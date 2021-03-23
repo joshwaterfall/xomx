@@ -5,3 +5,4 @@ CSV_annotations = "~/Desktop/work/code/RNAseq/data/annot_with_fusion_new_names.c
 CSV_annot_types = "~/Desktop/work/code/RNAseq/data/annot_types.csv"
 output_dir = os.path.expanduser("~/Desktop/data/xaio")
 data_dir = os.path.expanduser(output_dir + "/dataset/")
+xaio_tag = "xaio_tag_1"

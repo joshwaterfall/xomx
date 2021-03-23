@@ -1,7 +1,7 @@
 # import os
 import numpy as np
+import matplotlib.pyplot as plt
 
-# import matplotlib.pyplot as plt
 # import string
 # import random
 from xaio_config import data_dir
@@ -152,3 +152,50 @@ def load(normalization=""):
         ).item()
         data.maxlog = np.load(data_dir + "maxlog.npy", allow_pickle=True).item()
     return data
+
+
+class FeatureTools:
+    def __init__(self, data):
+        self.data = data.data
+        self.nr_samples = data.nr_samples
+        self.gene_dict = data.gene_dict
+        self.annot_index = data.annot_index
+
+    def mean(self, idx, cat_=None, func_=None):
+        # returns the mean value of the feature of index idx, across either all
+        # samples, or samples with annotation cat_
+        # the short id of the feature can be given instead of the index
+        if type(idx) == str:
+            idx = self.gene_dict[idx]
+        if not func_:
+            func_ = np.mean
+        if not cat_:
+            return func_(self.data[:, idx])
+        else:
+            return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
+
+    def std(self, idx, cat_=None):
+        # returns the standard deviation of the feature of index idx, across either all
+        # samples, or samples with annotation cat_
+        # the short id of the feature can be given instead of the index
+        return self.meangene(idx, cat_, np.std)
+
+    def plot(self, idx, cat_=None, v_min=None, v_max=None):
+        # plots the value of the feature of index idx for all samples
+        # if cat_ is not None the samples of annotation cat_ have a different color
+        # the short id of the feature can be given instead of the index
+        if type(idx) == str:
+            idx = self.gene_dict[idx]
+        y = self.data[:, idx]
+        if v_min is not None and v_max is not None:
+            y = np.clip(y, v_min, v_max)
+        x = np.arange(0, self.nr_samples) / self.nr_samples
+        plt.scatter(x, y, s=1)
+        if cat_:
+
+            y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
+            if v_min is not None and v_max is not None:
+                y = np.clip(y, v_min, v_max)
+            x = np.array(self.annot_index[cat_]) / self.nr_samples
+            plt.scatter(x, y, s=1)
+        plt.show()
