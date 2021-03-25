@@ -1,12 +1,12 @@
-from xaio_config import CSV_RNASeq_data, data_dir
+from xaio_config import CSV_RNASeq_data, output_dir
 import os
 import pandas as pd
 import numpy as np
 
-save_dir = os.path.expanduser(data_dir)
+save_dir = os.path.expanduser(output_dir + "/dataset/")
 
-nr_transcripts = np.load(data_dir + "nr_transcripts.npy", allow_pickle=True).item()
-nr_samples = np.load(data_dir + "nr_samples.npy", allow_pickle=True).item()
+nr_transcripts = np.load(save_dir + "nr_transcripts.npy", allow_pickle=True).item()
+nr_samples = np.load(save_dir + "nr_samples.npy", allow_pickle=True).item()
 
 epsilon_shift = 1.0
 rnaseq_data = pd.read_table(CSV_RNASeq_data, header=0, engine="c")

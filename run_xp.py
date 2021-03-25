@@ -11,6 +11,9 @@ data = load("log")
 # data = load()
 gt = FeatureTools(data)
 
+e()
+quit()
+
 annotation = "Breast"
 
 save_dir = os.path.expanduser(
