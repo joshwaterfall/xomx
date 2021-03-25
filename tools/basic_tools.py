@@ -212,11 +212,11 @@ def confusion_matrix(classifier, data_test, target_test):
     return np.array([[tp, fp], [fn, tn]])
 
 
-def matthews_coef(confusion_matrix):
-    tp = confusion_matrix[0, 0]
-    fp = confusion_matrix[0, 1]
-    fn = confusion_matrix[1, 0]
-    tn = confusion_matrix[1, 1]
+def matthews_coef(confusion_m):
+    tp = confusion_m[0, 0]
+    fp = confusion_m[0, 1]
+    fn = confusion_m[1, 0]
+    tn = confusion_m[1, 1]
     denominator = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
     if denominator == 0:
         denominator = 1
