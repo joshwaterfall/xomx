@@ -199,3 +199,26 @@ class FeatureTools:
             x = np.array(self.annot_index[cat_]) / self.nr_samples
             plt.scatter(x, y, s=1)
         plt.show()
+
+
+def confusion_matrix(classifier, data_test, target_test):
+    nr_neg = len(np.where(target_test == 0)[0])
+    nr_pos = len(np.where(target_test == 1)[0])
+    result = classifier.predict(data_test) - target_test
+    fp = len(np.where(result == 1)[0])
+    fn = len(np.where(result == -1)[0])
+    tp = nr_pos - fn
+    tn = nr_neg - fp
+    return np.array([[tp, fp], [fn, tn]])
+
+
+def matthews_coef(confusion_matrix):
+    tp = confusion_matrix[0, 0]
+    fp = confusion_matrix[0, 1]
+    fn = confusion_matrix[1, 0]
+    tn = confusion_matrix[1, 1]
+    denominator = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
+    if denominator == 0:
+        denominator = 1
+    mcc = (tp * tn - fp * fn) / np.sqrt(denominator)
+    return mcc
