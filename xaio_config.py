@@ -1,8 +1,11 @@
 import os
 
-""" User-defined variables: """
+with open("config.txt", "r") as f:
+    lines = f.readlines()
 
-CSV_RNASeq_data = "~/Desktop/work/code/RNAseq/data/big.csv"
+""" User-defined variables (run configure.py to define them): """
+
+CSV_RNASeq_data = os.path.expanduser(lines[0].rstrip())
 """
 CSV_RNASeq_data is the path towards a .csv file containing TPM-normalized RNASeq data.
 It is a matrix in which each column corresponds to a sample, and each row corresponds
@@ -19,7 +22,7 @@ Example:
 "ENSG00000000005.5|TNMD",0.1,0.4,0,0.1,0,0.1,0,0,0.5,0,0,0,...
 """
 
-CSV_annotations = "~/Desktop/work/code/RNAseq/data/annot_with_fusion_new_names.csv"
+CSV_annotations = os.path.expanduser(lines[1].rstrip())
 """
 CSV_annotations is the path towards a .csv file defining labels for all the samples.
 The first line of the file should be: "", "Diagnosis".
@@ -31,7 +34,7 @@ Example:
 ...
 """
 
-CSV_annot_types = "~/Desktop/work/code/RNAseq/data/annot_types.csv"
+CSV_annot_types = os.path.expanduser(lines[2].rstrip())
 """
 CSV_annot_types is the path towards a .csv file defining the origin of all the samples.
 The first line of the file should be:  "", "Origin".
@@ -43,7 +46,7 @@ Example:
 ...
 """
 
-output_dir = os.path.expanduser("~/Desktop/data/xaio")
+output_dir = os.path.expanduser(lines[3].rstrip())
 """
 output_dir defines the directory where all outputs will be saved.
 """
