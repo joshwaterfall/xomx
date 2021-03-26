@@ -102,55 +102,25 @@ class RFEExtraTrees:
         dump(self.log, fpath + "/log.joblib")
 
     def load(self, fpath):
-        self.forest = load(fpath + "/model.joblib")
-        self.log = load(fpath + "/log.joblib")
-        if self.logging:
-            feat_indices = np.copy(self.log[-1]["feature_indices"])
-            featpos = {
-                self.current_feature_indices[i]: i
-                for i in range(len(self.current_feature_indices))
-            }
-            reduced_feats = np.array([featpos[i] for i in feat_indices])
-            self.data_train = np.take(
-                self.data_train.transpose(), reduced_feats, axis=0
-            ).transpose()
-            self.data_test = np.take(
-                self.data_test.transpose(), reduced_feats, axis=0
-            ).transpose()
-            self.current_feature_indices = feat_indices
-
-    # def fit(self):
-    #     forest = ExtraTreesClassifier(n_estimators=450, random_state=0)
-    #     forest.fit(self.data, self.y)
-    #     mcc, mccstr = mcc_test(forest, self.data_test, self.y_test)
-    #     print(mccstr)
-    #
-    #     self.genes_progress.append(self.true_indices)
-    #     self.features_progress.append(len(self.true_indices))
-    #     self.mcc_progress.append(mcc)
-    #
-    #     # importances = forest.feature_importances_
-    #     # forest_indices = np.argsort(importances)[::-1]
-    #     # reduced_indices = list(forest_indices[:30])
-    #
-    #     for siz in [4000, 100, 30, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]:
-    #     # for siz in [5, 4, 3, 2, 1]:
-    #         sorted_feats = np.argsort(forest.feature_importances_)[::-1]
-    #         reduced_feats = list(sorted_feats[:siz])
-    #
-    #         self.true_indices = np.take(self.true_indices, reduced_feats, axis=0)
-    #
-    #         data_processed = np.take(self.data.transpose(), reduced_feats, axis=0)
-    #         .transpose()
-    #         data_test_processed = np.take(self.data_test.transpose(), reduced_feats
-    #         , axis=0).transpose()
-    #
-    #         forest = ExtraTreesClassifier(n_estimators=450, random_state=0)
-    #         forest.fit(data_processed, self.y)
-    #         mcc, mccstr = mcc_test(forest, data_test_processed, self.y_test)
-    #
-    #         print(mccstr)
-    #
-    #         self.genes_progress.append(self.true_indices)
-    #         self.features_progress.append(len(self.true_indices))
-    #         self.mcc_progress.append(mcc)
+        if os.path.isfile(fpath + "/model.joblib") and os.path.isfile(
+            fpath + "/log.joblib"
+        ):
+            self.forest = load(fpath + "/model.joblib")
+            self.log = load(fpath + "/log.joblib")
+            if self.logging:
+                feat_indices = np.copy(self.log[-1]["feature_indices"])
+                featpos = {
+                    self.current_feature_indices[i]: i
+                    for i in range(len(self.current_feature_indices))
+                }
+                reduced_feats = np.array([featpos[i] for i in feat_indices])
+                self.data_train = np.take(
+                    self.data_train.transpose(), reduced_feats, axis=0
+                ).transpose()
+                self.data_test = np.take(
+                    self.data_test.transpose(), reduced_feats, axis=0
+                ).transpose()
+                self.current_feature_indices = feat_indices
+            return True
+        else:
+            return False
