@@ -236,3 +236,45 @@ def matthews_coef(confusion_m):
         denominator = 1
     mcc = (tp * tn - fp * fn) / np.sqrt(denominator)
     return mcc
+
+
+def naive_feature_selection(
+    data,
+    annotation,
+    selection_size,
+):
+    feature_indices = np.array(
+        data.expressions_on_training_sets_argsort[annotation][
+            : (selection_size // 2)
+        ].tolist()
+        + data.expressions_on_training_sets_argsort[annotation][
+            -(selection_size - selection_size // 2) :
+        ].tolist()
+    )
+    train_indices = sum(data.annot_index_train.values(), [])
+    test_indices = sum(data.annot_index_test.values(), [])
+    data_train = np.take(
+        np.take(data.data.transpose(), feature_indices, axis=0),
+        train_indices,
+        axis=1,
+    ).transpose()
+    target_train = np.zeros(data.nr_samples)
+    target_train[data.annot_index_train[annotation]] = 1.0
+    target_train = np.take(target_train, train_indices, axis=0)
+    data_test = np.take(
+        np.take(data.data.transpose(), feature_indices, axis=0),
+        test_indices,
+        axis=1,
+    ).transpose()
+    target_test = np.zeros(data.nr_samples)
+    target_test[data.annot_index_test[annotation]] = 1.0
+    target_test = np.take(target_test, test_indices, axis=0)
+    return (
+        feature_indices,
+        train_indices,
+        test_indices,
+        data_train,
+        target_train,
+        data_test,
+        target_test,
+    )
