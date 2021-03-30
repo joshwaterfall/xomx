@@ -13,8 +13,8 @@ from IPython import embed as e
 data = load()
 gt = FeatureTools(data)
 
-# annotation = "Brain lower grade glioma"
-annotation = "TCGA-LGG_Primary Tumor"
+annotation = "Brain lower grade glioma"
+# annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
 save_dir = os.path.expanduser(
@@ -55,9 +55,14 @@ gene_list = [
 linear_clf = LinearSGD(data)
 
 linear_clf.fit(feature_selector.data_train, feature_selector.target_train)
-linear_clf.plot(feature_selector.data_test, feature_selector.test_indices, annotation)
+linear_clf.plot(
+    feature_selector.data_test,
+    feature_selector.test_indices,
+    annotation,
+    save_dir + "/d1/",
+)
 
 linear_clf.fit_list(gene_list, annotation)
-linear_clf.plot_list(gene_list)
+linear_clf.plot_list(gene_list, None, save_dir + "/d2/")
 
 e()
