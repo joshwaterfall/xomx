@@ -13,7 +13,8 @@ from IPython import embed as e
 data = load()
 gt = FeatureTools(data)
 
-annotation = "Brain lower grade glioma"
+# annotation = "Brain lower grade glioma"
+annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
 save_dir = os.path.expanduser(
