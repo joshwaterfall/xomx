@@ -7,6 +7,8 @@ import numpy as np
 from tools.basic_tools import confusion_matrix, naive_feature_selection
 from joblib import dump, load
 
+# from IPython import embed as e
+
 
 class RFENet:
     def __init__(
@@ -35,6 +37,8 @@ class RFENet:
         self.batch_size = batch_size
         self.net = None
         self.confusion_matrix = None
+        self.eval_batch_inputs = None
+        self.eval_batch_targets = None
         self.log = []
 
     def init(self):
@@ -51,12 +55,16 @@ class RFENet:
 
     def select_features(self, n):
         assert n <= self.data_train.shape[1]
-        reduced_feats = (
-            torch.argsort(torch.linalg.norm(self.net.fc1.weight, dim=0))[-n:]
-            .clone()
-            .detach()
-            .numpy()
-        )
+        if n > 30:
+            reduced_feats = (
+                torch.argsort(torch.linalg.norm(self.net.fc1.weight, dim=0))[-n:]
+                .clone()
+                .detach()
+                .numpy()
+            )
+        else:
+            fiv = self.compute_permutation_importance()
+            reduced_feats = np.argsort(fiv)[-n:]
         self.current_feature_indices = np.take(
             self.current_feature_indices, reduced_feats, axis=0
         )
@@ -94,6 +102,9 @@ class RFENet:
         inputs = inputs.to(self.device)
         targets = torch.tensor(target_train[class0and1], dtype=torch.long)
         targets = targets.to(self.device)
+        eval_batch_indices = torch.randint(0, inputs.shape[0], (10 * self.batch_size,))
+        self.eval_batch_inputs = inputs[eval_batch_indices, :]
+        self.eval_batch_targets = targets[eval_batch_indices]
         train = TensorDataset(inputs, targets)
         dl = DataLoader(train, batch_size=self.batch_size, shuffle=True)
         optimizer = optim.Adam(
@@ -157,17 +168,22 @@ class RFENet:
                 )
             )
 
-    # def compute_feature_importance(self):
-    # eval_batch_indices = torch.randint(0, inputs.shape[0], (5 * self.batch_size,))
-    # eval_batch = inputs[eval_batch_indices, :]
-    # eval_target = targets[eval_batch_indices]
-    # feature_importances = np.zeros(input_dim)
-    # for feature_to_eval in range(input_dim):
-    #     r = torch.randperm(eval_batch.shape[0])
-    #     eval_batch[:, feature_to_eval] = eval_batch[r, feature_to_eval]
-    #     feature_importances[feature_to_eval] = criterion(self.net(eval_batch),
-    #       eval_target).item()
-    #     eval_batch[:, feature_to_eval] = eval_batch[torch.argsort(r), feature_to_eval]
+    def compute_permutation_importance(self):
+        input_dim = self.eval_batch_inputs.shape[1]
+        feature_importance_vec = np.zeros(input_dim)
+        criterion = nn.CrossEntropyLoss()
+        for feature_to_eval in range(input_dim):
+            r = torch.randperm(self.eval_batch_inputs.shape[0])
+            self.eval_batch_inputs[:, feature_to_eval] = self.eval_batch_inputs[
+                r, feature_to_eval
+            ]
+            feature_importance_vec[feature_to_eval] = criterion(
+                self.net(self.eval_batch_inputs), self.eval_batch_targets
+            ).item()
+            self.eval_batch_inputs[:, feature_to_eval] = self.eval_batch_inputs[
+                torch.argsort(r), feature_to_eval
+            ]
+        return feature_importance_vec
 
 
 class NNet(nn.Module):
