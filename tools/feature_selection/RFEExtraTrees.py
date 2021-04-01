@@ -77,6 +77,7 @@ class RFEExtraTrees:
                 "confusion_matrix": self.confusion_matrix,
             }
         )
+        return self.confusion_matrix
 
     def predict(self, x):
         return self.forest.predict(x)

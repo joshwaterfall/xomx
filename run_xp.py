@@ -35,6 +35,19 @@ cm = confusion_matrix(
     feature_selector, feature_selector.data_test, feature_selector.target_test
 )
 print("MCC score:", matthews_coef(cm))
+linear_clf = LinearSGD(data)
+cm_linear = linear_clf.fit(
+    feature_selector.data_train,
+    feature_selector.target_train,
+    feature_selector.data_test,
+    feature_selector.target_test,
+)
+print("MCC score (linear fit):", matthews_coef(cm_linear))
+linear_clf.plot(
+    feature_selector.data_test,
+    feature_selector.test_indices,
+    annotation,
+)
 
 gene_list = [
     "PTPRZ1",
@@ -50,16 +63,10 @@ gene_list = [
 ]
 # gene_list = [3301, 47704, 6692, 54294, 583, 16343, 20741, 23090, 34358, 33734]
 
-linear_clf = LinearSGD(data)
 
-linear_clf.fit(feature_selector.data_train, feature_selector.target_train)
-linear_clf.plot(
-    feature_selector.data_test,
-    feature_selector.test_indices,
-    annotation,
-)
+cm_linear = linear_clf.fit_list(gene_list, annotation)
 
-linear_clf.fit_list(gene_list, annotation)
+print("MCC score (linear fit):", matthews_coef(cm_linear))
 linear_clf.plot_list(gene_list, None)
 
 e()

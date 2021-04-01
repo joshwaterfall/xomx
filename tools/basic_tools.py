@@ -1,9 +1,6 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
-# import string
-# import random
 from xaio_config import output_dir
 
 
@@ -238,23 +235,21 @@ def matthews_coef(confusion_m):
     return mcc
 
 
-def naive_feature_selection(
+def feature_selection_from_list(
     data,
     annotation,
-    selection_size,
+    feature_indices,
 ):
-    feature_indices = np.array(
-        data.expressions_on_training_sets_argsort[annotation][
-            : (selection_size // 2)
-        ].tolist()
-        + data.expressions_on_training_sets_argsort[annotation][
-            -(selection_size - selection_size // 2) :
-        ].tolist()
-    )
+    f_indices = np.zeros_like(feature_indices, dtype=np.int64)
+    for i in range(len(f_indices)):
+        if type(feature_indices[i]) == str or type(feature_indices[i]) == np.str_:
+            f_indices[i] = data.gene_dict[feature_indices[i]]
+        else:
+            f_indices[i] = feature_indices[i]
     train_indices = sum(data.annot_index_train.values(), [])
     test_indices = sum(data.annot_index_test.values(), [])
     data_train = np.take(
-        np.take(data.data.transpose(), feature_indices, axis=0),
+        np.take(data.data.transpose(), f_indices, axis=0),
         train_indices,
         axis=1,
     ).transpose()
@@ -262,7 +257,7 @@ def naive_feature_selection(
     target_train[data.annot_index_train[annotation]] = 1.0
     target_train = np.take(target_train, train_indices, axis=0)
     data_test = np.take(
-        np.take(data.data.transpose(), feature_indices, axis=0),
+        np.take(data.data.transpose(), f_indices, axis=0),
         test_indices,
         axis=1,
     ).transpose()
@@ -278,3 +273,19 @@ def naive_feature_selection(
         data_test,
         target_test,
     )
+
+
+def naive_feature_selection(
+    data,
+    annotation,
+    selection_size,
+):
+    feature_indices = np.array(
+        data.expressions_on_training_sets_argsort[annotation][
+            : (selection_size // 2)
+        ].tolist()
+        + data.expressions_on_training_sets_argsort[annotation][
+            -(selection_size - selection_size // 2) :
+        ].tolist()
+    )
+    return feature_selection_from_list(data, annotation, feature_indices)

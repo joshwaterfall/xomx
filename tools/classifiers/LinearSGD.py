@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
+from tools.basic_tools import confusion_matrix, feature_selection_from_list
 import numpy as np
 
 
@@ -13,28 +14,24 @@ class LinearSGD:
             StandardScaler(), SGDClassifier(max_iter=max_iter, tol=tol)
         )
 
-    def fit(self, x, y):
+    def fit(self, x, y, x_test, y_test):
         self.clf.fit(x, y)
+        return confusion_matrix(self.clf, x_test, y_test)
+
+    def predict(self, x):
+        return self.clf.predict(x)
 
     def fit_list(self, transcripts_list, annotation):
-        transcripts_indices = np.copy(transcripts_list)
-        for i in range(len(transcripts_indices)):
-            if (
-                type(transcripts_indices[i]) == str
-                or type(transcripts_indices[i]) == np.str_
-            ):
-                transcripts_indices[i] = self.data.gene_dict[transcripts_indices[i]]
-        transcripts_indices = np.array(transcripts_indices).astype(int)
-        train_indices = sum(self.data.annot_index_train.values(), [])
-        data_train = np.take(
-            np.take(self.data.data.transpose(), transcripts_indices, axis=0),
+        (
+            feature_indices,
             train_indices,
-            axis=1,
-        ).transpose()
-        target_train = np.zeros(self.data.nr_samples)
-        target_train[self.data.annot_index_train[annotation]] = 1.0
-        target_train = np.take(target_train, train_indices, axis=0)
-        self.clf.fit(data_train, target_train)
+            test_indices,
+            data_train,
+            target_train,
+            data_test,
+            target_test,
+        ) = feature_selection_from_list(self.data, annotation, transcripts_list)
+        return self.fit(data_train, target_train, data_test, target_test)
 
     def plot(self, x, indices, annotation=None, save_dir=None):
         res = self.clf.decision_function(x)
