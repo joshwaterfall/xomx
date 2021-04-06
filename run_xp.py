@@ -1,5 +1,11 @@
 from xaio_config import output_dir, xaio_tag
-from tools.basic_tools import load, FeatureTools, confusion_matrix, matthews_coef
+from tools.basic_tools import (
+    load,
+    FeatureTools,
+    confusion_matrix,
+    matthews_coef,
+    umap_plot,
+)
 from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
 from tools.feature_selection.RFENet import RFENet
@@ -38,6 +44,8 @@ cm = confusion_matrix(
 )
 feature_selector.plot()
 print("MCC score:", matthews_coef(cm))
+
+umap_plot(data, feature_selector.data_test, feature_selector.test_indices)
 
 # linear_clf = LinearSGD(data)
 # cm_linear = linear_clf.fit(

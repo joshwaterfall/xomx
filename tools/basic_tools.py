@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from xaio_config import output_dir
+import umap
 
 
 class RNASeqData:
@@ -291,7 +292,7 @@ def naive_feature_selection(
     return feature_selection_from_list(data, annotation, feature_indices)
 
 
-def plot_scores(data, scores, score_threshold, indices, annotation, save_dir):
+def plot_scores(data, scores, score_threshold, indices, annotation=None, save_dir=None):
     annot_colors = {}
     denom = len(data.annot_values)
     for i, val in enumerate(data.annot_values):
@@ -346,6 +347,97 @@ def plot_scores(data, scores, score_threshold, indices, annotation, save_dir):
             cont, ind = sc.contains(event)
             if cont:
                 update_annot(ind, sc)
+                ann.set_visible(True)
+                fig.canvas.draw_idle()
+            else:
+                if vis:
+                    ann.set_visible(False)
+                    fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect("motion_notify_event", hover)
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        plt.savefig(save_dir + "/plot.png", dpi=200)
+    else:
+        plt.show()
+
+
+def umap_plot(
+    data,
+    x,
+    indices,
+    save_dir=None,
+    metric="euclidean",
+    min_dist=0.0,
+    n_neighbors=120,
+    random_state=42,
+):
+    reducer = umap.UMAP(
+        metric=metric,
+        min_dist=min_dist,
+        n_neighbors=n_neighbors,
+        random_state=random_state,
+    )
+    print("Starting UMAP reduction...")
+    reducer.fit(x)
+    embedding = reducer.transform(x)
+    print("Done.")
+
+    all_colors = []
+
+    def color_function(id_):
+        label_ = data.annot_dict[data.samples_id[indices[id_]]]
+        type_ = data.annot_types[data.samples_id[indices[id_]]]
+        clo = (
+            np.where(data.annot_values == label_)[0],
+            list(data.annot_types_dict[label_]).index(type_),
+        )
+        if clo in all_colors:
+            return all_colors.index(clo)
+        else:
+            all_colors.append(clo)
+            return len(all_colors) - 1
+
+    def hover_function(id_):
+        return "{} / {}".format(
+            data.annot_dict[data.samples_id[indices[id_]]],
+            data.annot_types[data.samples_id[indices[id_]]],
+        )
+
+    samples_color = np.empty_like(indices)
+    for i in range(len(indices)):
+        samples_color[i] = color_function(i)
+
+    fig, ax = plt.subplots()
+
+    sc = plt.scatter(
+        embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
+    )
+    plt.gca().set_aspect("equal", "datalim")
+
+    ann = ax.annotate(
+        "",
+        xy=(0, 0),
+        xytext=(20, 20),
+        textcoords="offset points",
+        bbox=dict(boxstyle="round", fc="w"),
+        arrowprops=dict(arrowstyle="->"),
+    )
+    ann.set_visible(False)
+
+    def update_annot(ind):
+        pos = sc.get_offsets()[ind["ind"][0]]
+        ann.xy = pos
+        text = hover_function(ind["ind"][0])
+        ann.set_text(text)
+
+    def hover(event):
+        vis = ann.get_visible()
+        if event.inaxes == ax:
+            cont, ind = sc.contains(event)
+            if cont:
+                update_annot(ind)
                 ann.set_visible(True)
                 fig.canvas.draw_idle()
             else:
