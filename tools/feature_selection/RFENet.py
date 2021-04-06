@@ -4,7 +4,7 @@ from torch import nn, optim
 from torch.nn import functional
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
-from tools.basic_tools import confusion_matrix, naive_feature_selection
+from tools.basic_tools import confusion_matrix, naive_feature_selection, plot_scores
 from joblib import dump, load
 
 # from IPython import embed as e
@@ -55,7 +55,8 @@ class RFENet:
 
     def select_features(self, n):
         assert n <= self.data_train.shape[1]
-        if n > 50:
+        if True:
+            # if n > 50:
             reduced_feats = (
                 torch.argsort(torch.linalg.norm(self.net.fc1.weight, dim=0))[-n:]
                 .clone()
@@ -124,6 +125,9 @@ class RFENet:
     def predict(self, x):
         return self.net.predict(x)
 
+    def score(self, x):
+        return self.net.score(x)
+
     def save(self, fpath):
         sdir = fpath + "/" + self.__class__.__name__
         os.makedirs(sdir, exist_ok=True)
@@ -186,6 +190,10 @@ class RFENet:
             ]
         return feature_importance_vec
 
+    def plot(self, annotation=None, save_dir=None):
+        res = self.score(self.data_test)
+        plot_scores(self.data, res, 0.0, self.test_indices, annotation, save_dir)
+
 
 class NNet(nn.Module):
     def __init__(self, device, input_dim):
@@ -207,3 +215,15 @@ class NNet(nn.Module):
         h = h.to(self.device)
         h = self.forward(h)
         return np.array(torch.argmax(h, dim=1))
+
+    def score(self, x):
+        h = torch.tensor(x)
+        h = h.to(self.device)
+        h = self.forward(h)
+        hloss = nn.CrossEntropyLoss()
+        tmph = [
+            -hloss(h[i : i + 1], torch.ones(1, dtype=torch.int64)).item()
+            + hloss(h[i : i + 1], torch.zeros(1, dtype=torch.int64)).item()
+            for i in range(len(h))
+        ]
+        return np.array(tmph)

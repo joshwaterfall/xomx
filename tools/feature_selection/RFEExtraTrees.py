@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from sklearn.ensemble import ExtraTreesClassifier
-from tools.basic_tools import confusion_matrix, naive_feature_selection
+from tools.basic_tools import confusion_matrix, naive_feature_selection, plot_scores
 from joblib import dump, load
 
 # from IPython import embed as e
@@ -82,6 +82,17 @@ class RFEExtraTrees:
     def predict(self, x):
         return self.forest.predict(x)
 
+    def score(self, x):
+        return (
+            np.array(
+                sum(
+                    self.forest.estimators_[i].predict(self.data_test)
+                    for i in range(self.forest.n_estimators)
+                )
+            )
+            / self.forest.n_estimators
+        )
+
     def save(self, fpath):
         sdir = fpath + "/" + self.__class__.__name__
         os.makedirs(sdir, exist_ok=True)
@@ -111,3 +122,7 @@ class RFEExtraTrees:
             return True
         else:
             return False
+
+    def plot(self, annotation=None, save_dir=None):
+        res = self.score(self.data_test)
+        plot_scores(self.data, res, 0.5, self.test_indices, annotation, save_dir)
