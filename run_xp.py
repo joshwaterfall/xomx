@@ -45,7 +45,16 @@ cm = confusion_matrix(
 feature_selector.plot()
 print("MCC score:", matthews_coef(cm))
 
-umap_plot(data, feature_selector.data_test, feature_selector.test_indices)
+print(feature_selector.current_feature_indices)
+print(
+    [
+        data.transcripts[feature_selector.current_feature_indices[i]]
+        for i in range(len(feature_selector.current_feature_indices))
+    ]
+)
+
+if False:
+    umap_plot(data, feature_selector.data_test, feature_selector.test_indices)
 
 # linear_clf = LinearSGD(data)
 # cm_linear = linear_clf.fit(
