@@ -22,8 +22,8 @@ data = load()
 gt = FeatureTools(data)
 
 # annotation = "Brain lower grade glioma"
-# annotation = "TCGA-LGG_Primary Tumor"
-annotation = "Breast invasive carcinoma"
+annotation = "TCGA-LGG_Primary Tumor"
+# annotation = "Breast invasive carcinoma"
 
 save_dir = os.path.expanduser(
     output_dir + "/results/" + xaio_tag + "/" + annotation.replace(" ", "_")
