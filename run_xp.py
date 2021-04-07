@@ -29,8 +29,8 @@ save_dir = os.path.expanduser(
     output_dir + "/results/" + xaio_tag + "/" + annotation.replace(" ", "_")
 )
 
-feature_selector = RFENet(data, annotation, init_selection_size=4000)
-# feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
+# feature_selector = RFENet(data, annotation, init_selection_size=4000)
+feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
 if not feature_selector.load(save_dir):
     print("Initialization...")
     feature_selector.init()
