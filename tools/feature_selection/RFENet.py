@@ -55,8 +55,7 @@ class RFENet:
 
     def select_features(self, n):
         assert n <= self.data_train.shape[1]
-        if True:
-            # if n > 50:
+        if n > 50:
             reduced_feats = (
                 torch.argsort(torch.linalg.norm(self.net.fc1.weight, dim=0))[-n:]
                 .clone()
@@ -87,7 +86,7 @@ class RFENet:
         )
         return self.confusion_matrix
 
-    def fit(self, data_train, target_train, epochs=30, learning_rate=1e-4):
+    def fit(self, data_train, target_train, epochs=50, learning_rate=1e-4):
         input_dim = data_train.shape[1]
         self.net = NNet(self.device, input_dim)
         self.net = self.net.to(self.device)

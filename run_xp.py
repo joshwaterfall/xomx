@@ -21,29 +21,39 @@ _ = RFEExtraTrees, RFENet
 data = load()
 gt = FeatureTools(data)
 
+# annotation = "Acute myeloid leukemia"
+# annotation = "Diffuse large B-cell lymphoma"
+# annotation = "Glioblastoma multiforme"
+# annotation = "Lung adenocarcinoma"
+annotation = "Lung squamous cell carcinoma"
+# annotation = "Pheochromocytoma and paraganglioma"
+# annotation = "Small cell lung cancer"
+# annotation = "Uveal melanoma"
+# annotation = "Skin cutaneous melanoma"
 # annotation = "Brain lower grade glioma"
-annotation = "TCGA-LGG_Primary Tumor"
+# annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
 save_dir = os.path.expanduser(
     output_dir + "/results/" + xaio_tag + "/" + annotation.replace(" ", "_")
 )
 
-# feature_selector = RFENet(data, annotation, init_selection_size=4000)
-feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
+feature_selector = RFENet(data, annotation, init_selection_size=4000)
+# feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
 if not feature_selector.load(save_dir):
     print("Initialization...")
     feature_selector.init()
-    for siz in [100, 30, 15, 10]:
+    for siz in [100, 30, 20, 15, 10]:
         print("Selecting", siz, "features...")
         feature_selector.select_features(siz)
+        cm = confusion_matrix(
+            feature_selector, feature_selector.data_test, feature_selector.target_test
+        )
+        print("MCC score:", matthews_coef(cm))
     feature_selector.save(save_dir)
 print("Done.")
-cm = confusion_matrix(
-    feature_selector, feature_selector.data_test, feature_selector.target_test
-)
 feature_selector.plot()
-print("MCC score:", matthews_coef(cm))
+# print("MCC score:", matthews_coef(cm))
 
 print(feature_selector.current_feature_indices)
 print(

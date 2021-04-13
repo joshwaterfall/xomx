@@ -48,7 +48,7 @@ class RNASeqData:
 
     expressions_on_training_sets_argsort -> expressions_on_training_sets_argsort["#"]
                                             is the list of feature indices sorted by
-                                            devreasing value in
+                                            decreasing value in
                                             expressions_on_training_sets["#"]
 
     annot_types -> annot_types["#"] is a string characterizing the data origin for
