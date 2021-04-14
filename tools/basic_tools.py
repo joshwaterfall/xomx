@@ -142,6 +142,7 @@ def load(normalization=""):
         data.data_dir + "expressions_on_training_sets_argsort.npy", allow_pickle=True
     ).item()
     if normalization != "log":
+        data.normalization_type = "mean_std"
         data.data = np.array(
             np.memmap(
                 data.data_dir + "data.bin",
@@ -151,6 +152,7 @@ def load(normalization=""):
             )
         ).transpose()
     else:
+        data.normalization_type = "log"
         data.data = np.array(
             np.memmap(
                 data.data_dir + "lognorm_data.bin",

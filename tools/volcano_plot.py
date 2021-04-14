@@ -1,8 +1,51 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.feature_selection import f_regression
-from IPython import embed as e
+
+# from sklearn.feature_selection import f_regression, chi2, f_classif
+from sklearn.feature_selection import f_classif
+
+# from IPython import embed as e
+# from sklearn import linear_model
+# from regressors import stats
+# import scipy.stats as stat
+
+#
+#
+# class LinearRegression(linear_model.LinearRegression):
+#     """
+#     LinearRegression class after sklearn's, but calculate t-statistics
+#     and p-values for model coefficients (betas).
+#     Additional attributes available after .fit()
+#     are `t` and `p` which are of the shape (y.shape[1], X.shape[1])
+#     which is (n_features, n_coefs)
+#     This class sets the intercept to 0 by default, since usually we include it
+#     in X.
+#     """
+#
+#     # nothing changes in __init__
+#     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+#                  n_jobs=1):
+#         self.fit_intercept = fit_intercept
+#         self.normalize = normalize
+#         self.copy_X = copy_X
+#         self.n_jobs = n_jobs
+#
+#     def fit(self, X, y, n_jobs=1):
+#         self = super(LinearRegression, self).fit(X, y, n_jobs)
+#
+#         # Calculate SSE (sum of squared errors)
+#         # and SE (standard error)
+#         sse = np.sum((self.predict(X) - y) ** 2, axis=0) / float(
+#             X.shape[0] - X.shape[1])
+#         se = np.array([np.sqrt(np.diagonal(sse * np.linalg.inv(np.dot(X.T, X))))])
+#
+#         # compute the t-statistic for each feature
+#         self.t = self.coef_ / se
+#         # find the p-value for each feature
+#         self.p = np.squeeze(
+#             2 * (1 - stat.t.cdf(np.abs(self.t), y.shape[0] - X.shape[1])))
+#         return self
 
 
 class VolcanoPlot:
@@ -16,16 +59,23 @@ class VolcanoPlot:
         self.ok_target = None
         self.ok_indices = None
 
-    def init(self):
+    def init(self, feature_indices=None):
         reference_values = self.data.mean_expressions
         on_annotation_values = (
             self.data.expressions_on_training_sets[self.annotation]
             * self.data.std_expressions
             + self.data.mean_expressions
         )
-        self.ok_indices = np.where(reference_values > self.threshold)[0]
-        reference_values = reference_values[self.ok_indices]
-        on_annotation_values = on_annotation_values[self.ok_indices]
+        if feature_indices is not None:
+            reference_values = reference_values[feature_indices]
+            on_annotation_values = on_annotation_values[feature_indices]
+        ok1_indices = np.where(reference_values > self.threshold)[0]
+        if feature_indices is not None:
+            self.ok_indices = feature_indices[ok1_indices]
+        else:
+            self.ok_indices = ok1_indices
+        reference_values = reference_values[ok1_indices]
+        on_annotation_values = on_annotation_values[ok1_indices]
         ok2_indices = np.where(on_annotation_values > self.threshold)[0]
         reference_values = reference_values[ok2_indices]
         on_annotation_values = on_annotation_values[ok2_indices]
@@ -37,21 +87,25 @@ class VolcanoPlot:
         self.ok_target = np.zeros(self.data.nr_samples)
         self.ok_target[self.data.annot_index_train[self.annotation]] = 1.0
         self.ok_target[self.data.annot_index_test[self.annotation]] = 1.0
-        fscores, pvalues = f_regression(self.ok_data, self.ok_target)
-        self.log10_pvalues = -np.log10(pvalues + 1e-500)
+        fscores, pvalues = f_classif(self.ok_data, self.ok_target)
+        self.log10_pvalues = -np.log10(pvalues + 1e-45)
 
     def plot(self, feature_list=[], save_dir=None):
         fig, ax = plt.subplots()
-        e()
-        # colors = np.zeros(len(self.ok_indices))
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        # TODO
-        # TODO
+        idxs = np.sort(feature_list)
+        k = 0
+        args_ok = np.argsort(self.ok_indices)
+        colors = np.zeros(len(self.ok_indices))
+        sizes = np.ones(len(self.ok_indices)) * 5
+        for i in range(len(self.ok_indices)):
+            if idxs[k] < self.ok_indices[args_ok[i]]:
+                if k < len(idxs) - 1:
+                    k = k + 1
+            if idxs[k] == self.ok_indices[args_ok[i]]:
+                colors[args_ok[i]] = 1
+                sizes[args_ok[i]] = 35
         sc = ax.scatter(
-            self.log2_foldchange, self.log10_pvalues, c="gray", cm="nipy_spectral", s=5
+            self.log2_foldchange, self.log10_pvalues, c=colors, cmap="coolwarm", s=sizes
         )
         ann = ax.annotate(
             "",
@@ -66,7 +120,9 @@ class VolcanoPlot:
         def update_annot(ind, sc):
             pos = sc.get_offsets()[ind["ind"][0]]
             ann.xy = pos
-            text = "{}".format(self.data.transcripts[ind["ind"][0]])
+            # text = "{}".format(self.data.transcripts[self.ok_indices[["ind"][0]]])
+            # text = "{}".format(self.data.transcripts[["ind"][0]])
+            text = "{}".format(self.data.transcripts[self.ok_indices[ind["ind"][0]]])
             ann.set_text(text)
 
         def hover(event):
