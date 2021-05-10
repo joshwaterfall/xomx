@@ -1,9 +1,10 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.feature_selection import f_regression
 
-# from sklearn.feature_selection import f_regression, chi2, f_classif
-from sklearn.feature_selection import f_classif
+# , chi2, f_classif
+# from sklearn.feature_selection import f_classif
 
 # from IPython import embed as e
 # from sklearn import linear_model
@@ -87,7 +88,7 @@ class VolcanoPlot:
         self.ok_target = np.zeros(self.data.nr_samples)
         self.ok_target[self.data.annot_index_train[self.annotation]] = 1.0
         self.ok_target[self.data.annot_index_test[self.annotation]] = 1.0
-        fscores, pvalues = f_classif(self.ok_data, self.ok_target)
+        fscores, pvalues = f_regression(self.ok_data, self.ok_target)
         self.log10_pvalues = -np.log10(pvalues + 1e-45)
 
     def plot(self, feature_list=[], save_dir=None):

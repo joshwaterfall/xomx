@@ -1,6 +1,6 @@
 from xaio_config import output_dir, xaio_tag
+from RNASeq_preprocessing.load import loadRNASeq
 from tools.basic_tools import (
-    load,
     FeatureTools,
     confusion_matrix,
     matthews_coef,
@@ -17,9 +17,12 @@ from IPython import embed as e
 
 _ = RFEExtraTrees, RFENet
 
-# data = load("log")
-data = load()
-gt = FeatureTools(data)
+# data = loadRNASeq("log")
+data = loadRNASeq("raw")
+ft = FeatureTools(data)
+
+e()
+quit()
 
 # annotation = "Acute myeloid leukemia"
 # annotation = "Diffuse large B-cell lymphoma"
@@ -34,9 +37,13 @@ annotation = "Lung squamous cell carcinoma"
 # annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
-save_dir = os.path.expanduser(
+save_dir = os.path.abspath(
     output_dir + "/results/" + xaio_tag + "/" + annotation.replace(" ", "_")
 )
+
+
+e()
+quit()
 
 feature_selector = RFENet(data, annotation, init_selection_size=4000)
 # feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)

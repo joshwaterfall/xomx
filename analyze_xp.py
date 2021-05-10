@@ -23,12 +23,12 @@ gt = FeatureTools(data)
 # annotation = "Diffuse large B-cell lymphoma"
 # annotation = "Glioblastoma multiforme"
 # annotation = "Lung adenocarcinoma"
-annotation = "Lung squamous cell carcinoma"
+# annotation = "Lung squamous cell carcinoma"
 # annotation = "Pheochromocytoma and paraganglioma"
 # annotation = "Small cell lung cancer"
 # annotation = "Uveal melanoma"
 # annotation = "Skin cutaneous melanoma"
-# annotation = "Brain lower grade glioma"
+annotation = "Brain lower grade glioma"
 # annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
@@ -45,7 +45,7 @@ fs2.load(save_dir)
 
 
 vp = VolcanoPlot(data, annotation)
-vp.init()
-# vp.init(fs1.current_feature_indices)
+# vp.init()
+vp.init(fs1.current_feature_indices)
 vp.plot(fs2.current_feature_indices)
 e()
