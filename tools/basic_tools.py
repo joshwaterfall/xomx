@@ -17,8 +17,8 @@ class RNASeqData:
 
     sample_annotations -> the i-th sample has annotation sample_annotations[i]
 
-    sample_origins -> sample_origins["#"] is a string characterizing the dataset of
-                      origin for the sample of ID "#"
+    sample_origins -> sample_origins[i] is a string characterizing the dataset of
+                      origin for the i-th sample
 
     sample_origins_per_annotation -> sample_origins_per_annotation["#"] is the set
                                      of different origins for all the samples of
@@ -72,7 +72,7 @@ class RNASeqData:
 
     raw_data -> raw_data[i, j]: value of the j-th feature of the i-th sample
 
-    std_data -> data nprmalized by mean and standard deviation; the original value is:
+    std_data -> data normalized by mean and standard deviation; the original value is:
                 raw_data[i, j] == std_data[i, j] * std_expression[j]
                                   + mean_expression[j]
 
@@ -292,21 +292,146 @@ class RNASeqData:
                 self.normalization_type = "log"
                 print('Normalization type: "log"')
 
-    def reduce_samples(self, idx_list):
-        # TODO
-        pass
+    def compute_sample_indices(self):
+        assert self.sample_ids is not None
+        self.sample_indices = {}
+        for i, s_id in enumerate(self.sample_ids):
+            self.sample_indices[s_id] = i
+
+    def compute_sample_indices_per_annotation(self):
+        assert self.sample_annotations is not None
+        self.sample_indices_per_annotation = {}
+        for i, annot in enumerate(self.sample_annotations):
+            self.sample_indices_per_annotation.setdefault(annot, [])
+            self.sample_indices_per_annotation[annot].append(i)
+
+    def compute_all_annotations(self):
+        assert self.sample_annotations is not None
+        self.all_annotations = np.array(list(dict.fromkeys(self.sample_annotations)))
+
+    def compute_sample_origins_per_annotation(self):
+        assert self.sample_annotations is not None and self.sample_origins is not None
+        self.sample_origins_per_annotation = {}
+        for i, annot in enumerate(self.sample_annotations):
+            self.sample_origins_per_annotation.setdefault(annot, set()).add(
+                self.sample_origins[i]
+            )
+
+    def compute_mean_expressions(self):
+        assert self.raw_data is not None and self.nr_features is not None
+        self.mean_expressions = [
+            np.mean(self.raw_data[:, i]) for i in range(self.nr_features)
+        ]
+
+    def compute_std_expressions(self):
+        assert self.raw_data is not None and self.nr_features is not None
+        self.std_expressions = [
+            np.std(self.raw_data[:, i]) for i in range(self.nr_features)
+        ]
+
+    def compute_std_data(self):
+        assert (
+            self.raw_data is not None
+            and self.mean_expressions is not None
+            and self.std_expressions is not None
+            and self.nr_features is not None
+        )
+        self.std_data = np.copy(self.raw_data)
+        for i in range(self.nr_features):
+            if self.std_expressions[i] == 0.0:
+                self.std_data[:, i] = 0.0
+            else:
+                self.std_data[:, i] = (
+                    self.std_data[:, i] - self.mean_expressions[i]
+                ) / self.std_expressions[i]
+            # for j in range(self.nr_samples):
+            #     if self.std_expressions[i] == 0.0:
+            #         self.std_data[j, i] = 0.0
+            #     else:
+            #         self.std_data[j, i] = (
+            #                                       self.std_data[j, i] -
+            #                                       self.mean_expressions[i]
+            #                               ) / self.std_expressions[i]
+
+    def compute_log_data(self):
+        assert (
+            self.raw_data is not None
+            and self.mean_expressions is not None
+            and self.std_expressions is not None
+            and self.nr_features is not None
+        )
+        self.log_data = np.copy(self.raw_data)
+        self.epsilon_shift = 1.0
+        for i in range(self.nr_features):
+            self.log_data[:, i] = np.log(self.log_data[:, i] + self.epsilon_shift)
+        self.maxlog = np.max(self.log_data)
+        for i in range(self.nr_features):
+            self.log_data[:, i] = (self.log_data[:, i] - np.log(self.epsilon_shift)) / (
+                self.maxlog - np.log(self.epsilon_shift)
+            )
+
+    def compute_train_and_test_indices_per_annotation(self):
+        assert self.sample_indices_per_annotation is not None
+        self.train_indices_per_annotation = {}
+        self.test_indices_per_annotation = {}
+        for annot in self.sample_indices_per_annotation:
+            idxs = np.random.permutation(self.sample_indices_per_annotation[annot])
+            cut = len(idxs) // 4 + 1
+            self.test_indices_per_annotation[annot] = idxs[:cut]
+            self.train_indices_per_annotation[annot] = idxs[cut:]
+
+    def compute_feature_shortnames_ref(self):
+        assert self.feature_names is not None
+        self.feature_shortnames_ref = {}
+        for i, elt in enumerate(self.feature_names):
+            self.feature_shortnames_ref[elt.split("|")[1]] = i
+
+    def compute_std_values_on_training_sets(self):
+        assert (
+            self.all_annotations is not None
+            and self.nr_features is not None
+            and self.std_data is not None
+            and self.train_indices_per_annotation is not None
+        )
+        self.std_values_on_training_sets = {}
+        for annot in self.all_annotations:
+            self.std_values_on_training_sets[annot] = []
+            for i in range(self.nr_features):
+                self.std_values_on_training_sets[annot].append(
+                    np.mean(
+                        [
+                            self.std_data[j, i]
+                            for j in self.train_indices_per_annotation[annot]
+                        ]
+                    )
+                )
+
+    def compute_std_values_on_training_sets_argsort(self):
+        assert (
+            self.all_annotations is not None
+            and self.std_values_on_training_sets is not None
+        )
+        self.std_values_on_training_sets_argsort = {}
+        for annot in self.all_annotations:
+            self.std_values_on_training_sets_argsort[annot] = np.argsort(
+                self.std_values_on_training_sets[annot]
+            )[::-1]
 
     def compute_nr_non_zero_features(self):
-        assert self.raw_data is not None
+        assert self.raw_data is not None and self.nr_samples is not None
         self.nr_non_zero_features = np.empty((self.nr_samples,), dtype=int)
         for i in range(self.nr_samples):
             self.nr_non_zero_features[i] = len(np.where(self.raw_data[i, :] > 0.0)[0])
 
     def compute_total_counts(self):
-        assert self.raw_data is not None
+        assert self.raw_data is not None and self.nr_samples is not None
         self.total_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
             self.total_sums[i] = np.sum(self.raw_data[i, :])
+
+    def reduce_samples(self, idx_list):
+        # TODO
+        pass
 
     def reduce_features(self, idx_list):
         self.nr_features = len(idx_list)

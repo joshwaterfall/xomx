@@ -24,6 +24,8 @@ data.nr_samples = mat.shape[1]
 data.feature_names = np.empty((data.nr_features,), dtype=object)
 for i in range(data.nr_features):
     data.feature_names[i] = feature_ids[i]
+
+
 data.mean_expressions = [np.mean(data.raw_data[:, i]) for i in range(data.nr_features)]
 data.std_expressions = [np.std(data.raw_data[:, i]) for i in range(data.nr_features)]
 data.std_data = np.copy(data.raw_data)
