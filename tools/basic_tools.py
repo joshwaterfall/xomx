@@ -434,10 +434,16 @@ class RNASeqData:
         pass
 
     def reduce_features(self, idx_list):
-        self.nr_features = len(idx_list)
-        self.feature_names = np.take(self.feature_names, idx_list)
-        self.mean_expressions = np.take(self.mean_expressions, idx_list)
-        self.std_expressions = np.take(self.std_expressions, idx_list)
+        if self.nr_features is not None:
+            self.nr_features = len(idx_list)
+        if self.feature_names is not None:
+            self.feature_names = np.take(self.feature_names, idx_list)
+        if self.mean_expressions is not None:
+            self.mean_expressions = np.take(self.mean_expressions, idx_list)
+        if self.std_expressions is not None:
+            self.std_expressions = np.take(self.std_expressions, idx_list)
+        if self.feature_shortnames_ref is not None:
+            self.compute_feature_shortnames_ref()
         if self.raw_data is not None:
             self.raw_data = np.take(
                 self.raw_data.transpose(), idx_list, axis=0
@@ -457,19 +463,15 @@ class RNASeqData:
                 self.data = self.std_data
             elif self.normalization_type == "log":
                 self.data = self.log_data
-
-        self.feature_shortnames_ref = {}
-        for i, elt in enumerate(self.feature_names):
-            self.feature_shortnames_ref[elt.split("|")[1]] = i
-        if self.all_annotations:
+        if (
+            self.all_annotations is not None
+            and self.std_values_on_training_sets is not None
+        ):
             for cat in self.all_annotations:
                 self.std_values_on_training_sets[cat] = list(
                     np.take(self.std_values_on_training_sets[cat], idx_list)
                 )
-            for cat in self.all_annotations:
-                self.std_values_on_training_sets_argsort[cat] = np.argsort(
-                    self.std_values_on_training_sets[cat]
-                )[::-1]
+            self.compute_std_values_on_training_sets_argsort()
         self.total_sums = None
         self.nr_non_zero_features = None
         if self.raw_data is not None:
