@@ -13,8 +13,9 @@ class RNASeqData:
 
     sample_ids -> array of IDs: the i-th sample has ID sample_ids[i] (starting at 0)
 
-    sample_annotations -> dict of annotations: sample of ID "#" has annotation
-                          sample_annotations["#"]
+    sample_indices -> sample of ID "#" has index sample_indices["#"]
+
+    sample_annotations -> the i-th sample has annotation sample_annotations[i]
 
     sample_origins -> sample_origins["#"] is a string characterizing the dataset of
                       origin for the sample of ID "#"
@@ -69,14 +70,20 @@ class RNASeqData:
     maxlog -> maximum value of the log data; it is a parameter computed during
               log-normalization
 
-    raw_data -> data[i, j]: value of the j-th feature of the i-th sample
+    raw_data -> raw_data[i, j]: value of the j-th feature of the i-th sample
 
     std_data -> data nprmalized by mean and standard deviation; the original value is:
-                data[i, j] * std_expression[j] + mean_expression[j]
+                raw_data[i, j] == std_data[i, j] * std_expression[j]
+                                  + mean_expression[j]
 
-    lognorm_data -> log-normalized values; the original value is:
-                    np.exp( data[i,j] * (maxlog - np.log(epsilon_shift))
-                    + np.log(epsilon_shift)) - epsilon_shift
+    log_data -> log-normalized values; the original value is:
+                raw_data[i, j] == np.exp(
+                                    log_data[i,j] * (maxlog - np.log(epsilon_shift)
+                                  ) + np.log(epsilon_shift)) - epsilon_shift
+
+    normalization_type -> if normalization_type=="raw", then data = raw_data
+                          if normalization_type=="std", then data = std_data
+                          if normalization_type=="log", then data = log_data
 
     nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the list
                             of features with positive values (in raw data)
@@ -88,6 +95,7 @@ class RNASeqData:
     def __init__(self):
         self.save_dir = None
         self.sample_ids = None
+        self.sample_indices = None
         self.sample_annotations = None
         self.sample_origins = None
         self.sample_origins_per_annotation = None
@@ -100,7 +108,7 @@ class RNASeqData:
         self.std_expressions = None
         self.data = None
         self.raw_data = None
-        self.lognorm_data = None
+        self.log_data = None
         self.std_data = None
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
@@ -109,32 +117,222 @@ class RNASeqData:
         self.std_values_on_training_sets_argsort = None
         self.epsilon_shift = None
         self.maxlog = None
-        # self.normalization_type = None
+        self.normalization_type = None
         self.nr_non_zero_features = None
         self.total_sums = None
+
+    def save(self):
+        if not (os.path.exists(self.save_dir)):
+            os.makedirs(self.save_dir, exist_ok=True)
+        if self.nr_features is not None:
+            np.save(self.save_dir + "nr_features.npy", self.nr_features)
+            # Load with:
+            # np.load(self.save_dir + 'nr_features.npy', allow_pickle=True).item()
+            print("Saved: " + self.save_dir + "nr_features.npy")
+        if self.nr_samples is not None:
+            np.save(self.save_dir + "nr_samples.npy", self.nr_samples)
+            # Load with:
+            # np.load(self.save_dir + 'nr_samples.npy', allow_pickle=True).item()
+            print("Saved: " + self.save_dir + "nr_samples.npy")
+        if self.feature_names is not None:
+            np.save(self.save_dir + "feature_names.npy", self.feature_names)
+            # Load with:
+            # np.load(self.save_dir + 'feature_names.npy', allow_pickle=True)
+            print("Saved: " + self.save_dir + "feature_names.npy")
+        if self.mean_expressions is not None:
+            np.save(self.save_dir + "mean_expressions.npy", self.mean_expressions)
+            # Load with:
+            # np.load(self.save_dir + 'mean_expressions.npy', allow_pickle=True)
+            print("Saved: " + self.save_dir + "mean_expressions.npy")
+        if self.std_expressions is not None:
+            np.save(self.save_dir + "std_expressions.npy", self.std_expressions)
+            # Load with:
+            # np.load(self.save_dir + 'std_expressions.npy', allow_pickle=True)
+            print("Saved: " + self.save_dir + "std_expressions.npy")
+        if self.epsilon_shift is not None:
+            np.save(self.save_dir + "epsilon_shift.npy", self.epsilon_shift)
+            # Load with:
+            # np.load(self.save_dir + 'epsilon_shift.npy', allow_pickle=True).item()
+            print("Saved: " + self.save_dir + "epsilon_shift.npy")
+        if self.maxlog is not None:
+            np.save(self.save_dir + "maxlog.npy", self.maxlog)
+            # Load with:
+            # np.load(self.save_dir + 'maxlog.npy', allow_pickle=True).item()
+            print("Saved: " + self.save_dir + "maxlog.npy")
+        if self.feature_shortnames_ref is not None:
+            np.save(
+                self.save_dir + "feature_shortnames_ref.npy",
+                self.feature_shortnames_ref,
+            )
+            # Load with:
+            # np.load(self.save_dir + 'feature_shortnames_ref.npy',
+            #         allow_pickle=True).item()
+            print("Saved: " + self.save_dir + "feature_shortnames_ref.npy")
+        if self.raw_data is not None:
+            fp_data = np.memmap(
+                self.save_dir + "raw_data.bin",
+                dtype="float32",
+                mode="w+",
+                shape=(self.nr_features, self.nr_samples),
+            )
+            fp_data[:] = self.raw_data.transpose()[:]
+            del fp_data
+            # Load with:
+            # np.array(np.memmap(self.save_dir + 'raw_data.bin', dtype='float32',
+            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
+            print("Saved: " + self.save_dir + "raw_data.bin")
+        if self.std_data is not None:
+            fp_data = np.memmap(
+                self.save_dir + "std_data.bin",
+                dtype="float32",
+                mode="w+",
+                shape=(self.nr_features, self.nr_samples),
+            )
+            fp_data[:] = self.std_data.transpose()[:]
+            del fp_data
+            # Load with:
+            # np.array(np.memmap(self.save_dir + 'std_data.bin', dtype='float32',
+            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
+            print("Saved: " + self.save_dir + "std_data.bin")
+        if self.log_data is not None:
+            fp_data = np.memmap(
+                self.save_dir + "log_data.bin",
+                dtype="float32",
+                mode="w+",
+                shape=(self.nr_features, self.nr_samples),
+            )
+            fp_data[:] = self.log_data.transpose()[:]
+            del fp_data
+            # Load with:
+            # np.array(np.memmap(self.save_dir + 'log_data.bin', dtype='float32',
+            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
+            print("Saved: " + self.save_dir + "log_data.bin")
+
+    def load(self, normalization_types_list):
+        assert self.save_dir is not None
+        if os.path.exists(self.save_dir + "nr_features.npy"):
+            self.nr_features = np.load(
+                self.save_dir + "nr_features.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "nr_samples.npy"):
+            self.nr_samples = np.load(
+                self.save_dir + "nr_samples.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "feature_names.npy"):
+            self.feature_names = np.load(
+                self.save_dir + "feature_names.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "mean_expressions.npy"):
+            self.mean_expressions = np.load(
+                self.save_dir + "mean_expressions.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "std_expressions.npy"):
+            self.std_expressions = np.load(
+                self.save_dir + "std_expressions.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "feature_shortnames_ref.npy"):
+            self.feature_shortnames_ref = np.load(
+                self.save_dir + "feature_shortnames_ref.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "epsilon_shift.npy"):
+            self.epsilon_shift = np.load(
+                self.save_dir + "epsilon_shift.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "maxlog.npy"):
+            self.maxlog = np.load(
+                self.save_dir + "maxlog.npy", allow_pickle=True
+            ).item()
+        if (
+            os.path.exists(self.save_dir + "raw_data.bin")
+            and "raw" in normalization_types_list
+        ):
+            self.raw_data = np.array(
+                np.memmap(
+                    self.save_dir + "raw_data.bin",
+                    dtype="float32",
+                    mode="r",
+                    shape=(self.nr_features, self.nr_samples),
+                )
+            ).transpose()
+        if (
+            os.path.exists(self.save_dir + "std_data.bin")
+            and "std" in normalization_types_list
+        ):
+            self.std_data = np.array(
+                np.memmap(
+                    self.save_dir + "std_data.bin",
+                    dtype="float32",
+                    mode="r",
+                    shape=(self.nr_features, self.nr_samples),
+                )
+            ).transpose()
+        if (
+            os.path.exists(self.save_dir + "log_data.bin")
+            and "log" in normalization_types_list
+        ):
+            self.log_data = np.array(
+                np.memmap(
+                    self.save_dir + "log_data.bin",
+                    dtype="float32",
+                    mode="r",
+                    shape=(self.nr_features, self.nr_samples),
+                )
+            ).transpose()
+        if len(normalization_types_list) > 0:
+            if normalization_types_list[0] == "raw":
+                print('Normalization type: "raw"')
+                self.data = self.raw_data
+                self.normalization_type = "raw"
+            elif normalization_types_list[0] == "std":
+                self.data = self.std_data
+                self.normalization_type = "std"
+                print('Normalization type: "std"')
+            elif normalization_types_list[0] == "log":
+                self.data = self.log_data
+                self.normalization_type = "log"
+                print('Normalization type: "log"')
 
     def reduce_samples(self, idx_list):
         # TODO
         pass
 
     def compute_nr_non_zero_features(self):
-        assert self.normalization_type == "raw"
+        assert self.raw_data is not None
         self.nr_non_zero_features = np.empty((self.nr_samples,), dtype=int)
         for i in range(self.nr_samples):
-            self.nr_non_zero_features[i] = len(np.where(self.data[i, :] > 0.0)[0])
+            self.nr_non_zero_features[i] = len(np.where(self.raw_data[i, :] > 0.0)[0])
 
     def compute_total_counts(self):
-        assert self.normalization_type == "raw"
+        assert self.raw_data is not None
         self.total_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
-            self.total_sums[i] = np.sum(self.data[i, :])
+            self.total_sums[i] = np.sum(self.raw_data[i, :])
 
     def reduce_features(self, idx_list):
         self.nr_features = len(idx_list)
         self.feature_names = np.take(self.feature_names, idx_list)
         self.mean_expressions = np.take(self.mean_expressions, idx_list)
         self.std_expressions = np.take(self.std_expressions, idx_list)
-        self.data = np.take(self.data.transpose(), idx_list, axis=0).transpose()
+        if self.raw_data is not None:
+            self.raw_data = np.take(
+                self.raw_data.transpose(), idx_list, axis=0
+            ).transpose()
+        if self.std_data is not None:
+            self.std_data = np.take(
+                self.std_data.transpose(), idx_list, axis=0
+            ).transpose()
+        if self.log_data is not None:
+            self.log_data = np.take(
+                self.log_data.transpose(), idx_list, axis=0
+            ).transpose()
+        if self.normalization_type is not None:
+            if self.normalization_type == "raw":
+                self.data = self.raw_data
+            elif self.normalization_type == "std":
+                self.data = self.std_data
+            elif self.normalization_type == "log":
+                self.data = self.log_data
+
         self.feature_shortnames_ref = {}
         for i, elt in enumerate(self.feature_names):
             self.feature_shortnames_ref[elt.split("|")[1]] = i
@@ -149,20 +347,21 @@ class RNASeqData:
                 )[::-1]
         self.total_sums = None
         self.nr_non_zero_features = None
-        if self.normalization_type == "raw":
+        if self.raw_data is not None:
             self.compute_total_counts()
             self.compute_nr_non_zero_features()
 
     def percentage_feature_set(self, idx_list, sample_idx=None):
-        """computes the sum of values, across all samples or for one given sample,
-        for features of indices in idx_list, divided by the sum of values for all
-        the features"""
+        """computes the sum of values (in raw data), across all samples or for one
+        given sample, for features of indices in idx_list, divided by the sum of values
+        for all the features"""
+        assert self.raw_data is not None
         if sample_idx:
-            return np.sum(self.data[sample_idx, idx_list]) / np.sum(
-                self.data[sample_idx, :]
+            return np.sum(self.raw_data[sample_idx, idx_list]) / np.sum(
+                self.raw_data[sample_idx, :]
             )
         else:
-            return np.sum(self.data[:, idx_list]) / np.sum(self.data)
+            return np.sum(self.raw_data[:, idx_list]) / np.sum(self.raw_data)
 
     def regex_search(self, rexpr):
         """tests for every feature name whether it matches the regular expression
@@ -173,7 +372,7 @@ class RNASeqData:
     def feature_mean(self, idx, cat_=None, func_=None):
         # returns the mean value of the feature of index idx, across either all
         # samples, or samples with annotation cat_
-        # the short id of the feature can be given instead of the index
+        # the short name of the feature can be given instead of the index
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
         if not func_:
@@ -188,13 +387,13 @@ class RNASeqData:
     def feature_std(self, idx, cat_=None):
         # returns the standard deviation of the feature of index idx, across either all
         # samples, or samples with annotation cat_
-        # the short id of the feature can be given instead of the index
+        # the short name of the feature can be given instead of the index
         return self.feature_mean(idx, cat_, np.std)
 
     def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
         # plots the value of the feature of index idx for all samples
         # if cat_ is not None the samples of annotation cat_ have a different color
-        # the short id of the feature can be given instead of the index
+        # the short name of the feature can be given instead of the index
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
         y = self.data[:, idx]
@@ -241,50 +440,50 @@ class RNASeqData:
         plt.show()
 
 
-class FeatureTools:
-    def __init__(self, data):
-        self.data = data.data
-        self.nr_samples = data.nr_samples
-        self.gene_dict = data.feature_shortnames_ref
-        self.annot_index = data.sample_indices_per_annotation
-
-    def mean(self, idx, cat_=None, func_=None):
-        # returns the mean value of the feature of index idx, across either all
-        # samples, or samples with annotation cat_
-        # the short id of the feature can be given instead of the index
-        if type(idx) == str:
-            idx = self.gene_dict[idx]
-        if not func_:
-            func_ = np.mean
-        if not cat_:
-            return func_(self.data[:, idx])
-        else:
-            return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
-
-    def std(self, idx, cat_=None):
-        # returns the standard deviation of the feature of index idx, across either all
-        # samples, or samples with annotation cat_
-        # the short id of the feature can be given instead of the index
-        return self.mean(idx, cat_, np.std)
-
-    def plot(self, idx, cat_=None, v_min=None, v_max=None):
-        # plots the value of the feature of index idx for all samples
-        # if cat_ is not None the samples of annotation cat_ have a different color
-        # the short id of the feature can be given instead of the index
-        if type(idx) == str:
-            idx = self.gene_dict[idx]
-        y = self.data[:, idx]
-        if v_min is not None and v_max is not None:
-            y = np.clip(y, v_min, v_max)
-        x = np.arange(0, self.nr_samples) / self.nr_samples
-        plt.scatter(x, y, s=1)
-        if cat_:
-            y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
-            if v_min is not None and v_max is not None:
-                y = np.clip(y, v_min, v_max)
-            x = np.array(self.annot_index[cat_]) / self.nr_samples
-            plt.scatter(x, y, s=1)
-        plt.show()
+# class FeatureTools:
+#     def __init__(self, data):
+#         self.data = data.data
+#         self.nr_samples = data.nr_samples
+#         self.gene_dict = data.feature_shortnames_ref
+#         self.annot_index = data.sample_indices_per_annotation
+#
+#     def mean(self, idx, cat_=None, func_=None):
+#         # returns the mean value of the feature of index idx, across either all
+#         # samples, or samples with annotation cat_
+#         # the short id of the feature can be given instead of the index
+#         if type(idx) == str:
+#             idx = self.gene_dict[idx]
+#         if not func_:
+#             func_ = np.mean
+#         if not cat_:
+#             return func_(self.data[:, idx])
+#         else:
+#             return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
+#
+#     def std(self, idx, cat_=None):
+#         # returns the standard deviation of the feature of index idx, across either
+#         # all samples, or samples with annotation cat_;
+#         # the short id of the feature can be given instead of the index
+#         return self.mean(idx, cat_, np.std)
+#
+#     def plot(self, idx, cat_=None, v_min=None, v_max=None):
+#         # plots the value of the feature of index idx for all samples
+#         # if cat_ is not None the samples of annotation cat_ have a different color
+#         # the short id of the feature can be given instead of the index
+#         if type(idx) == str:
+#             idx = self.gene_dict[idx]
+#         y = self.data[:, idx]
+#         if v_min is not None and v_max is not None:
+#             y = np.clip(y, v_min, v_max)
+#         x = np.arange(0, self.nr_samples) / self.nr_samples
+#         plt.scatter(x, y, s=1)
+#         if cat_:
+#             y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
+#             if v_min is not None and v_max is not None:
+#                 y = np.clip(y, v_min, v_max)
+#             x = np.array(self.annot_index[cat_]) / self.nr_samples
+#             plt.scatter(x, y, s=1)
+#         plt.show()
 
 
 def confusion_matrix(classifier, data_test, target_test):

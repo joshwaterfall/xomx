@@ -1,7 +1,7 @@
 from xaio_config import output_dir, xaio_tag
 from RNASeq_preprocessing.load import loadRNASeq
 from tools.basic_tools import (
-    FeatureTools,
+    # FeatureTools,
     confusion_matrix,
     matthews_coef,
     umap_plot,
@@ -19,7 +19,7 @@ _ = RFEExtraTrees, RFENet
 
 # data = loadRNASeq("log")
 data = loadRNASeq("raw")
-ft = FeatureTools(data)
+# ft = FeatureTools(data)
 
 e()
 quit()

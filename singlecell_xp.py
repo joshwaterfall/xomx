@@ -1,6 +1,6 @@
 import numpy as np
 from xaio_config import output_dir, xaio_tag
-from scRNASeq_preprocessing.load import loadscRNASeq
+from tools.basic_tools import RNASeqData
 
 # from tools.basic_tools import (
 #     FeatureTools,
@@ -20,8 +20,12 @@ from IPython import embed as e
 
 # _ = RFEExtraTrees, RFENet
 
+data = RNASeqData()
+data.save_dir = output_dir + "/dataset/scRNASeq/"
+data.load(["raw", "std", "log"])
+
 # data = loadscRNASeq("log")
-data = loadscRNASeq("raw")
+# data = loadscRNASeq("raw")
 # data = loadscRNASeq()
 
 
