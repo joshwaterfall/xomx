@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 
-save_dir = os.path.abspath(output_dir + "/dataset/")
+save_dir = output_dir + "/dataset/RNASeq/"
 if not (os.path.exists(save_dir)):
     os.makedirs(save_dir, exist_ok=True)
 

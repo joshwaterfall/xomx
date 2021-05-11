@@ -1,4 +1,3 @@
-import os
 from xaio_config import root_dir
 
 with open(root_dir + "/RNASeq_preprocessing/config.txt", "r") as f:
@@ -6,7 +5,7 @@ with open(root_dir + "/RNASeq_preprocessing/config.txt", "r") as f:
 
 """ User-defined variables (run configure.py to define them): """
 
-CSV_RNASeq_data = os.path.expanduser(lines[0].rstrip())
+CSV_RNASeq_data = lines[0].rstrip()
 """
 CSV_RNASeq_data is the path towards a .csv file containing TPM-normalized RNASeq data.
 It is a matrix in which each column corresponds to a sample, and each row corresponds
@@ -24,7 +23,7 @@ Example:
 ...
 """
 
-CSV_annotations = os.path.expanduser(lines[1].rstrip())
+CSV_annotations = lines[1].rstrip()
 """
 CSV_annotations is the path towards a .csv file defining labels for all the samples.
 The first line of the file should be: "", "Diagnosis".
@@ -36,7 +35,7 @@ Example:
 ...
 """
 
-CSV_annot_types = os.path.expanduser(lines[2].rstrip())
+CSV_annot_types = lines[2].rstrip()
 """
 CSV_annot_types is the path towards a .csv file defining the origin of all the samples.
 The first line of the file should be:  "", "Origin".

@@ -1,26 +1,11 @@
-import os
 import numpy as np
 from tools.basic_tools import RNASeqData
 from xaio_config import output_dir
 
 
-def loadRNASeq(normalization=""):
+def loadscRNASeq(normalization=""):
     data = RNASeqData()
-    data.data_dir = os.path.expanduser(output_dir + "/dataset/RNASeq/")
-    data.samples_id = np.load(data.data_dir + "samples_id.npy", allow_pickle=True)
-    data.annot_dict = np.load(
-        data.data_dir + "annot_dict.npy", allow_pickle=True
-    ).item()
-    data.annot_types = np.load(
-        data.data_dir + "annot_types.npy", allow_pickle=True
-    ).item()
-    data.annot_types_dict = np.load(
-        data.data_dir + "annot_types_dict.npy", allow_pickle=True
-    ).item()
-    data.annot_values = np.load(data.data_dir + "annot_values.npy", allow_pickle=True)
-    data.annot_index = np.load(
-        data.data_dir + "annot_index.npy", allow_pickle=True
-    ).item()
+    data.data_dir = output_dir + "/dataset/scRNASeq/"
     data.nr_transcripts = np.load(
         data.data_dir + "nr_transcripts.npy", allow_pickle=True
     ).item()
@@ -34,19 +19,7 @@ def loadRNASeq(normalization=""):
     data.std_expressions = np.load(
         data.data_dir + "std_expressions.npy", allow_pickle=True
     )
-    data.annot_index_train = np.load(
-        data.data_dir + "annot_index_train.npy", allow_pickle=True
-    ).item()
-    data.annot_index_test = np.load(
-        data.data_dir + "annot_index_test.npy", allow_pickle=True
-    ).item()
     data.gene_dict = np.load(data.data_dir + "gene_dict.npy", allow_pickle=True).item()
-    data.expressions_on_training_sets = np.load(
-        data.data_dir + "expressions_on_training_sets.npy", allow_pickle=True
-    ).item()
-    data.expressions_on_training_sets_argsort = np.load(
-        data.data_dir + "expressions_on_training_sets_argsort.npy", allow_pickle=True
-    ).item()
     if normalization == "log":
         data.normalization_type = "log"
         data.data = np.array(

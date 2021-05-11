@@ -11,7 +11,7 @@ from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 from tools.feature_selection.RFENet import RFENet
 
 # from tools.classifiers.LinearSGD import LinearSGD
-import os
+# import os
 
 from IPython import embed as e
 
@@ -37,8 +37,8 @@ annotation = "Lung squamous cell carcinoma"
 # annotation = "TCGA-LGG_Primary Tumor"
 # annotation = "Breast invasive carcinoma"
 
-save_dir = os.path.abspath(
-    output_dir + "/results/" + xaio_tag + "/" + annotation.replace(" ", "_")
+save_dir = (
+    output_dir + "/results/RNASeq/" + xaio_tag + "/" + annotation.replace(" ", "_")
 )
 
 

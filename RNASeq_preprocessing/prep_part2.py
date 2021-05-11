@@ -2,12 +2,10 @@ from xaio_config import output_dir
 from RNASeq_preprocessing.config import (
     CSV_RNASeq_data,
 )
-import os
 import pandas as pd
 import numpy as np
 
-save_dir = os.path.abspath(output_dir + "/dataset/")
-
+save_dir = output_dir + "/dataset/RNASeq/"
 nr_transcripts = np.load(save_dir + "nr_transcripts.npy", allow_pickle=True).item()
 nr_samples = np.load(save_dir + "nr_samples.npy", allow_pickle=True).item()
 
@@ -24,7 +22,6 @@ np.save(save_dir + "epsilon_shift.npy", epsilon_shift)
 # Load with: np.load(save_dir + 'epsilon_shift.npy', allow_pickle=True).item()
 print("(18) " + "saved: " + save_dir + "epsilon_shift.npy")
 
-# data_array = np.log(data_array + epsilon_shift)
 maxlog = np.max(data_array)
 np.save(save_dir + "maxlog.npy", maxlog)
 # Load with: np.load(save_dir + 'maxlog.npy', allow_pickle=True).item()

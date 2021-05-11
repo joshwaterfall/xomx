@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import re
 import matplotlib.pyplot as plt
 import umap
 
@@ -38,10 +39,10 @@ class RNASeqData:
                  of short ID #
 
     expressions_on_training_sets -> expressions_on_training_sets["#"][j] is the mean
-                                    value of the j-th feature in the data normalized
-                                    by mean and std_dev for all samples of annotation
-                                    "#" belonging to the training set ; it is useful
-                                    to determine whether a transcript is up-regulated
+                                    value of the j-th feature, normalized by mean and
+                                    std_dev, across all samples of annotation "#"
+                                    belonging to the training set ; it is useful to
+                                    determine whether a transcript is up-regulated
                                     for a given diagnosis (positive value), or
                                     down-regulated (negative value)
 
@@ -73,6 +74,12 @@ class RNASeqData:
                      + np.log(epsilon_shift)) - epsilon_shift
             if no normalization ("raw"):
               data[i, j] is the original value
+
+    non_zero_features -> for each sample, the list of features with positive counts (in
+                         raw data)
+
+    total_counts -> for each sample, the sum of counts (in raw data) accross all
+                    features
     """
 
     def __init__(self):
@@ -97,6 +104,133 @@ class RNASeqData:
         self.maxlog = None
         self.epsilon_shift = None
         self.normalization_type = None
+        self.nr_non_zero_features = None
+        self.total_counts = None
+
+    def reduce_samples(self, idx_list):
+        # TODO
+        pass
+
+    def compute_nr_non_zero_features(self):
+        assert self.normalization_type == "raw"
+        self.nr_non_zero_features = np.empty((self.nr_samples,), dtype=int)
+        for i in range(self.nr_samples):
+            self.nr_non_zero_features[i] = len(np.where(self.data[i, :] > 0.0)[0])
+
+    def compute_total_counts(self):
+        assert self.normalization_type == "raw"
+        self.total_counts = np.empty((self.nr_samples,), dtype=float)
+        for i in range(self.nr_samples):
+            self.total_counts[i] = np.sum(self.data[i, :])
+
+    def reduce_features(self, idx_list):
+        self.nr_transcripts = len(idx_list)
+        self.transcripts = np.take(self.transcripts, idx_list)
+        self.mean_expressions = np.take(self.mean_expressions, idx_list)
+        self.std_expressions = np.take(self.std_expressions, idx_list)
+        self.data = np.take(self.data.transpose(), idx_list, axis=0).transpose()
+        self.gene_dict = {}
+        for i, elt in enumerate(self.transcripts):
+            self.gene_dict[elt.split("|")[1]] = i
+        if self.annot_values:
+            for cat in self.annot_values:
+                self.expressions_on_training_sets[cat] = list(
+                    np.take(self.expressions_on_training_sets[cat], idx_list)
+                )
+            for cat in self.annot_values:
+                self.expressions_on_training_sets_argsort[cat] = np.argsort(
+                    self.expressions_on_training_sets[cat]
+                )[::-1]
+        self.total_counts = None
+        self.nr_non_zero_features = None
+        if self.normalization_type == "raw":
+            self.compute_total_counts()
+            self.compute_nr_non_zero_features()
+
+    def percentage_feature_set(self, idx_list, sample_idx=None):
+        """computes the sum of values, across all samples or for one given sample,
+        for features of indices in idx_list, divided by the sum of values for all
+        the features"""
+        if sample_idx:
+            return np.sum(self.data[sample_idx, idx_list]) / np.sum(
+                self.data[sample_idx, :]
+            )
+        else:
+            return np.sum(self.data[:, idx_list]) / np.sum(self.data)
+
+    def regex_search(self, rexpr):
+        """tests for every feature name whether it matches the regular expression
+        rexpr; returns the list of indices of the features that do match
+        """
+        return np.where([re.search(rexpr, s) for s in self.transcripts])[0]
+
+    def feature_mean(self, idx, cat_=None, func_=None):
+        # returns the mean value of the feature of index idx, across either all
+        # samples, or samples with annotation cat_
+        # the short id of the feature can be given instead of the index
+        if type(idx) == str:
+            idx = self.gene_dict[idx]
+        if not func_:
+            func_ = np.mean
+        if not cat_:
+            return func_(self.data[:, idx])
+        else:
+            return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
+
+    def feature_std(self, idx, cat_=None):
+        # returns the standard deviation of the feature of index idx, across either all
+        # samples, or samples with annotation cat_
+        # the short id of the feature can be given instead of the index
+        return self.feature_mean(idx, cat_, np.std)
+
+    def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
+        # plots the value of the feature of index idx for all samples
+        # if cat_ is not None the samples of annotation cat_ have a different color
+        # the short id of the feature can be given instead of the index
+        if type(idx) == str:
+            idx = self.gene_dict[idx]
+        y = self.data[:, idx]
+        if v_min is not None and v_max is not None:
+            y = np.clip(y, v_min, v_max)
+        x = np.arange(0, self.nr_samples) / self.nr_samples
+        plt.scatter(x, y, s=1)
+        if cat_:
+
+            y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
+            if v_min is not None and v_max is not None:
+                y = np.clip(y, v_min, v_max)
+            x = np.array(self.annot_index[cat_]) / self.nr_samples
+            plt.scatter(x, y, s=1)
+        plt.show()
+
+    def function_plot(self, func_=np.identity, cat_=None):
+        # plots the value of a function on all samples (the function must take sample
+        # indices in input)
+        # if cat_ is not None the samples of annotation cat_ have a different color
+        y = [func_(i) for i in range(self.nr_samples)]
+        x = np.arange(0, self.nr_samples) / self.nr_samples
+        fig, ax = plt.subplots()
+        parts = ax.violinplot(
+            y,
+            [0.5],
+            points=60,
+            widths=1.0,
+            showmeans=False,
+            showextrema=False,
+            showmedians=False,
+            bw_method=0.5,
+        )
+        for pc in parts["bodies"]:
+            pc.set_facecolor("#D43F3A")
+            pc.set_edgecolor("grey")
+            pc.set_alpha(0.7)
+        ax.scatter(x, y, s=1)
+
+        if cat_:
+            y = [func_(i_) for i_ in self.annot_index[cat_]]
+            x = np.array(self.annot_index[cat_]) / self.nr_samples
+            plt.scatter(x, y, s=1)
+        plt.show()
 
 
 class FeatureTools:
@@ -123,7 +257,7 @@ class FeatureTools:
         # returns the standard deviation of the feature of index idx, across either all
         # samples, or samples with annotation cat_
         # the short id of the feature can be given instead of the index
-        return self.meangene(idx, cat_, np.std)
+        return self.mean(idx, cat_, np.std)
 
     def plot(self, idx, cat_=None, v_min=None, v_max=None):
         # plots the value of the feature of index idx for all samples
@@ -137,7 +271,6 @@ class FeatureTools:
         x = np.arange(0, self.nr_samples) / self.nr_samples
         plt.scatter(x, y, s=1)
         if cat_:
-
             y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
             if v_min is not None and v_max is not None:
                 y = np.clip(y, v_min, v_max)
