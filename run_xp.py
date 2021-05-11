@@ -65,7 +65,7 @@ feature_selector.plot()
 print(feature_selector.current_feature_indices)
 print(
     [
-        data.transcripts[feature_selector.current_feature_indices[i]]
+        data.feature_names[feature_selector.current_feature_indices[i]]
         for i in range(len(feature_selector.current_feature_indices))
     ]
 )

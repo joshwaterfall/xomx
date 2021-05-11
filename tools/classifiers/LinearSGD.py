@@ -42,9 +42,11 @@ class LinearSGD:
                 type(transcripts_indices[i]) == str
                 or type(transcripts_indices[i]) == np.str_
             ):
-                transcripts_indices[i] = self.data.gene_dict[transcripts_indices[i]]
+                transcripts_indices[i] = self.data.feature_shortnames_ref[
+                    transcripts_indices[i]
+                ]
         transcripts_indices = np.array(transcripts_indices).astype(int)
-        test_indices = sum(self.data.annot_index_test.values(), [])
+        test_indices = sum(self.data.test_indices_per_annotation.values(), [])
         data_test = np.take(
             np.take(self.data.data.transpose(), transcripts_indices, axis=0),
             test_indices,

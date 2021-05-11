@@ -9,103 +9,109 @@ class RNASeqData:
     """
     Attributes (None if they do not exist):
 
-    samples_id -> array of IDs: i-th sample has ID samples_id[i] (starting at 0)
+    save_id -> directory where data is saved
 
-    annot_dict -> dict of annotations: sample of ID "#" has annotation annot_dict["#"]
+    sample_ids -> array of IDs: the i-th sample has ID sample_ids[i] (starting at 0)
 
-    annot_values -> list of all annotations
+    sample_annotations -> dict of annotations: sample of ID "#" has annotation
+                          sample_annotations["#"]
 
-    annot_index -> annot_index["#"] is the list of indices of the samples of
-                   annotation "#"
+    sample_origins -> sample_origins["#"] is a string characterizing the dataset of
+                      origin for the sample of ID "#"
 
-    nr_transcripts -> the total number of features (i.e. transcripts) for each sample
+    sample_origins_per_annotation -> sample_origins_per_annotation["#"] is the set
+                                     of different origins for all the samples of
+                                     annotation "#"
+
+    all_annotations -> list of all annotations
+
+    sample_indices_per_annotation -> sample_indices_per_annotation["#"] is the list
+                                     of indices of the samples of annotation "#"
+
+    nr_features -> the total number of features for each sample
 
     nr_samples -> the total number of samples
 
-    transcripts -> IDs for the features: i-th feature has ID transcripts[i]
+    feature_names -> the i-th feature name is feature_names[i]; it should be a string
+                     of the form "<long_featureID>|<feature_shortname>"
 
     mean_expressions -> mean_expression[i] is the mean value of the i-th feature
                             accross all samples
 
     std_expressions -> similar to mean_expression but standard deviation instead of mean
 
-    annot_index_train -> annot_index["#"] is the list of indices of the samples of
-                         annotation "#" which belong to the training set
+    train_indices_per_annotation -> annot_index["#"] is the list of indices of the
+                                    samples of annotation "#" which belong to the
+                                    training set
 
-    annot_index_test -> annot_index["#"] is the list of indices of the samples of
-                        annotation "#" which belong to the validation set
+    test_indices_per_annotation -> annot_index["#"] is the list of indices of the
+                                   samples of annotation "#" which belong to the
+                                   validation set
 
-    gene_dict -> features have short IDs: gene_dict["#"] is the index of the feature
-                 of short ID #
+    feature_shortnames_ref -> if features have short IDs: feature_shortnames_ref["#"]
+                              is the index of the feature of short name "#"
 
-    expressions_on_training_sets -> expressions_on_training_sets["#"][j] is the mean
-                                    value of the j-th feature, normalized by mean and
-                                    std_dev, across all samples of annotation "#"
-                                    belonging to the training set ; it is useful to
-                                    determine whether a transcript is up-regulated
-                                    for a given diagnosis (positive value), or
-                                    down-regulated (negative value)
+    std_values_on_training_sets -> std_values_on_training_sets["#"][j] is the mean
+                                   value of the j-th feature, normalized by mean and
+                                   std_dev, across all samples of annotation "#"
+                                   belonging to the training set ; it is useful to
+                                   determine whether a transcript is up-regulated
+                                   for a given diagnosis (positive value), or
+                                   down-regulated (negative value)
 
-    expressions_on_training_sets_argsort -> expressions_on_training_sets_argsort["#"]
-                                            is the list of feature indices sorted by
-                                            decreasing value in
-                                            expressions_on_training_sets["#"]
-
-    annot_types -> annot_types["#"] is a string characterizing the data origin for
-                   the sample of ID "#"
-
-    annot_types_dict -> annot_types_dict["#"] is the set of different origins for all
-                        the samples of annotation "#"
+    std_values_on_training_sets_argsort -> std_values_on_training_sets_argsort["#"]
+                                           is the list of feature indices sorted by
+                                           decreasing value in
+                                           std_values_on_training_sets["#"]
 
     epsilon_shift -> the value of the shift used for log-normalization of the data
 
-    maxlog -> maximum value of the log data
+    maxlog -> maximum value of the log data; it is a parameter computed during
+              log-normalization
 
-    normalization_type -> the type of normalization:
-                          - None or "" = ( . - mean) / std_dev
-                          - "log" = log_normalization
+    raw_data -> data[i, j]: value of the j-th feature of the i-th sample
 
-    data -> data[i, j]: value of the j-th feature of the i-th sample
-            if the normalization is of type ( . - mean) / std_dev ("mean_std"):
-              data[i, j] * std_expression[j] + mean_expression[j] is the original value
-            if the normalization is of type log-norm ("log"):
-              the original value is:
-              np.exp( data[i,j] * (maxlog - np.log(epsilon_shift))
-                     + np.log(epsilon_shift)) - epsilon_shift
-            if no normalization ("raw"):
-              data[i, j] is the original value
+    std_data -> data nprmalized by mean and standard deviation; the original value is:
+                data[i, j] * std_expression[j] + mean_expression[j]
 
-    non_zero_features -> for each sample, the list of features with positive counts (in
-                         raw data)
+    lognorm_data -> log-normalized values; the original value is:
+                    np.exp( data[i,j] * (maxlog - np.log(epsilon_shift))
+                    + np.log(epsilon_shift)) - epsilon_shift
 
-    total_counts -> for each sample, the sum of counts (in raw data) accross all
-                    features
+    nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the list
+                            of features with positive values (in raw data)
+
+    total_sums -> total_sums[i] is, for the i-th sample, the sum of values (in raw data)
+                  accross all features
     """
 
     def __init__(self):
-        self.data_dir = None
-        self.samples_id = None
-        self.annot_dict = None
-        self.annot_types = None
-        self.annot_types_dict = None
-        self.annot_values = None
-        self.annot_index = None
-        self.nr_transcripts = None
+        self.save_dir = None
+        self.sample_ids = None
+        self.sample_annotations = None
+        self.sample_origins = None
+        self.sample_origins_per_annotation = None
+        self.all_annotations = None
+        self.sample_indices_per_annotation = None
+        self.nr_features = None
         self.nr_samples = None
-        self.transcripts = None
+        self.feature_names = None
         self.mean_expressions = None
         self.std_expressions = None
         self.data = None
-        self.annot_index_train = None
-        self.annot_index_test = None
-        self.gene_dict = None
-        self.expressions_on_training_sets = None
-        self.expressions_on_training_sets_argsort = None
-        self.maxlog = None
+        self.raw_data = None
+        self.lognorm_data = None
+        self.std_data = None
+        self.train_indices_per_annotation = None
+        self.test_indices_per_annotation = None
+        self.feature_shortnames_ref = None
+        self.std_values_on_training_sets = None
+        self.std_values_on_training_sets_argsort = None
         self.epsilon_shift = None
-        self.normalization_type = None
+        self.maxlog = None
+        # self.normalization_type = None
         self.nr_non_zero_features = None
-        self.total_counts = None
+        self.total_sums = None
 
     def reduce_samples(self, idx_list):
         # TODO
@@ -119,29 +125,29 @@ class RNASeqData:
 
     def compute_total_counts(self):
         assert self.normalization_type == "raw"
-        self.total_counts = np.empty((self.nr_samples,), dtype=float)
+        self.total_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
-            self.total_counts[i] = np.sum(self.data[i, :])
+            self.total_sums[i] = np.sum(self.data[i, :])
 
     def reduce_features(self, idx_list):
-        self.nr_transcripts = len(idx_list)
-        self.transcripts = np.take(self.transcripts, idx_list)
+        self.nr_features = len(idx_list)
+        self.feature_names = np.take(self.feature_names, idx_list)
         self.mean_expressions = np.take(self.mean_expressions, idx_list)
         self.std_expressions = np.take(self.std_expressions, idx_list)
         self.data = np.take(self.data.transpose(), idx_list, axis=0).transpose()
-        self.gene_dict = {}
-        for i, elt in enumerate(self.transcripts):
-            self.gene_dict[elt.split("|")[1]] = i
-        if self.annot_values:
-            for cat in self.annot_values:
-                self.expressions_on_training_sets[cat] = list(
-                    np.take(self.expressions_on_training_sets[cat], idx_list)
+        self.feature_shortnames_ref = {}
+        for i, elt in enumerate(self.feature_names):
+            self.feature_shortnames_ref[elt.split("|")[1]] = i
+        if self.all_annotations:
+            for cat in self.all_annotations:
+                self.std_values_on_training_sets[cat] = list(
+                    np.take(self.std_values_on_training_sets[cat], idx_list)
                 )
-            for cat in self.annot_values:
-                self.expressions_on_training_sets_argsort[cat] = np.argsort(
-                    self.expressions_on_training_sets[cat]
+            for cat in self.all_annotations:
+                self.std_values_on_training_sets_argsort[cat] = np.argsort(
+                    self.std_values_on_training_sets[cat]
                 )[::-1]
-        self.total_counts = None
+        self.total_sums = None
         self.nr_non_zero_features = None
         if self.normalization_type == "raw":
             self.compute_total_counts()
@@ -162,20 +168,22 @@ class RNASeqData:
         """tests for every feature name whether it matches the regular expression
         rexpr; returns the list of indices of the features that do match
         """
-        return np.where([re.search(rexpr, s) for s in self.transcripts])[0]
+        return np.where([re.search(rexpr, s) for s in self.feature_names])[0]
 
     def feature_mean(self, idx, cat_=None, func_=None):
         # returns the mean value of the feature of index idx, across either all
         # samples, or samples with annotation cat_
         # the short id of the feature can be given instead of the index
         if type(idx) == str:
-            idx = self.gene_dict[idx]
+            idx = self.feature_shortnames_ref[idx]
         if not func_:
             func_ = np.mean
         if not cat_:
             return func_(self.data[:, idx])
         else:
-            return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
+            return func_(
+                [self.data[i_, idx] for i_ in self.sample_indices_per_annotation[cat_]]
+            )
 
     def feature_std(self, idx, cat_=None):
         # returns the standard deviation of the feature of index idx, across either all
@@ -188,7 +196,7 @@ class RNASeqData:
         # if cat_ is not None the samples of annotation cat_ have a different color
         # the short id of the feature can be given instead of the index
         if type(idx) == str:
-            idx = self.gene_dict[idx]
+            idx = self.feature_shortnames_ref[idx]
         y = self.data[:, idx]
         if v_min is not None and v_max is not None:
             y = np.clip(y, v_min, v_max)
@@ -196,10 +204,10 @@ class RNASeqData:
         plt.scatter(x, y, s=1)
         if cat_:
 
-            y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
+            y = [self.data[i_, idx] for i_ in self.sample_indices_per_annotation[cat_]]
             if v_min is not None and v_max is not None:
                 y = np.clip(y, v_min, v_max)
-            x = np.array(self.annot_index[cat_]) / self.nr_samples
+            x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
             plt.scatter(x, y, s=1)
         plt.show()
 
@@ -227,8 +235,8 @@ class RNASeqData:
         ax.scatter(x, y, s=1)
 
         if cat_:
-            y = [func_(i_) for i_ in self.annot_index[cat_]]
-            x = np.array(self.annot_index[cat_]) / self.nr_samples
+            y = [func_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
+            x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
             plt.scatter(x, y, s=1)
         plt.show()
 
@@ -237,8 +245,8 @@ class FeatureTools:
     def __init__(self, data):
         self.data = data.data
         self.nr_samples = data.nr_samples
-        self.gene_dict = data.gene_dict
-        self.annot_index = data.annot_index
+        self.gene_dict = data.feature_shortnames_ref
+        self.annot_index = data.sample_indices_per_annotation
 
     def mean(self, idx, cat_=None, func_=None):
         # returns the mean value of the feature of index idx, across either all
@@ -310,18 +318,18 @@ def feature_selection_from_list(
     f_indices = np.zeros_like(feature_indices, dtype=np.int64)
     for i in range(len(f_indices)):
         if type(feature_indices[i]) == str or type(feature_indices[i]) == np.str_:
-            f_indices[i] = data.gene_dict[feature_indices[i]]
+            f_indices[i] = data.feature_shortnames_ref[feature_indices[i]]
         else:
             f_indices[i] = feature_indices[i]
-    train_indices = sum(data.annot_index_train.values(), [])
-    test_indices = sum(data.annot_index_test.values(), [])
+    train_indices = sum(data.train_indices_per_annotation.values(), [])
+    test_indices = sum(data.test_indices_per_annotation.values(), [])
     data_train = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
         train_indices,
         axis=1,
     ).transpose()
     target_train = np.zeros(data.nr_samples)
-    target_train[data.annot_index_train[annotation]] = 1.0
+    target_train[data.train_indices_per_annotation[annotation]] = 1.0
     target_train = np.take(target_train, train_indices, axis=0)
     data_test = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
@@ -329,7 +337,7 @@ def feature_selection_from_list(
         axis=1,
     ).transpose()
     target_test = np.zeros(data.nr_samples)
-    target_test[data.annot_index_test[annotation]] = 1.0
+    target_test[data.test_indices_per_annotation[annotation]] = 1.0
     target_test = np.take(target_test, test_indices, axis=0)
     return (
         feature_indices,
@@ -348,10 +356,10 @@ def naive_feature_selection(
     selection_size,
 ):
     feature_indices = np.array(
-        data.expressions_on_training_sets_argsort[annotation][
+        data.std_values_on_training_sets_argsort[annotation][
             : (selection_size // 2)
         ].tolist()
-        + data.expressions_on_training_sets_argsort[annotation][
+        + data.std_values_on_training_sets_argsort[annotation][
             -(selection_size - selection_size // 2) :
         ].tolist()
     )
@@ -360,8 +368,8 @@ def naive_feature_selection(
 
 def plot_scores(data, scores, score_threshold, indices, annotation=None, save_dir=None):
     annot_colors = {}
-    denom = len(data.annot_values)
-    for i, val in enumerate(data.annot_values):
+    denom = len(data.all_annotations)
+    for i, val in enumerate(data.all_annotations):
         if annotation:
             if val == annotation:
                 annot_colors[val] = 0.0 / denom
@@ -372,7 +380,9 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
 
     samples_color = np.zeros(len(indices))
     for i in range(len(indices)):
-        samples_color[i] = annot_colors[data.annot_dict[data.samples_id[indices[i]]]]
+        samples_color[i] = annot_colors[
+            data.sample_annotations[data.sample_ids[indices[i]]]
+        ]
 
     fig, ax = plt.subplots()
     if annotation:
@@ -394,7 +404,9 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
     def update_annot(ind, sc):
         pos = sc.get_offsets()[ind["ind"][0]]
         ann.xy = pos
-        text = "{}".format(data.annot_dict[data.samples_id[indices[ind["ind"][0]]]])
+        text = "{}".format(
+            data.sample_annotations[data.sample_ids[indices[ind["ind"][0]]]]
+        )
         ann.set_text(text)
 
     def hover(event):
@@ -453,11 +465,11 @@ def umap_plot(
     all_colors = []
 
     def color_function(id_):
-        label_ = data.annot_dict[data.samples_id[indices[id_]]]
-        type_ = data.annot_types[data.samples_id[indices[id_]]]
+        label_ = data.sample_annotations[data.sample_ids[indices[id_]]]
+        type_ = data.sample_origins[data.sample_ids[indices[id_]]]
         clo = (
-            np.where(data.annot_values == label_)[0],
-            list(data.annot_types_dict[label_]).index(type_),
+            np.where(data.all_annotations == label_)[0],
+            list(data.sample_origins_per_annotation[label_]).index(type_),
         )
         if clo in all_colors:
             return all_colors.index(clo)
@@ -467,8 +479,8 @@ def umap_plot(
 
     def hover_function(id_):
         return "{} / {}".format(
-            data.annot_dict[data.samples_id[indices[id_]]],
-            data.annot_types[data.samples_id[indices[id_]]],
+            data.sample_annotations[data.sample_ids[indices[id_]]],
+            data.sample_origins[data.sample_ids[indices[id_]]],
         )
 
     samples_color = np.empty_like(indices)

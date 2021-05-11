@@ -63,7 +63,7 @@ class VolcanoPlot:
     def init(self, feature_indices=None):
         reference_values = self.data.mean_expressions
         on_annotation_values = (
-            self.data.expressions_on_training_sets[self.annotation]
+            self.data.std_values_on_training_sets[self.annotation]
             * self.data.std_expressions
             + self.data.mean_expressions
         )
@@ -86,8 +86,8 @@ class VolcanoPlot:
             self.data.data.transpose(), self.ok_indices, axis=0
         ).transpose()
         self.ok_target = np.zeros(self.data.nr_samples)
-        self.ok_target[self.data.annot_index_train[self.annotation]] = 1.0
-        self.ok_target[self.data.annot_index_test[self.annotation]] = 1.0
+        self.ok_target[self.data.train_indices_per_annotation[self.annotation]] = 1.0
+        self.ok_target[self.data.test_indices_per_annotation[self.annotation]] = 1.0
         fscores, pvalues = f_regression(self.ok_data, self.ok_target)
         self.log10_pvalues = -np.log10(pvalues + 1e-45)
 
@@ -123,7 +123,7 @@ class VolcanoPlot:
             ann.xy = pos
             # text = "{}".format(self.data.transcripts[self.ok_indices[["ind"][0]]])
             # text = "{}".format(self.data.transcripts[["ind"][0]])
-            text = "{}".format(self.data.transcripts[self.ok_indices[ind["ind"][0]]])
+            text = "{}".format(self.data.feature_names[self.ok_indices[ind["ind"][0]]])
             ann.set_text(text)
 
         def hover(event):
