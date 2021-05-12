@@ -4,6 +4,8 @@ import re
 import matplotlib.pyplot as plt
 import umap
 
+# from IPython import embed as e
+
 
 class RNASeqData:
     """
@@ -126,47 +128,81 @@ class RNASeqData:
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
             np.save(self.save_dir + "nr_features.npy", self.nr_features)
-            # Load with:
-            # np.load(self.save_dir + 'nr_features.npy', allow_pickle=True).item()
             print("Saved: " + self.save_dir + "nr_features.npy")
         if self.nr_samples is not None:
             np.save(self.save_dir + "nr_samples.npy", self.nr_samples)
-            # Load with:
-            # np.load(self.save_dir + 'nr_samples.npy', allow_pickle=True).item()
             print("Saved: " + self.save_dir + "nr_samples.npy")
+        if self.sample_ids is not None:
+            np.save(self.save_dir + "sample_ids.npy", self.sample_ids)
+            print("Saved: " + self.save_dir + "sample_ids.npy")
+        if self.sample_indices is not None:
+            np.save(self.save_dir + "sample_indices.npy", self.sample_indices)
+            print("Saved: " + self.save_dir + "sample_indices.npy")
+        if self.sample_indices_per_annotation is not None:
+            np.save(
+                self.save_dir + "sample_indices_per_annotation.npy",
+                self.sample_indices_per_annotation,
+            )
+            print("Saved: " + self.save_dir + "sample_indices_per_annotation.npy")
+        if self.sample_annotations is not None:
+            np.save(self.save_dir + "sample_annotations.npy", self.sample_annotations)
+            print("Saved: " + self.save_dir + "sample_annotations.npy")
+        if self.all_annotations is not None:
+            np.save(self.save_dir + "all_annotations.npy", self.all_annotations)
+            print("Saved: " + self.save_dir + "all_annotations.npy")
         if self.feature_names is not None:
             np.save(self.save_dir + "feature_names.npy", self.feature_names)
-            # Load with:
-            # np.load(self.save_dir + 'feature_names.npy', allow_pickle=True)
             print("Saved: " + self.save_dir + "feature_names.npy")
         if self.mean_expressions is not None:
             np.save(self.save_dir + "mean_expressions.npy", self.mean_expressions)
-            # Load with:
-            # np.load(self.save_dir + 'mean_expressions.npy', allow_pickle=True)
             print("Saved: " + self.save_dir + "mean_expressions.npy")
         if self.std_expressions is not None:
             np.save(self.save_dir + "std_expressions.npy", self.std_expressions)
-            # Load with:
-            # np.load(self.save_dir + 'std_expressions.npy', allow_pickle=True)
             print("Saved: " + self.save_dir + "std_expressions.npy")
+        if self.sample_origins is not None:
+            np.save(self.save_dir + "sample_origins.npy", self.sample_origins)
+            print("Saved: " + self.save_dir + "sample_origins.npy")
+        if self.sample_origins_per_annotation is not None:
+            np.save(
+                self.save_dir + "sample_origins_per_annotation.npy",
+                self.sample_origins_per_annotation,
+            )
+            print("Saved: " + self.save_dir + "sample_origins_per_annotations.npy")
+        if self.train_indices_per_annotation is not None:
+            np.save(
+                self.save_dir + "train_indices_per_annotation.npy",
+                self.train_indices_per_annotation,
+            )
+            print("Saved: " + self.save_dir + "train_indices_per_annotation.npy")
+        if self.test_indices_per_annotation is not None:
+            np.save(
+                self.save_dir + "test_indices_per_annotation.npy",
+                self.test_indices_per_annotation,
+            )
+            print("Saved: " + self.save_dir + "test_indices_per_annotation.npy")
+        if self.std_values_on_training_sets is not None:
+            np.save(
+                self.save_dir + "std_values_on_training_sets.npy",
+                self.std_values_on_training_sets,
+            )
+            print("Saved: " + self.save_dir + "std_values_on_training_sets.npy")
+        if self.std_values_on_training_sets_argsort is not None:
+            np.save(
+                self.save_dir + "std_values_on_training_sets_argsort.npy",
+                self.std_values_on_training_sets_argsort,
+            )
+            print("Saved: " + self.save_dir + "std_values_on_training_sets_argsort.npy")
         if self.epsilon_shift is not None:
             np.save(self.save_dir + "epsilon_shift.npy", self.epsilon_shift)
-            # Load with:
-            # np.load(self.save_dir + 'epsilon_shift.npy', allow_pickle=True).item()
             print("Saved: " + self.save_dir + "epsilon_shift.npy")
         if self.maxlog is not None:
             np.save(self.save_dir + "maxlog.npy", self.maxlog)
-            # Load with:
-            # np.load(self.save_dir + 'maxlog.npy', allow_pickle=True).item()
             print("Saved: " + self.save_dir + "maxlog.npy")
         if self.feature_shortnames_ref is not None:
             np.save(
                 self.save_dir + "feature_shortnames_ref.npy",
                 self.feature_shortnames_ref,
             )
-            # Load with:
-            # np.load(self.save_dir + 'feature_shortnames_ref.npy',
-            #         allow_pickle=True).item()
             print("Saved: " + self.save_dir + "feature_shortnames_ref.npy")
         if self.raw_data is not None:
             fp_data = np.memmap(
@@ -177,9 +213,6 @@ class RNASeqData:
             )
             fp_data[:] = self.raw_data.transpose()[:]
             del fp_data
-            # Load with:
-            # np.array(np.memmap(self.save_dir + 'raw_data.bin', dtype='float32',
-            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
             print("Saved: " + self.save_dir + "raw_data.bin")
         if self.std_data is not None:
             fp_data = np.memmap(
@@ -190,9 +223,6 @@ class RNASeqData:
             )
             fp_data[:] = self.std_data.transpose()[:]
             del fp_data
-            # Load with:
-            # np.array(np.memmap(self.save_dir + 'std_data.bin', dtype='float32',
-            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
             print("Saved: " + self.save_dir + "std_data.bin")
         if self.log_data is not None:
             fp_data = np.memmap(
@@ -203,9 +233,6 @@ class RNASeqData:
             )
             fp_data[:] = self.log_data.transpose()[:]
             del fp_data
-            # Load with:
-            # np.array(np.memmap(self.save_dir + 'log_data.bin', dtype='float32',
-            #                    mode='r', shape=(nr_features, nr_samples))).transpose()
             print("Saved: " + self.save_dir + "log_data.bin")
 
     def load(self, normalization_types_list):
@@ -218,6 +245,26 @@ class RNASeqData:
             self.nr_samples = np.load(
                 self.save_dir + "nr_samples.npy", allow_pickle=True
             ).item()
+        if os.path.exists(self.save_dir + "sample_ids.npy"):
+            self.sample_ids = np.load(
+                self.save_dir + "sample_ids.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "sample_indices.npy"):
+            self.sample_indices = np.load(
+                self.save_dir + "sample_indices.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "sample_indices_per_annotation.npy"):
+            self.sample_indices_per_annotation = np.load(
+                self.save_dir + "sample_indices_per_annotation.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "sample_annotations.npy"):
+            self.sample_annotations = np.load(
+                self.save_dir + "sample_annotations.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "all_annotations.npy"):
+            self.all_annotations = np.load(
+                self.save_dir + "all_annotations.npy", allow_pickle=True
+            )
         if os.path.exists(self.save_dir + "feature_names.npy"):
             self.feature_names = np.load(
                 self.save_dir + "feature_names.npy", allow_pickle=True
@@ -233,6 +280,31 @@ class RNASeqData:
         if os.path.exists(self.save_dir + "feature_shortnames_ref.npy"):
             self.feature_shortnames_ref = np.load(
                 self.save_dir + "feature_shortnames_ref.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "sample_origins.npy"):
+            self.sample_origins = np.load(
+                self.save_dir + "sample_origins.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "sample_origins_per_annotation.npy"):
+            self.sample_origins_per_annotation = np.load(
+                self.save_dir + "sample_origins_per_annotation.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "train_indices_per_annotation.npy"):
+            self.train_indices_per_annotation = np.load(
+                self.save_dir + "train_indices_per_annotation.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "test_indices_per_annotation.npy"):
+            self.test_indices_per_annotation = np.load(
+                self.save_dir + "test_indices_per_annotation.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "std_values_on_training_sets.npy"):
+            self.std_values_on_training_sets = np.load(
+                self.save_dir + "std_values_on_training_sets.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "std_values_on_training_sets_argsort.npy"):
+            self.std_values_on_training_sets_argsort = np.load(
+                self.save_dir + "std_values_on_training_sets_argsort.npy",
+                allow_pickle=True,
             ).item()
         if os.path.exists(self.save_dir + "epsilon_shift.npy"):
             self.epsilon_shift = np.load(
@@ -430,8 +502,41 @@ class RNASeqData:
             self.total_sums[i] = np.sum(self.raw_data[i, :])
 
     def reduce_samples(self, idx_list):
-        # TODO
-        pass
+        if self.nr_samples is not None:
+            self.nr_samples = len(idx_list)
+        if self.sample_ids is not None:
+            self.sample_ids = np.take(self.sample_ids, idx_list)
+        if self.sample_annotations is not None:
+            self.sample_annotations = np.take(self.sample_annotations, idx_list)
+        if self.sample_indices is not None:
+            self.compute_sample_indices()
+        if self.all_annotations is not None:
+            self.compute_all_annotations()
+        if self.sample_indices_per_annotation is not None:
+            self.compute_sample_indices_per_annotation()
+        if self.sample_origins is not None:
+            self.sample_origins = np.take(self.sample_origins, idx_list)
+        if self.sample_origins_per_annotation is not None:
+            self.compute_sample_indices_per_annotation()
+        if self.raw_data is not None:
+            self.raw_data = np.take(self.raw_data, idx_list, axis=0)
+        if self.std_data is not None:
+            self.std_data = np.take(self.std_data, idx_list, axis=0)
+        if self.log_data is not None:
+            self.log_data = np.take(self.log_data, idx_list, axis=0)
+        if self.mean_expressions is not None:
+            self.compute_mean_expressions()
+        if self.std_expressions is not None:
+            self.compute_std_expressions()
+        if (
+            self.train_indices_per_annotation is not None
+            and self.test_indices_per_annotation is not None
+        ):
+            self.compute_train_and_test_indices_per_annotation()
+        if self.std_values_on_training_sets is not None:
+            self.compute_std_values_on_training_sets()
+        if self.std_values_on_training_sets_argsort is not None:
+            self.compute_std_values_on_training_sets_argsort()
 
     def reduce_features(self, idx_list):
         if self.nr_features is not None:
@@ -647,8 +752,10 @@ def feature_selection_from_list(
             f_indices[i] = data.feature_shortnames_ref[feature_indices[i]]
         else:
             f_indices[i] = feature_indices[i]
-    train_indices = sum(data.train_indices_per_annotation.values(), [])
-    test_indices = sum(data.test_indices_per_annotation.values(), [])
+    # train_indices = sum(data.train_indices_per_annotation.values(), [])
+    # test_indices = sum(data.test_indices_per_annotation.values(), [])
+    train_indices = np.concatenate(list(data.train_indices_per_annotation.values()))
+    test_indices = np.concatenate(list(data.test_indices_per_annotation.values()))
     data_train = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
         train_indices,
@@ -706,9 +813,7 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
 
     samples_color = np.zeros(len(indices))
     for i in range(len(indices)):
-        samples_color[i] = annot_colors[
-            data.sample_annotations[data.sample_ids[indices[i]]]
-        ]
+        samples_color[i] = annot_colors[data.sample_annotations[indices[i]]]
 
     fig, ax = plt.subplots()
     if annotation:
@@ -730,9 +835,7 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
     def update_annot(ind, sc):
         pos = sc.get_offsets()[ind["ind"][0]]
         ann.xy = pos
-        text = "{}".format(
-            data.sample_annotations[data.sample_ids[indices[ind["ind"][0]]]]
-        )
+        text = "{}".format(data.sample_annotations[indices[ind["ind"][0]]])
         ann.set_text(text)
 
     def hover(event):
@@ -791,8 +894,8 @@ def umap_plot(
     all_colors = []
 
     def color_function(id_):
-        label_ = data.sample_annotations[data.sample_ids[indices[id_]]]
-        type_ = data.sample_origins[data.sample_ids[indices[id_]]]
+        label_ = data.sample_annotations[indices[id_]]
+        type_ = data.sample_origins[indices[id_]]
         clo = (
             np.where(data.all_annotations == label_)[0],
             list(data.sample_origins_per_annotation[label_]).index(type_),
@@ -805,8 +908,8 @@ def umap_plot(
 
     def hover_function(id_):
         return "{} / {}".format(
-            data.sample_annotations[data.sample_ids[indices[id_]]],
-            data.sample_origins[data.sample_ids[indices[id_]]],
+            data.sample_annotations[indices[id_]],
+            data.sample_origins[indices[id_]],
         )
 
     samples_color = np.empty_like(indices)

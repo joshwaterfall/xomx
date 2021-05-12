@@ -1,7 +1,8 @@
 from xaio_config import output_dir, xaio_tag
-from RNASeq_preprocessing.load import loadRNASeq
+
+# from RNASeq_preprocessing.load import loadRNASeq
 from tools.basic_tools import (
-    # FeatureTools,
+    RNASeqData,
     confusion_matrix,
     matthews_coef,
     umap_plot,
@@ -18,17 +19,18 @@ from IPython import embed as e
 _ = RFEExtraTrees, RFENet
 
 # data = loadRNASeq("log")
-data = loadRNASeq("raw")
+# data = loadRNASeq("raw")
 # ft = FeatureTools(data)
 
-e()
-quit()
+data = RNASeqData()
+data.save_dir = output_dir + "/dataset/RNASeq/"
+data.load(["std"])
 
 # annotation = "Acute myeloid leukemia"
-# annotation = "Diffuse large B-cell lymphoma"
+annotation = "Diffuse large B-cell lymphoma"
 # annotation = "Glioblastoma multiforme"
 # annotation = "Lung adenocarcinoma"
-annotation = "Lung squamous cell carcinoma"
+# annotation = "Lung squamous cell carcinoma"
 # annotation = "Pheochromocytoma and paraganglioma"
 # annotation = "Small cell lung cancer"
 # annotation = "Uveal melanoma"
@@ -41,12 +43,8 @@ save_dir = (
     output_dir + "/results/RNASeq/" + xaio_tag + "/" + annotation.replace(" ", "_")
 )
 
-
-e()
-quit()
-
-feature_selector = RFENet(data, annotation, init_selection_size=4000)
-# feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
+# feature_selector = RFENet(data, annotation, init_selection_size=4000)
+feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
 if not feature_selector.load(save_dir):
     print("Initialization...")
     feature_selector.init()
