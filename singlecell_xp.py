@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 from xaio_config import output_dir, xaio_tag
 from tools.basic_tools import RNASeqData
 
@@ -28,18 +28,18 @@ data.load(["raw", "std", "log"])
 # data = loadscRNASeq("raw")
 # data = loadscRNASeq()
 
-data.reduce_features(np.where(data.nr_non_zero_samples > 2)[0])
-
+# data.reduce_features(np.where(data.nr_non_zero_samples > 2)[0])
+#
 mitochondrial_genes = data.regex_search(r"\|MT\-")
-mt_percents = np.array(
-    [
-        data.percentage_feature_set(mitochondrial_genes, i)
-        for i in range(data.nr_samples)
-    ]
-)
-
-data.reduce_samples(np.where(mt_percents < 0.05)[0])
-data.reduce_samples(np.where(data.nr_non_zero_features < 2500)[0])
+# mt_percents = np.array(
+#     [
+#         data.percentage_feature_set(mitochondrial_genes, i)
+#         for i in range(data.nr_samples)
+#     ]
+# )
+#
+# data.reduce_samples(np.where(mt_percents < 0.05)[0])
+# data.reduce_samples(np.where(data.nr_non_zero_features < 2500)[0])
 
 
 def tsums(i):
@@ -54,9 +54,19 @@ def nzfeats(i):
     return data.nr_non_zero_features[i]
 
 
-data.function_plot(tsums)
+def stdval(i):
+    return data.std_expressions[i]
 
-data.function_scatter(tsums, nzfeats)
+
+def mval(i):
+    return data.mean_expressions[i]
+
+
+data.function_plot(tsums, "samples")
+
+data.function_scatter(tsums, nzfeats, "samples")
+
+data.function_scatter(mval, stdval, "features")
 
 e()
 

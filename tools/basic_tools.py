@@ -719,18 +719,30 @@ class RNASeqData:
     #     plt.show()
 
     def function_scatter(
-        self, func1_=np.identity, func2_=np.identity, cat_=None, violinplot=False
+        self,
+        func1_=np.identity,
+        func2_=np.identity,
+        sof_="samples",
+        cat_=None,
+        violinplot_=False,
     ):
         """displays a scatter plot, with coordinates computed by applying two
-         funnctions (func1_ and func2_) to every sample (both functions must take sample
-        indices in input);
-        if cat_ is not None the samples of annotation cat_ have a different color"""
-        y = [func2_(i) for i in range(self.nr_samples)]
-        x = [func1_(i) for i in range(self.nr_samples)]
+        functions (func1_ and func2_) to every sample or every feature, depending
+        on the value of sof_ which must be either "samples" or "features"
+        (both functions must take indices in input);
+        if sof=="samples" and cat_ is not None the samples of annotation cat_ have
+        a different color"""
+        assert sof_ == "samples" or sof_ == "features"
+        if sof_ == "samples":
+            y = [func2_(i) for i in range(self.nr_samples)]
+            x = [func1_(i) for i in range(self.nr_samples)]
+        else:
+            y = [func2_(i) for i in range(self.nr_features)]
+            x = [func1_(i) for i in range(self.nr_features)]
         xmax = np.max(x)
         xmin = np.min(x)
         fig, ax = plt.subplots()
-        if violinplot:
+        if violinplot_:
             parts = ax.violinplot(
                 y,
                 [(xmax + xmin) / 2.0],
@@ -745,19 +757,66 @@ class RNASeqData:
                 pc.set_facecolor("#D43F3A")
                 pc.set_edgecolor("grey")
                 pc.set_alpha(0.7)
-        ax.scatter(x, y, s=1)
+        scax = ax.scatter(x, y, s=1)
+        ann = ax.annotate(
+            "",
+            xy=(0, 0),
+            xytext=(-100, 20),
+            textcoords="offset points",
+            bbox=dict(boxstyle="round", fc="w"),
+            arrowprops=dict(arrowstyle="->"),
+        )
+        ann.set_visible(False)
 
-        if cat_:
+        def update_annot(ind, sc):
+            pos = sc.get_offsets()[ind["ind"][0]]
+            ann.xy = pos
+            if sof_ == "samples":
+                text = "{}".format(self.sample_ids[ind["ind"][0]])
+            else:
+                text = "{}".format(self.feature_names[ind["ind"][0]])
+            ann.set_text(text)
+
+        def hover(event):
+            vis = ann.get_visible()
+            if event.inaxes == ax:
+                cont, ind = scax.contains(event)
+                if cont:
+                    update_annot(ind, scax)
+                    ann.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        ann.set_visible(False)
+                        fig.canvas.draw_idle()
+            if event.inaxes == ax:
+                cont, ind = scax.contains(event)
+                if cont:
+                    update_annot(ind, scax)
+                    ann.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        ann.set_visible(False)
+                        fig.canvas.draw_idle()
+
+        fig.canvas.mpl_connect("motion_notify_event", hover)
+
+        if sof_ == "samples" and cat_:
             y = [func2_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             x = [func1_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
-            plt.scatter(x, y, s=1)
+            ax.scatter(x, y, s=1)
         plt.show()
 
-    def function_plot(self, func_=lambda x: x, cat_=None, violinplot=True):
-        """plots the value of a function on all samples (the function must take sample
-        indices in input);
-        if cat_ is not None the samples of annotation cat_ have a different color"""
-        self.function_scatter(lambda x: x, func_, cat_, violinplot)
+    def function_plot(
+        self, func_=lambda x: x, sof_="samples", cat_=None, violinplot_=True
+    ):
+        """plots the value of a function on every sample or every feature, depending
+        on the value of sof_ which must be either "samples" or "features"
+        (the function must take indices in input);
+        if sof== "samples" and cat_ is not None the samples of annotation cat_ have a
+        different color"""
+        self.function_scatter(lambda x: x, func_, sof_, cat_, violinplot_)
 
 
 # class FeatureTools:

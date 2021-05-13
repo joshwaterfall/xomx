@@ -37,6 +37,19 @@ data.compute_log_data()
 data.compute_nr_non_zero_features()
 data.compute_nr_non_zero_samples()
 data.compute_total_sums()
+
+mitochondrial_genes = data.regex_search(r"\|MT\-")
+mt_percents = np.array(
+    [
+        data.percentage_feature_set(mitochondrial_genes, i)
+        for i in range(data.nr_samples)
+    ]
+)
+
+data.reduce_samples(np.where(mt_percents < 0.05)[0])
+data.reduce_samples(np.where(data.nr_non_zero_features < 2500)[0])
+data.reduce_features(np.where(data.nr_non_zero_samples > 2)[0])
+
 data.save()
 
 # data.mean_expressions = [np.mean(data.raw_data[:, i])
