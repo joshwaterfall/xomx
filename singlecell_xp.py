@@ -28,21 +28,35 @@ data.load(["raw", "std", "log"])
 # data = loadscRNASeq("raw")
 # data = loadscRNASeq()
 
-
-data.reduce_features(np.where(data.std_expressions > 0.0)[0])
+data.reduce_features(np.where(data.nr_non_zero_samples > 2)[0])
 
 mitochondrial_genes = data.regex_search(r"\|MT\-")
-# data.compute_non_zero_features()
-# data.compute_total_counts()
+mt_percents = np.array(
+    [
+        data.percentage_feature_set(mitochondrial_genes, i)
+        for i in range(data.nr_samples)
+    ]
+)
+
+data.reduce_samples(np.where(mt_percents < 0.05)[0])
+data.reduce_samples(np.where(data.nr_non_zero_features < 2500)[0])
 
 
-def fun(i):
-    # return data.nr_non_zero_features[i]
-    # return data.total_counts[i]
+def tsums(i):
+    return data.total_sums[i]
+
+
+def mt_p(i):
     return data.percentage_feature_set(mitochondrial_genes, i)
 
 
-data.function_plot(fun)
+def nzfeats(i):
+    return data.nr_non_zero_features[i]
+
+
+data.function_plot(tsums)
+
+data.function_scatter(tsums, nzfeats)
 
 e()
 

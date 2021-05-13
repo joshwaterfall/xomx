@@ -87,8 +87,11 @@ class RNASeqData:
                           if normalization_type=="std", then data = std_data
                           if normalization_type=="log", then data = log_data
 
-    nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the list
+    nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the number
                             of features with positive values (in raw data)
+
+    nr_non_zero_samples -> nr_non_zero_samples[i] is the number of samples with positive
+                           values on the i-th feature (in raw data)
 
     total_sums -> total_sums[i] is, for the i-th sample, the sum of values (in raw data)
                   accross all features
@@ -121,6 +124,7 @@ class RNASeqData:
         self.maxlog = None
         self.normalization_type = None
         self.nr_non_zero_features = None
+        self.nr_non_zero_samples = None
         self.total_sums = None
 
     def save(self):
@@ -204,6 +208,24 @@ class RNASeqData:
                 self.feature_shortnames_ref,
             )
             print("Saved: " + self.save_dir + "feature_shortnames_ref.npy")
+        if self.nr_non_zero_features is not None:
+            np.save(
+                self.save_dir + "nr_non_zero_features.npy",
+                self.nr_non_zero_features,
+            )
+            print("Saved: " + self.save_dir + "nr_non_zero_features.npy")
+        if self.nr_non_zero_samples is not None:
+            np.save(
+                self.save_dir + "nr_non_zero_samples.npy",
+                self.nr_non_zero_samples,
+            )
+            print("Saved: " + self.save_dir + "nr_non_zero_samples.npy")
+        if self.total_sums is not None:
+            np.save(
+                self.save_dir + "total_sums.npy",
+                self.total_sums,
+            )
+            print("Saved: " + self.save_dir + "total_sums.npy")
         if self.raw_data is not None:
             fp_data = np.memmap(
                 self.save_dir + "raw_data.bin",
@@ -314,6 +336,18 @@ class RNASeqData:
             self.maxlog = np.load(
                 self.save_dir + "maxlog.npy", allow_pickle=True
             ).item()
+        if os.path.exists(self.save_dir + "nr_non_zero_samples.npy"):
+            self.nr_non_zero_samples = np.load(
+                self.save_dir + "nr_non_zero_samples.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "nr_non_zero_features.npy"):
+            self.nr_non_zero_features = np.load(
+                self.save_dir + "nr_non_zero_features.npy", allow_pickle=True
+            )
+        if os.path.exists(self.save_dir + "total_sums.npy"):
+            self.total_sums = np.load(
+                self.save_dir + "total_sums.npy", allow_pickle=True
+            )
         if (
             os.path.exists(self.save_dir + "raw_data.bin")
             and "raw" in normalization_types_list
@@ -495,7 +529,13 @@ class RNASeqData:
         for i in range(self.nr_samples):
             self.nr_non_zero_features[i] = len(np.where(self.raw_data[i, :] > 0.0)[0])
 
-    def compute_total_counts(self):
+    def compute_nr_non_zero_samples(self):
+        assert self.raw_data is not None and self.nr_features is not None
+        self.nr_non_zero_samples = np.empty((self.nr_features,), dtype=int)
+        for i in range(self.nr_features):
+            self.nr_non_zero_samples[i] = len(np.where(self.raw_data[:, i] > 0.0)[0])
+
+    def compute_total_sums(self):
         assert self.raw_data is not None and self.nr_samples is not None
         self.total_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
@@ -537,6 +577,12 @@ class RNASeqData:
             self.compute_std_values_on_training_sets()
         if self.std_values_on_training_sets_argsort is not None:
             self.compute_std_values_on_training_sets_argsort()
+        if self.nr_non_zero_features is not None:
+            self.compute_nr_non_zero_features()
+        if self.nr_non_zero_samples is not None:
+            self.compute_nr_non_zero_samples()
+        if self.total_sums is not None:
+            self.compute_total_sums()
 
     def reduce_features(self, idx_list):
         if self.nr_features is not None:
@@ -577,11 +623,12 @@ class RNASeqData:
                     np.take(self.std_values_on_training_sets[cat], idx_list)
                 )
             self.compute_std_values_on_training_sets_argsort()
-        self.total_sums = None
-        self.nr_non_zero_features = None
-        if self.raw_data is not None:
-            self.compute_total_counts()
+        if self.nr_non_zero_features is not None:
             self.compute_nr_non_zero_features()
+        if self.nr_non_zero_samples is not None:
+            self.compute_nr_non_zero_samples()
+        if self.total_sums is not None:
+            self.compute_total_sums()
 
     def percentage_feature_set(self, idx_list, sample_idx=None):
         """computes the sum of values (in raw data), across all samples or for one
@@ -602,9 +649,9 @@ class RNASeqData:
         return np.where([re.search(rexpr, s) for s in self.feature_names])[0]
 
     def feature_mean(self, idx, cat_=None, func_=None):
-        # returns the mean value of the feature of index idx, across either all
-        # samples, or samples with annotation cat_
-        # the short name of the feature can be given instead of the index
+        """returns the mean value of the feature of index idx, across either all
+        samples, or samples with annotation cat_
+        the short name of the feature can be given instead of the index"""
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
         if not func_:
@@ -617,15 +664,15 @@ class RNASeqData:
             )
 
     def feature_std(self, idx, cat_=None):
-        # returns the standard deviation of the feature of index idx, across either all
-        # samples, or samples with annotation cat_
-        # the short name of the feature can be given instead of the index
+        """returns the standard deviation of the feature of index idx, across either all
+        samples, or samples with annotation cat_;
+        the short name of the feature can be given instead of the index"""
         return self.feature_mean(idx, cat_, np.std)
 
     def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
-        # plots the value of the feature of index idx for all samples
-        # if cat_ is not None the samples of annotation cat_ have a different color
-        # the short name of the feature can be given instead of the index
+        """plots the value of the feature of index idx for all samples;
+        if cat_ is not None the samples of annotation cat_ have a different color
+        the short name of the feature can be given instead of the index"""
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
         y = self.data[:, idx]
@@ -642,34 +689,75 @@ class RNASeqData:
             plt.scatter(x, y, s=1)
         plt.show()
 
-    def function_plot(self, func_=np.identity, cat_=None):
-        # plots the value of a function on all samples (the function must take sample
-        # indices in input)
-        # if cat_ is not None the samples of annotation cat_ have a different color
-        y = [func_(i) for i in range(self.nr_samples)]
-        x = np.arange(0, self.nr_samples) / self.nr_samples
+    # def function_plot(self, func_=np.identity, cat_=None):
+    #     """plots the value of a function on all samples (the function must take sample
+    #     indices in input);
+    #     if cat_ is not None the samples of annotation cat_ have a different color"""
+    #     y = [func_(i) for i in range(self.nr_samples)]
+    #     x = np.arange(0, self.nr_samples) / self.nr_samples
+    #     fig, ax = plt.subplots()
+    #     parts = ax.violinplot(
+    #         y,
+    #         [0.5],
+    #         points=60,
+    #         widths=1.0,
+    #         showmeans=False,
+    #         showextrema=False,
+    #         showmedians=False,
+    #         bw_method=0.5,
+    #     )
+    #     for pc in parts["bodies"]:
+    #         pc.set_facecolor("#D43F3A")
+    #         pc.set_edgecolor("grey")
+    #         pc.set_alpha(0.7)
+    #     ax.scatter(x, y, s=1)
+    #
+    #     if cat_:
+    #         y = [func_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
+    #         x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
+    #         plt.scatter(x, y, s=1)
+    #     plt.show()
+
+    def function_scatter(
+        self, func1_=np.identity, func2_=np.identity, cat_=None, violinplot=False
+    ):
+        """displays a scatter plot, with coordinates computed by applying two
+         funnctions (func1_ and func2_) to every sample (both functions must take sample
+        indices in input);
+        if cat_ is not None the samples of annotation cat_ have a different color"""
+        y = [func2_(i) for i in range(self.nr_samples)]
+        x = [func1_(i) for i in range(self.nr_samples)]
+        xmax = np.max(x)
+        xmin = np.min(x)
         fig, ax = plt.subplots()
-        parts = ax.violinplot(
-            y,
-            [0.5],
-            points=60,
-            widths=1.0,
-            showmeans=False,
-            showextrema=False,
-            showmedians=False,
-            bw_method=0.5,
-        )
-        for pc in parts["bodies"]:
-            pc.set_facecolor("#D43F3A")
-            pc.set_edgecolor("grey")
-            pc.set_alpha(0.7)
+        if violinplot:
+            parts = ax.violinplot(
+                y,
+                [(xmax + xmin) / 2.0],
+                points=60,
+                widths=xmax - xmin,
+                showmeans=False,
+                showextrema=False,
+                showmedians=False,
+                bw_method=0.5,
+            )
+            for pc in parts["bodies"]:
+                pc.set_facecolor("#D43F3A")
+                pc.set_edgecolor("grey")
+                pc.set_alpha(0.7)
         ax.scatter(x, y, s=1)
 
         if cat_:
-            y = [func_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
-            x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
+            y = [func2_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
+            x = [func1_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             plt.scatter(x, y, s=1)
         plt.show()
+
+    def function_plot(self, func_=lambda x: x, cat_=None, violinplot=True):
+        """plots the value of a function on all samples (the function must take sample
+        indices in input);
+        if cat_ is not None the samples of annotation cat_ have a different color"""
+        self.function_scatter(lambda x: x, func_, cat_, violinplot)
 
 
 # class FeatureTools:
