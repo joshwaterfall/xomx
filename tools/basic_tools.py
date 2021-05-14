@@ -648,14 +648,12 @@ class RNASeqData:
         """
         return np.where([re.search(rexpr, s) for s in self.feature_names])[0]
 
-    def feature_mean(self, idx, cat_=None, func_=None):
-        """returns the mean value of the feature of index idx, across either all
-        samples, or samples with annotation cat_
+    def feature_func(self, idx, cat_=None, func_=np.mean):
+        """applies a function to the array of values of the feature of index idx, across
+        either all samples, or samples with annotation cat_;
         the short name of the feature can be given instead of the index"""
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
-        if not func_:
-            func_ = np.mean
         if not cat_:
             return func_(self.data[:, idx])
         else:
@@ -663,31 +661,26 @@ class RNASeqData:
                 [self.data[i_, idx] for i_ in self.sample_indices_per_annotation[cat_]]
             )
 
-    def feature_std(self, idx, cat_=None):
-        """returns the standard deviation of the feature of index idx, across either all
-        samples, or samples with annotation cat_;
-        the short name of the feature can be given instead of the index"""
-        return self.feature_mean(idx, cat_, np.std)
-
-    def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
-        """plots the value of the feature of index idx for all samples;
-        if cat_ is not None the samples of annotation cat_ have a different color
-        the short name of the feature can be given instead of the index"""
-        if type(idx) == str:
-            idx = self.feature_shortnames_ref[idx]
-        y = self.data[:, idx]
-        if v_min is not None and v_max is not None:
-            y = np.clip(y, v_min, v_max)
-        x = np.arange(0, self.nr_samples) / self.nr_samples
-        plt.scatter(x, y, s=1)
-        if cat_:
-
-            y = [self.data[i_, idx] for i_ in self.sample_indices_per_annotation[cat_]]
-            if v_min is not None and v_max is not None:
-                y = np.clip(y, v_min, v_max)
-            x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
-            plt.scatter(x, y, s=1)
-        plt.show()
+    # def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
+    #     """plots the value of the feature of index idx for all samples;
+    #     if cat_ is not None the samples of annotation cat_ have a different color
+    #     the short name of the feature can be given instead of the index"""
+    #     if type(idx) == str:
+    #         idx = self.feature_shortnames_ref[idx]
+    #     y = self.data[:, idx]
+    #     if v_min is not None and v_max is not None:
+    #         y = np.clip(y, v_min, v_max)
+    #     x = np.arange(0, self.nr_samples) / self.nr_samples
+    #     plt.scatter(x, y, s=1)
+    #     if cat_:
+    #
+    #         y = [self.data[i_, idx] for i_ in
+    #              self.sample_indices_per_annotation[cat_]]
+    #         if v_min is not None and v_max is not None:
+    #             y = np.clip(y, v_min, v_max)
+    #         x = np.array(self.sample_indices_per_annotation[cat_]) / self.nr_samples
+    #         plt.scatter(x, y, s=1)
+    #     plt.show()
 
     # def function_plot(self, func_=np.identity, cat_=None):
     #     """plots the value of a function on all samples (the function must take sample

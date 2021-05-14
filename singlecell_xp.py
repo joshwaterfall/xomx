@@ -1,6 +1,12 @@
-# import numpy as np
+import numpy as np
 from xaio_config import output_dir, xaio_tag
-from tools.basic_tools import RNASeqData
+from tools.basic_tools import (
+    RNASeqData,
+    confusion_matrix,
+    matthews_coef,
+)
+from sklearn.cluster import KMeans
+from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
 # from tools.basic_tools import (
 #     FeatureTools,
@@ -62,11 +68,50 @@ def mval(i):
     return data.mean_expressions[i]
 
 
-data.function_plot(tsums, "samples")
+# data.function_plot(tsums, "samples")
+#
+# data.function_scatter(tsums, nzfeats, "samples")
+#
+# data.function_scatter(mval, stdval, "features")
 
-data.function_scatter(tsums, nzfeats, "samples")
+# data.function_plot(lambda i: data.data[i, data.feature_shortnames_ref['MALAT1']],
+#                    "samples", violinplot_=False)
 
-data.function_scatter(mval, stdval, "features")
+data.reduce_features(np.argsort(data.std_expressions)[-4000:])
+
+kmeans = KMeans(n_clusters=8, random_state=0).fit(data.data)
+data.sample_annotations = kmeans.labels_
+data.compute_all_annotations()
+data.compute_sample_indices_per_annotation()
+data.compute_train_and_test_indices_per_annotation()
+data.compute_std_values_on_training_sets()
+data.compute_std_values_on_training_sets_argsort()
+
+for annotation in range(8):
+    feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
+
+    print("Initialization...")
+    feature_selector.init()
+    for siz in [100, 30, 20, 15, 10]:
+        print("Selecting", siz, "features...")
+        feature_selector.select_features(siz)
+        cm = confusion_matrix(
+            feature_selector, feature_selector.data_test, feature_selector.target_test
+        )
+        print("MCC score:", matthews_coef(cm))
+    # feature_selector.save(save_dir)
+    print("Done.")
+    feature_selector.plot()
+    # print("MCC score:", matthews_coef(cm))
+
+    print(feature_selector.current_feature_indices)
+    print(
+        [
+            data.feature_names[feature_selector.current_feature_indices[i]]
+            for i in range(len(feature_selector.current_feature_indices))
+        ]
+    )
+
 
 e()
 
