@@ -713,8 +713,8 @@ class RNASeqData:
 
     def function_scatter(
         self,
-        func1_=np.identity,
-        func2_=np.identity,
+        func1_=lambda x: x,
+        func2_=lambda x: x,
         sof_="samples",
         cat_=None,
         violinplot_=False,
@@ -795,7 +795,7 @@ class RNASeqData:
 
         fig.canvas.mpl_connect("motion_notify_event", hover)
 
-        if sof_ == "samples" and cat_:
+        if sof_ == "samples" and cat_ is not None:
             y = [func2_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             x = [func1_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             ax.scatter(x, y, s=1)
@@ -810,6 +810,114 @@ class RNASeqData:
         if sof== "samples" and cat_ is not None the samples of annotation cat_ have a
         different color"""
         self.function_scatter(lambda x: x, func_, sof_, cat_, violinplot_)
+
+    def feature_plot(self, feature_list_=None, normalization_type_="", cat_=None):
+        """displays """
+        if normalization_type_ == "raw":
+            data_ = self.raw_data
+        elif normalization_type_ == "std":
+            data_ = self.std_data
+        elif normalization_type_ == "log":
+            data_ = self.log_data
+        else:
+            data_ = self.data
+        xsize = self.nr_samples
+        set_xticks = None
+        plot_array = np.empty((len(feature_list_), xsize))
+        if self.all_annotations is None:
+            for k, idx in enumerate(feature_list_):
+                if type(idx) == str:
+                    idx = self.feature_shortnames_ref[idx]
+                plot_array[k, :] = [data_[i, idx] for i in range(self.nr_samples)]
+        else:
+            argsort_annotations = np.argsort(
+                [
+                    len(self.sample_indices_per_annotation[i])
+                    for i in self.all_annotations
+                ]
+            )[::-1]
+            list_samples = np.concatenate(
+                [
+                    self.sample_indices_per_annotation[self.all_annotations[i]]
+                    for i in argsort_annotations
+                ]
+            )
+            set_xticks = list(
+                np.cumsum(
+                    [0]
+                    + [
+                        len(self.sample_indices_per_annotation[self.all_annotations[i]])
+                        for i in argsort_annotations
+                    ]
+                )
+            )
+            for k, idx in enumerate(feature_list_):
+                if type(idx) == str:
+                    idx = self.feature_shortnames_ref[idx]
+                plot_array[k, :] = [data_[i, idx] for i in list_samples]
+
+        fig, ax = plt.subplots()
+        im = ax.imshow(plot_array, extent=[0, xsize, 0, 1], aspect="auto")
+        if set_xticks is not None:
+            plt.xticks(set_xticks, [""] * len(set_xticks))
+        plt.colorbar(im)
+        plt.show()
+
+    # def color_plot(
+    #     self,
+    #     func_list_=None,
+    #     sof_="samples",
+    #     cat_=None
+    # ):
+    #     """displays """
+    #     assert sof_ == "samples" or sof_ == "features"
+    #     xsize = self.nr_samples if sof_ == "samples" else self.nr_features
+    #     set_xticks = None
+    #     plot_array = np.empty((len(func_list_), xsize))
+    #     if sof_ == "features":
+    #         for k, func_ in enumerate(func_list_):
+    #             plot_array[k, :] = [func_(i) for i in range(self.nr_features)]
+    #     else:
+    #         if self.all_annotations is None:
+    #             for k, func_ in enumerate(func_list_):
+    #                 plot_array[k, :] = [func_(i) for i in range(self.nr_samples)]
+    #         else:
+    #             argsort_annotations = np.argsort(
+    #                 [len(self.sample_indices_per_annotation[i]) for i
+    #                  in self.all_annotations]
+    #             )[::-1]
+    #             list_samples = np.concatenate(
+    #                 [self.sample_indices_per_annotation[self.all_annotations[i]]
+    #                  for i in argsort_annotations]
+    #             )
+    #             set_xticks = list(np.cumsum(
+    #                 [0] +
+    #                 [len(self.sample_indices_per_annotation[
+    #                          self.all_annotations[i]])
+    #                  for i in argsort_annotations]
+    #             ))
+    #             for k, func_ in enumerate(func_list_):
+    #                 plot_array[k, :] = [func_(i) for i in list_samples]
+    #
+    #     e()
+    #             # x = list_samples
+    #     # xmax = np.max(x)
+    #     # xmin = np.min(x)
+    #     fig, ax = plt.subplots()
+    #     # im = ax.imshow(np.arange(100).reshape((2, 50)))
+    #     # im = ax.imshow(np.array(y).reshape((1, self.nr_samples)),
+    #     #                extent=[0, self.nr_samples, 0, 1], aspect='auto')
+    #     im = ax.imshow(plot_array,
+    #                    extent=[0, xsize, 0, 1], aspect='auto')
+    #     if set_xticks is not None:
+    #         plt.xticks(set_xticks, [''] * len(set_xticks))
+    #     plt.colorbar(im)
+    #
+    #     # if sof_ == "samples" and cat_ is not None:
+    #     #     y = [func_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
+    #     #     x = [i_ for i_ in self.sample_indices_per_annotation[cat_]]
+    #     #     ax.scatter(x, y, s=1)
+    #     plt.show()
 
 
 # class FeatureTools:

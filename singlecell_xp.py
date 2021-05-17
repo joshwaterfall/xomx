@@ -79,7 +79,9 @@ def mval(i):
 
 data.reduce_features(np.argsort(data.std_expressions)[-4000:])
 
-kmeans = KMeans(n_clusters=8, random_state=0).fit(data.data)
+n_clusters = 6
+
+kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(data.log_data)
 data.sample_annotations = kmeans.labels_
 data.compute_all_annotations()
 data.compute_sample_indices_per_annotation()
@@ -87,31 +89,56 @@ data.compute_train_and_test_indices_per_annotation()
 data.compute_std_values_on_training_sets()
 data.compute_std_values_on_training_sets_argsort()
 
-for annotation in range(8):
-    feature_selector = RFEExtraTrees(data, annotation, init_selection_size=4000)
+
+# list_genes = ["FTL", "LYZ"]
+#
+#
+# def feature_func(x, annot):
+#     return data.log_data[x, data.feature_shortnames_ref[annot]]
+#
+#
+# fun_list = [lambda x: feature_func(x, 0), lambda x: feature_func(x, 1)]
+
+# e()
+# quit()
+
+gene_list = []
+
+feature_selector = np.empty(n_clusters, dtype=object)
+
+for annotation in range(n_clusters):
+    feature_selector[annotation] = RFEExtraTrees(
+        data, annotation, init_selection_size=4000
+    )
 
     print("Initialization...")
-    feature_selector.init()
+    feature_selector[annotation].init()
     for siz in [100, 30, 20, 15, 10]:
         print("Selecting", siz, "features...")
-        feature_selector.select_features(siz)
+        feature_selector[annotation].select_features(siz)
         cm = confusion_matrix(
-            feature_selector, feature_selector.data_test, feature_selector.target_test
+            feature_selector[annotation],
+            feature_selector[annotation].data_test,
+            feature_selector[annotation].target_test,
         )
         print("MCC score:", matthews_coef(cm))
     # feature_selector.save(save_dir)
     print("Done.")
-    feature_selector.plot()
+    feature_selector[annotation].plot()
     # print("MCC score:", matthews_coef(cm))
 
-    print(feature_selector.current_feature_indices)
-    print(
-        [
-            data.feature_names[feature_selector.current_feature_indices[i]]
-            for i in range(len(feature_selector.current_feature_indices))
-        ]
-    )
+    print(feature_selector[annotation].current_feature_indices)
+    gene_list = gene_list + [
+        data.feature_names[
+            feature_selector[annotation].current_feature_indices[i]
+        ].split("|")[1]
+        for i in range(len(feature_selector[annotation].current_feature_indices))
+    ]
+    print(gene_list)
 
+e()
+
+data.feature_plot(gene_list, "log")
 
 e()
 
