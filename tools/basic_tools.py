@@ -822,12 +822,17 @@ class RNASeqData:
         else:
             data_ = self.data
         xsize = self.nr_samples
+        ysize = len(feature_list_)
         set_xticks = None
+        set_xticks_text = None
         plot_array = np.empty((len(feature_list_), xsize))
+        feature_indices_list_ = []
+        for idx in feature_list_:
+            if type(idx) == str:
+                idx = self.feature_shortnames_ref[idx]
+            feature_indices_list_.append(idx)
         if self.all_annotations is None:
-            for k, idx in enumerate(feature_list_):
-                if type(idx) == str:
-                    idx = self.feature_shortnames_ref[idx]
+            for k, idx in enumerate(feature_indices_list_):
                 plot_array[k, :] = [data_[i, idx] for i in range(self.nr_samples)]
         else:
             argsort_annotations = np.argsort(
@@ -842,24 +847,32 @@ class RNASeqData:
                     for i in argsort_annotations
                 ]
             )
-            set_xticks = list(
-                np.cumsum(
-                    [0]
-                    + [
-                        len(self.sample_indices_per_annotation[self.all_annotations[i]])
-                        for i in argsort_annotations
-                    ]
+            set_xticks1 = np.cumsum(
+                [0]
+                + [
+                    len(self.sample_indices_per_annotation[self.all_annotations[i]])
+                    for i in argsort_annotations
+                ]
+            )
+            set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
+            set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
+            set_xticks_text = ["|"] + list(
+                np.concatenate(
+                    [[str(self.all_annotations[i]), "|"] for i in argsort_annotations]
                 )
             )
-            for k, idx in enumerate(feature_list_):
-                if type(idx) == str:
-                    idx = self.feature_shortnames_ref[idx]
+            for k, idx in enumerate(feature_indices_list_):
                 plot_array[k, :] = [data_[i, idx] for i in list_samples]
 
         fig, ax = plt.subplots()
-        im = ax.imshow(plot_array, extent=[0, xsize, 0, 1], aspect="auto")
+        im = ax.imshow(plot_array, extent=[0, xsize, 0, ysize], aspect="auto")
         if set_xticks is not None:
-            plt.xticks(set_xticks, [""] * len(set_xticks))
+            plt.xticks(set_xticks, set_xticks_text)
+        plt.yticks(
+            np.arange(ysize) + 0.5,
+            [self.feature_names[i].split("|")[1] for i in feature_indices_list_][::-1],
+        )
+        plt.tick_params(axis=u"both", which=u"both", length=0)
         plt.colorbar(im)
         plt.show()
 

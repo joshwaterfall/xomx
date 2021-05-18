@@ -89,6 +89,11 @@ data.compute_train_and_test_indices_per_annotation()
 data.compute_std_values_on_training_sets()
 data.compute_std_values_on_training_sets_argsort()
 
+data.save_dir = output_dir + "/dataset/scRNASeqKMEANS/"
+data.save()
+
+e()
+quit()
 
 # list_genes = ["FTL", "LYZ"]
 #

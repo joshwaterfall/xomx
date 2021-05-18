@@ -80,13 +80,25 @@ class RFEExtraTrees:
         return self.confusion_matrix
 
     def predict(self, x):
+        if len(x.shape) > 0:
+            if x.shape[1] == self.data.nr_features:
+                x_tmp = np.take(
+                    x.transpose(), self.current_feature_indices, axis=0
+                ).transpose()
+                return self.forest.predict(x_tmp)
         return self.forest.predict(x)
 
     def score(self, x):
+        x_tmp = x
+        if len(x.shape) > 0:
+            if x.shape[1] == self.data.nr_features:
+                x_tmp = np.take(
+                    x.transpose(), self.current_feature_indices, axis=0
+                ).transpose()
         return (
             np.array(
                 sum(
-                    self.forest.estimators_[i].predict(self.data_test)
+                    self.forest.estimators_[i].predict(x_tmp)
                     for i in range(self.forest.n_estimators)
                 )
             )
