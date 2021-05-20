@@ -876,6 +876,103 @@ class RNASeqData:
         plt.colorbar(im)
         plt.show()
 
+    def umap_plot(
+        self,
+        normalization_type="",
+        save_dir=None,
+        metric="euclidean",
+        min_dist=0.0,
+        n_neighbors=120,
+        random_state=42,
+    ):
+        reducer = umap.UMAP(
+            metric=metric,
+            min_dist=min_dist,
+            n_neighbors=n_neighbors,
+            random_state=random_state,
+        )
+        print("Starting UMAP reduction...")
+        if normalization_type == "raw":
+            x = self.raw_data
+        elif normalization_type == "std":
+            x = self.std_data
+        elif normalization_type == "log":
+            x = self.log_data
+        else:
+            x = self.data
+        reducer.fit(x)
+        embedding = reducer.transform(x)
+        print("Done.")
+
+        # all_colors = []
+        # def color_function(id_):
+        #     label_ = self.sample_annotations[id_]
+        #     type_ = data.sample_origins[indices[id_]]
+        #     clo = (
+        #         np.where(data.all_annotations == label_)[0],
+        #         list(data.sample_origins_per_annotation[label_]).index(type_),
+        #     )
+        #     if clo in all_colors:
+        #         return all_colors.index(clo)
+        #     else:
+        #         all_colors.append(clo)
+        #         return len(all_colors) - 1
+
+        def hover_function(id_):
+            return "{}".format(str(self.sample_annotations[id_]))
+
+        annot_idxs = {}
+        for i, annot_ in enumerate(self.all_annotations):
+            annot_idxs[annot_] = i
+
+        samples_color = np.empty(self.nr_samples)
+        for i in range(self.nr_samples):
+            samples_color[i] = annot_idxs[self.sample_annotations[i]]
+
+        fig, ax = plt.subplots()
+
+        sc = plt.scatter(
+            embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
+        )
+        plt.gca().set_aspect("equal", "datalim")
+
+        ann = ax.annotate(
+            "",
+            xy=(0, 0),
+            xytext=(20, 20),
+            textcoords="offset points",
+            bbox=dict(boxstyle="round", fc="w"),
+            arrowprops=dict(arrowstyle="->"),
+        )
+        ann.set_visible(False)
+
+        def update_annot(ind):
+            pos = sc.get_offsets()[ind["ind"][0]]
+            ann.xy = pos
+            text = hover_function(ind["ind"][0])
+            ann.set_text(text)
+
+        def hover(event):
+            vis = ann.get_visible()
+            if event.inaxes == ax:
+                cont, ind = sc.contains(event)
+                if cont:
+                    update_annot(ind)
+                    ann.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        ann.set_visible(False)
+                        fig.canvas.draw_idle()
+
+        fig.canvas.mpl_connect("motion_notify_event", hover)
+
+        if save_dir:
+            os.makedirs(save_dir, exist_ok=True)
+            plt.savefig(save_dir + "/plot.png", dpi=200)
+        else:
+            plt.show()
+
     # def color_plot(
     #     self,
     #     func_list_=None,

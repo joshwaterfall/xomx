@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 from xaio_config import output_dir, xaio_tag
 from tools.basic_tools import (
     RNASeqData,
@@ -61,9 +61,57 @@ else:
 
     classifier.load(output_dir + "/results/scRNASeq/" + xaio_tag + "/multiclassif/")
 
+all_predictions = classifier.predict(data.data)
+
+gene_list = list(
+    np.concatenate(
+        [
+            classifier.binary_classifiers[annot_].current_feature_indices
+            for annot_ in [4, 0, 3, 5, 1, 2]
+        ]
+    )
+)
+
 e()
 quit()
 
+data.function_plot(lambda i: data.total_sums[i], "samples")
+
+data.function_plot(lambda i: data.nr_non_zero_features[i], "samples")
+
+data.function_scatter(
+    lambda i: data.total_sums[i], lambda i: data.nr_non_zero_features[i], "samples"
+)
+
+data.function_scatter(
+    lambda i: data.mean_expressions[i], lambda i: data.std_expressions[i], "features"
+)
+
+classifier.binary_classifiers[0].plot()
+
+data.function_plot(lambda i: all_predictions[i], "samples", 2, violinplot_=False)
+
+data.umap_plot("log")
+
 data.feature_plot(gene_list, "log")
+
+data.feature_plot(["IL7R", "CCR7"], "log")
+
+data.feature_plot(["LYZ", "CD14"], "log")
+
+data.feature_plot(["IL7R", "S100A4"], "log")
+
+data.feature_plot(["MS4A1"], "log")
+
+data.feature_plot(["CD8A"], "log")
+
+data.feature_plot(["FCGR3A", "MS4A7"], "log")
+
+data.feature_plot(["GNLY", "NKG7"], "log")
+
+data.feature_plot(["FCER1A", "CST3"], "log")
+
+data.feature_plot(["PPBP"], "log")
+
 
 e()
