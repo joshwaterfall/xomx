@@ -81,7 +81,7 @@ data.reduce_features(np.argsort(data.std_expressions)[-4000:])
 
 n_clusters = 6
 
-kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(data.log_data)
+kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(data.data_array["log"])
 data.sample_annotations = kmeans.labels_
 data.compute_all_annotations()
 data.compute_sample_indices_per_annotation()

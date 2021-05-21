@@ -72,20 +72,22 @@ class RNASeqData:
     maxlog -> maximum value of the log data; it is a parameter computed during
               log-normalization
 
-    raw_data -> raw_data[i, j]: value of the j-th feature of the i-th sample
+    data_array["raw"] -> data_array["raw"][i, j]: value of the j-th feature of
+                         the i-th sample
 
-    std_data -> data normalized by mean and standard deviation; the original value is:
-                raw_data[i, j] == std_data[i, j] * std_expression[j]
+    data_array["std"] -> data normalized by mean and standard deviation; the original
+                         value is:
+                data_array["raw"][i, j] == data_array["std"][i, j] * std_expression[j]
                                   + mean_expression[j]
 
-    log_data -> log-normalized values; the original value is:
-                raw_data[i, j] == np.exp(
-                                    log_data[i,j] * (maxlog - np.log(epsilon_shift)
-                                  ) + np.log(epsilon_shift)) - epsilon_shift
+    data_array["log"] -> log-normalized values; the original value is:
+                data_array["raw"][i, j] == np.exp(
+                            data_array["log"][i,j] * (maxlog - np.log(epsilon_shift)
+                        ) + np.log(epsilon_shift)) - epsilon_shift
 
-    normalization_type -> if normalization_type=="raw", then data = raw_data
-                          if normalization_type=="std", then data = std_data
-                          if normalization_type=="log", then data = log_data
+    normalization_type -> if normalization_type=="raw", then data = data_array["raw"]
+                          if normalization_type=="std", then data = data_array["std"]
+                          if normalization_type=="log", then data = data_array["log"]
 
     nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the number
                             of features with positive values (in raw data)
@@ -112,9 +114,7 @@ class RNASeqData:
         self.mean_expressions = None
         self.std_expressions = None
         self.data = None
-        self.raw_data = None
-        self.log_data = None
-        self.std_data = None
+        self.data_array = {}
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
         self.feature_shortnames_ref = None
@@ -226,36 +226,17 @@ class RNASeqData:
                 self.total_sums,
             )
             print("Saved: " + self.save_dir + "total_sums.npy")
-        if self.raw_data is not None:
-            fp_data = np.memmap(
-                self.save_dir + "raw_data.bin",
-                dtype="float32",
-                mode="w+",
-                shape=(self.nr_features, self.nr_samples),
-            )
-            fp_data[:] = self.raw_data.transpose()[:]
-            del fp_data
-            print("Saved: " + self.save_dir + "raw_data.bin")
-        if self.std_data is not None:
-            fp_data = np.memmap(
-                self.save_dir + "std_data.bin",
-                dtype="float32",
-                mode="w+",
-                shape=(self.nr_features, self.nr_samples),
-            )
-            fp_data[:] = self.std_data.transpose()[:]
-            del fp_data
-            print("Saved: " + self.save_dir + "std_data.bin")
-        if self.log_data is not None:
-            fp_data = np.memmap(
-                self.save_dir + "log_data.bin",
-                dtype="float32",
-                mode="w+",
-                shape=(self.nr_features, self.nr_samples),
-            )
-            fp_data[:] = self.log_data.transpose()[:]
-            del fp_data
-            print("Saved: " + self.save_dir + "log_data.bin")
+        for normtype in self.data_array:
+            if self.data_array[normtype] is not None:
+                fp_data = np.memmap(
+                    self.save_dir + normtype + "_data.bin",
+                    dtype="float32",
+                    mode="w+",
+                    shape=(self.nr_features, self.nr_samples),
+                )
+                fp_data[:] = self.data_array[normtype].transpose()[:]
+                del fp_data
+                print("Saved: " + self.save_dir + normtype + "_data.bin")
 
     def load(self, normalization_types_list):
         assert self.save_dir is not None
@@ -348,55 +329,20 @@ class RNASeqData:
             self.total_sums = np.load(
                 self.save_dir + "total_sums.npy", allow_pickle=True
             )
-        if (
-            os.path.exists(self.save_dir + "raw_data.bin")
-            and "raw" in normalization_types_list
-        ):
-            self.raw_data = np.array(
-                np.memmap(
-                    self.save_dir + "raw_data.bin",
-                    dtype="float32",
-                    mode="r",
-                    shape=(self.nr_features, self.nr_samples),
-                )
-            ).transpose()
-        if (
-            os.path.exists(self.save_dir + "std_data.bin")
-            and "std" in normalization_types_list
-        ):
-            self.std_data = np.array(
-                np.memmap(
-                    self.save_dir + "std_data.bin",
-                    dtype="float32",
-                    mode="r",
-                    shape=(self.nr_features, self.nr_samples),
-                )
-            ).transpose()
-        if (
-            os.path.exists(self.save_dir + "log_data.bin")
-            and "log" in normalization_types_list
-        ):
-            self.log_data = np.array(
-                np.memmap(
-                    self.save_dir + "log_data.bin",
-                    dtype="float32",
-                    mode="r",
-                    shape=(self.nr_features, self.nr_samples),
-                )
-            ).transpose()
+        for normtype in normalization_types_list:
+            if os.path.exists(self.save_dir + normtype + "_data.bin"):
+                self.data_array[normtype] = np.array(
+                    np.memmap(
+                        self.save_dir + normtype + "_data.bin",
+                        dtype="float32",
+                        mode="r",
+                        shape=(self.nr_features, self.nr_samples),
+                    )
+                ).transpose()
         if len(normalization_types_list) > 0:
-            if normalization_types_list[0] == "raw":
-                print('Normalization type: "raw"')
-                self.data = self.raw_data
-                self.normalization_type = "raw"
-            elif normalization_types_list[0] == "std":
-                self.data = self.std_data
-                self.normalization_type = "std"
-                print('Normalization type: "std"')
-            elif normalization_types_list[0] == "log":
-                self.data = self.log_data
-                self.normalization_type = "log"
-                print('Normalization type: "log"')
+            print("Normalization type: " + normalization_types_list[0])
+            self.data = self.data_array[normalization_types_list[0]]
+            self.normalization_type = normalization_types_list[0]
 
     def compute_sample_indices(self):
         assert self.sample_ids is not None
@@ -424,57 +370,59 @@ class RNASeqData:
             )
 
     def compute_mean_expressions(self):
-        assert self.raw_data is not None and self.nr_features is not None
+        assert self.data_array["raw"] is not None and self.nr_features is not None
         self.mean_expressions = [
-            np.mean(self.raw_data[:, i]) for i in range(self.nr_features)
+            np.mean(self.data_array["raw"][:, i]) for i in range(self.nr_features)
         ]
 
     def compute_std_expressions(self):
-        assert self.raw_data is not None and self.nr_features is not None
+        assert self.data_array["raw"] is not None and self.nr_features is not None
         self.std_expressions = [
-            np.std(self.raw_data[:, i]) for i in range(self.nr_features)
+            np.std(self.data_array["raw"][:, i]) for i in range(self.nr_features)
         ]
 
     def compute_std_data(self):
         assert (
-            self.raw_data is not None
+            self.data_array["raw"] is not None
             and self.mean_expressions is not None
             and self.std_expressions is not None
             and self.nr_features is not None
         )
-        self.std_data = np.copy(self.raw_data)
+        self.data_array["std"] = np.copy(self.data_array["raw"])
         for i in range(self.nr_features):
             if self.std_expressions[i] == 0.0:
-                self.std_data[:, i] = 0.0
+                self.data_array["std"][:, i] = 0.0
             else:
-                self.std_data[:, i] = (
-                    self.std_data[:, i] - self.mean_expressions[i]
+                self.data_array["std"][:, i] = (
+                    self.data_array["std"][:, i] - self.mean_expressions[i]
                 ) / self.std_expressions[i]
             # for j in range(self.nr_samples):
             #     if self.std_expressions[i] == 0.0:
-            #         self.std_data[j, i] = 0.0
+            #         self.data_array["std"][j, i] = 0.0
             #     else:
-            #         self.std_data[j, i] = (
-            #                                       self.std_data[j, i] -
+            #         self.data_array["std"][j, i] = (
+            #                                       self.data_array["std"][j, i] -
             #                                       self.mean_expressions[i]
             #                               ) / self.std_expressions[i]
 
     def compute_log_data(self):
         assert (
-            self.raw_data is not None
+            self.data_array["raw"] is not None
             and self.mean_expressions is not None
             and self.std_expressions is not None
             and self.nr_features is not None
         )
-        self.log_data = np.copy(self.raw_data)
+        self.data_array["log"] = np.copy(self.data_array["raw"])
         self.epsilon_shift = 1.0
         for i in range(self.nr_features):
-            self.log_data[:, i] = np.log(self.log_data[:, i] + self.epsilon_shift)
-        self.maxlog = np.max(self.log_data)
-        for i in range(self.nr_features):
-            self.log_data[:, i] = (self.log_data[:, i] - np.log(self.epsilon_shift)) / (
-                self.maxlog - np.log(self.epsilon_shift)
+            self.data_array["log"][:, i] = np.log(
+                self.data_array["log"][:, i] + self.epsilon_shift
             )
+        self.maxlog = np.max(self.data_array["log"])
+        for i in range(self.nr_features):
+            self.data_array["log"][:, i] = (
+                self.data_array["log"][:, i] - np.log(self.epsilon_shift)
+            ) / (self.maxlog - np.log(self.epsilon_shift))
 
     def compute_train_and_test_indices_per_annotation(self):
         assert self.sample_indices_per_annotation is not None
@@ -496,7 +444,7 @@ class RNASeqData:
         assert (
             self.all_annotations is not None
             and self.nr_features is not None
-            and self.std_data is not None
+            and self.data_array["std"] is not None
             and self.train_indices_per_annotation is not None
         )
         self.std_values_on_training_sets = {}
@@ -506,7 +454,7 @@ class RNASeqData:
                 self.std_values_on_training_sets[annot].append(
                     np.mean(
                         [
-                            self.std_data[j, i]
+                            self.data_array["std"][j, i]
                             for j in self.train_indices_per_annotation[annot]
                         ]
                     )
@@ -524,22 +472,26 @@ class RNASeqData:
             )[::-1]
 
     def compute_nr_non_zero_features(self):
-        assert self.raw_data is not None and self.nr_samples is not None
+        assert self.data_array["raw"] is not None and self.nr_samples is not None
         self.nr_non_zero_features = np.empty((self.nr_samples,), dtype=int)
         for i in range(self.nr_samples):
-            self.nr_non_zero_features[i] = len(np.where(self.raw_data[i, :] > 0.0)[0])
+            self.nr_non_zero_features[i] = len(
+                np.where(self.data_array["raw"][i, :] > 0.0)[0]
+            )
 
     def compute_nr_non_zero_samples(self):
-        assert self.raw_data is not None and self.nr_features is not None
+        assert self.data_array["raw"] is not None and self.nr_features is not None
         self.nr_non_zero_samples = np.empty((self.nr_features,), dtype=int)
         for i in range(self.nr_features):
-            self.nr_non_zero_samples[i] = len(np.where(self.raw_data[:, i] > 0.0)[0])
+            self.nr_non_zero_samples[i] = len(
+                np.where(self.data_array["raw"][:, i] > 0.0)[0]
+            )
 
     def compute_total_sums(self):
-        assert self.raw_data is not None and self.nr_samples is not None
+        assert self.data_array["raw"] is not None and self.nr_samples is not None
         self.total_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
-            self.total_sums[i] = np.sum(self.raw_data[i, :])
+            self.total_sums[i] = np.sum(self.data_array["raw"][i, :])
 
     def reduce_samples(self, idx_list):
         if self.nr_samples is not None:
@@ -558,12 +510,13 @@ class RNASeqData:
             self.sample_origins = np.take(self.sample_origins, idx_list)
         if self.sample_origins_per_annotation is not None:
             self.compute_sample_indices_per_annotation()
-        if self.raw_data is not None:
-            self.raw_data = np.take(self.raw_data, idx_list, axis=0)
-        if self.std_data is not None:
-            self.std_data = np.take(self.std_data, idx_list, axis=0)
-        if self.log_data is not None:
-            self.log_data = np.take(self.log_data, idx_list, axis=0)
+        for normtype in self.data_array:
+            if self.data_array[normtype] is not None:
+                self.data_array[normtype] = np.take(
+                    self.data_array[normtype], idx_list, axis=0
+                )
+        if self.normalization_type is not None:
+            self.data = self.data_array[self.normalization_type]
         if self.mean_expressions is not None:
             self.compute_mean_expressions()
         if self.std_expressions is not None:
@@ -595,25 +548,13 @@ class RNASeqData:
             self.std_expressions = np.take(self.std_expressions, idx_list)
         if self.feature_shortnames_ref is not None:
             self.compute_feature_shortnames_ref()
-        if self.raw_data is not None:
-            self.raw_data = np.take(
-                self.raw_data.transpose(), idx_list, axis=0
-            ).transpose()
-        if self.std_data is not None:
-            self.std_data = np.take(
-                self.std_data.transpose(), idx_list, axis=0
-            ).transpose()
-        if self.log_data is not None:
-            self.log_data = np.take(
-                self.log_data.transpose(), idx_list, axis=0
-            ).transpose()
+        for normtype in self.data_array:
+            if self.data_array[normtype] is not None:
+                self.data_array[normtype] = np.take(
+                    self.data_array[normtype].transpose(), idx_list, axis=0
+                ).transpose()
         if self.normalization_type is not None:
-            if self.normalization_type == "raw":
-                self.data = self.raw_data
-            elif self.normalization_type == "std":
-                self.data = self.std_data
-            elif self.normalization_type == "log":
-                self.data = self.log_data
+            self.data = self.data_array[self.normalization_type]
         if (
             self.all_annotations is not None
             and self.std_values_on_training_sets is not None
@@ -634,13 +575,15 @@ class RNASeqData:
         """computes the sum of values (in raw data), across all samples or for one
         given sample, for features of indices in idx_list, divided by the sum of values
         for all the features"""
-        assert self.raw_data is not None
+        assert self.data_array["raw"] is not None
         if sample_idx:
-            return np.sum(self.raw_data[sample_idx, idx_list]) / np.sum(
-                self.raw_data[sample_idx, :]
+            return np.sum(self.data_array["raw"][sample_idx, idx_list]) / np.sum(
+                self.data_array["raw"][sample_idx, :]
             )
         else:
-            return np.sum(self.raw_data[:, idx_list]) / np.sum(self.raw_data)
+            return np.sum(self.data_array["raw"][:, idx_list]) / np.sum(
+                self.data_array["raw"]
+            )
 
     def regex_search(self, rexpr):
         """tests for every feature name whether it matches the regular expression
@@ -718,6 +661,7 @@ class RNASeqData:
         sof_="samples",
         cat_=None,
         violinplot_=False,
+        function_plot_=False,
     ):
         """displays a scatter plot, with coordinates computed by applying two
         functions (func1_ and func2_) to every sample or every feature, depending
@@ -726,9 +670,43 @@ class RNASeqData:
         if sof=="samples" and cat_ is not None the samples of annotation cat_ have
         a different color"""
         assert sof_ == "samples" or sof_ == "features"
+        set_xticks = None
         if sof_ == "samples":
-            y = [func2_(i) for i in range(self.nr_samples)]
-            x = [func1_(i) for i in range(self.nr_samples)]
+            if self.all_annotations is not None and function_plot_:
+                argsort_annotations = np.argsort(
+                    [
+                        len(self.sample_indices_per_annotation[i])
+                        for i in self.all_annotations
+                    ]
+                )[::-1]
+                list_samples = np.concatenate(
+                    [
+                        self.sample_indices_per_annotation[self.all_annotations[i]]
+                        for i in argsort_annotations
+                    ]
+                )
+                set_xticks1 = np.cumsum(
+                    [0]
+                    + [
+                        len(self.sample_indices_per_annotation[self.all_annotations[i]])
+                        for i in argsort_annotations
+                    ]
+                )
+                set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
+                set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
+                set_xticks_text = ["|"] + list(
+                    np.concatenate(
+                        [
+                            [str(self.all_annotations[i]), "|"]
+                            for i in argsort_annotations
+                        ]
+                    )
+                )
+                y = [func2_(i) for i in list_samples]
+                x = [i for i in range(self.nr_samples)]
+            else:
+                y = [func2_(i) for i in range(self.nr_samples)]
+                x = [func1_(i) for i in range(self.nr_samples)]
         else:
             y = [func2_(i) for i in range(self.nr_features)]
             x = [func1_(i) for i in range(self.nr_features)]
@@ -765,7 +743,11 @@ class RNASeqData:
             pos = sc.get_offsets()[ind["ind"][0]]
             ann.xy = pos
             if sof_ == "samples":
-                text = "{}".format(self.sample_ids[ind["ind"][0]])
+                if self.all_annotations is not None and function_plot_:
+                    text = "{}".format(self.sample_ids[list_samples[ind["ind"][0]]])
+                else:
+                    text = "{}".format(self.sample_ids[ind["ind"][0]])
+
             else:
                 text = "{}".format(self.feature_names[ind["ind"][0]])
             ann.set_text(text)
@@ -799,6 +781,8 @@ class RNASeqData:
             y = [func2_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             x = [func1_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
             ax.scatter(x, y, s=1)
+        if set_xticks is not None:
+            plt.xticks(set_xticks, set_xticks_text)
         plt.show()
 
     def function_plot(
@@ -809,16 +793,14 @@ class RNASeqData:
         (the function must take indices in input);
         if sof== "samples" and cat_ is not None the samples of annotation cat_ have a
         different color"""
-        self.function_scatter(lambda x: x, func_, sof_, cat_, violinplot_)
+        self.function_scatter(
+            lambda x: x, func_, sof_, cat_, violinplot_, function_plot_=True
+        )
 
     def feature_plot(self, feature_list_=None, normalization_type_="", cat_=None):
         """displays """
-        if normalization_type_ == "raw":
-            data_ = self.raw_data
-        elif normalization_type_ == "std":
-            data_ = self.std_data
-        elif normalization_type_ == "log":
-            data_ = self.log_data
+        if normalization_type_ in self.data_array:
+            data_ = self.data_array[normalization_type_]
         else:
             data_ = self.data
         xsize = self.nr_samples
@@ -892,12 +874,8 @@ class RNASeqData:
             random_state=random_state,
         )
         print("Starting UMAP reduction...")
-        if normalization_type == "raw":
-            x = self.raw_data
-        elif normalization_type == "std":
-            x = self.std_data
-        elif normalization_type == "log":
-            x = self.log_data
+        if normalization_type in self.data_array:
+            x = self.data_array[normalization_type]
         else:
             x = self.data
         reducer.fit(x)

@@ -39,7 +39,7 @@ for i in range(data.nr_samples):
     if not i % (data.nr_samples // 100):
         print(i // (data.nr_samples // 100), "%\r", end="")
 
-data.raw_data = raw_data_transpose.transpose()
+data.data_array["raw"] = raw_data_transpose.transpose()
 data.compute_mean_expressions()
 data.compute_std_expressions()
 data.compute_feature_shortnames_ref()

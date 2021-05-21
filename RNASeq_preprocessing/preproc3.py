@@ -8,5 +8,5 @@ data.save_dir = output_dir + "/dataset/RNASeq/"
 
 data.load(["raw"])
 data.compute_log_data()
-data.raw_data = None
+data.data_array["raw"] = None
 data.save()

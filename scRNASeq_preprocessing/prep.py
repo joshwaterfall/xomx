@@ -19,7 +19,7 @@ barcodes = [row[0] for row in csv.reader(open(scRNASeq_barcodes), delimiter="\t"
 
 data = RNASeqData()
 data.save_dir = output_dir + "/dataset/scRNASeq/"
-data.raw_data = mat.todense().transpose()
+data.data_array["raw"] = mat.todense().transpose()
 data.nr_features = len(feature_ids)
 data.nr_samples = mat.shape[1]
 data.feature_names = np.empty((data.nr_features,), dtype=object)

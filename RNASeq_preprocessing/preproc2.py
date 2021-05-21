@@ -12,5 +12,5 @@ data.compute_train_and_test_indices_per_annotation()
 data.compute_std_values_on_training_sets()
 data.compute_std_values_on_training_sets_argsort()
 
-data.raw_data = None
+data.data_array["raw"] = None
 data.save()
