@@ -7,11 +7,16 @@ from tools.basic_tools import (
 )
 from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 from tools.classifiers.multiclass import ScoreBasedMulticlass
+from tools.normalization.sctransform import compute_sctransform
 from IPython import embed as e
 
 data = RNASeqData()
 data.save_dir = output_dir + "/dataset/scRNASeqKMEANS/"
-data.load(["raw", "std", "log"])
+data.load(["raw", "std", "sct"])
+
+if False:
+    compute_sctransform(data)
+    data.save(["sct"])
 
 n_clusters = 8
 gene_list = []

@@ -1,10 +1,9 @@
+# from IPython import embed as e
 import os
 import numpy as np
 import re
 import matplotlib.pyplot as plt
 import umap
-
-# from IPython import embed as e
 
 
 def identity_func(x):
@@ -147,7 +146,7 @@ class RNASeqData:
         self.nr_non_zero_samples = None
         self.total_sums = None
 
-    def save(self):
+    def save(self, normalization_types_list):
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
@@ -247,7 +246,10 @@ class RNASeqData:
             )
             print("Saved: " + self.save_dir + "total_sums.npy")
         for normtype in self.data_array:
-            if self.data_array[normtype] is not None:
+            if (
+                self.data_array[normtype] is not None
+                and normtype in normalization_types_list
+            ):
                 fp_data = np.memmap(
                     self.save_dir + normtype + "_data.bin",
                     dtype="float32",
@@ -676,21 +678,21 @@ class RNASeqData:
                 for i in argsort_annotations
             ]
         )
-        set_xticks1 = np.cumsum(
+        boundaries = np.cumsum(
             [0]
             + [
                 len(self.sample_indices_per_annotation[self.all_annotations[i]])
                 for i in argsort_annotations
             ]
         )
-        set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
-        set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
+        set_xticks2 = (boundaries[1:] + boundaries[:-1]) // 2
+        set_xticks = list(np.sort(np.concatenate((boundaries, set_xticks2))))
         set_xticks_text = ["|"] + list(
             np.concatenate(
                 [[str(self.all_annotations[i]), "|"] for i in argsort_annotations]
             )
         )
-        return list_samples, set_xticks, set_xticks_text
+        return list_samples, set_xticks, set_xticks_text, boundaries
 
     def function_scatter(
         self,
@@ -709,15 +711,34 @@ class RNASeqData:
         a different color"""
         assert sof_ == "samples" or sof_ == "features"
         set_xticks = None
+        violinplots_done = False
+        fig, ax = plt.subplots()
         if sof_ == "samples":
             if self.all_annotations is not None and function_plot_:
                 (
                     list_samples,
                     set_xticks,
                     set_xticks_text,
+                    boundaries,
                 ) = self._samples_by_annotations()
                 y = [func2_(i) for i in list_samples]
                 x = [i for i in range(self.nr_samples)]
+                for i in range(len(boundaries) - 1):
+                    parts = ax.violinplot(
+                        y[boundaries[i] : boundaries[i + 1]],
+                        [(boundaries[i + 1] + boundaries[i]) / 2.0],
+                        points=60,
+                        widths=(boundaries[i + 1] - boundaries[i]) * 0.8,
+                        showmeans=False,
+                        showextrema=False,
+                        showmedians=False,
+                        bw_method=0.5,
+                    )
+                    for pc in parts["bodies"]:
+                        pc.set_facecolor("#D43F3A")
+                        pc.set_edgecolor("grey")
+                        pc.set_alpha(0.5)
+                violinplots_done = True
             else:
                 y = [func2_(i) for i in range(self.nr_samples)]
                 x = [func1_(i) for i in range(self.nr_samples)]
@@ -726,8 +747,7 @@ class RNASeqData:
             x = [func1_(i) for i in range(self.nr_features)]
         xmax = np.max(x)
         xmin = np.min(x)
-        fig, ax = plt.subplots()
-        if violinplot_:
+        if violinplot_ and not violinplots_done:
             parts = ax.violinplot(
                 y,
                 [(xmax + xmin) / 2.0],
@@ -741,7 +761,7 @@ class RNASeqData:
             for pc in parts["bodies"]:
                 pc.set_facecolor("#D43F3A")
                 pc.set_edgecolor("grey")
-                pc.set_alpha(0.7)
+                pc.set_alpha(0.5)
         scax = ax.scatter(x, y, s=1)
         ann = ax.annotate(
             "",
@@ -811,41 +831,54 @@ class RNASeqData:
             identity_func, func_, sof_, cat_, violinplot_, function_plot_=True
         )
 
-    def feature_plot(self, feature_list_=None, normalization_type_="", cat_=None):
+    def feature_plot(self, features_=None, normalization_type_="", cat_=None):
         """displays """
         if normalization_type_ in self.data_array:
             data_ = self.data_array[normalization_type_]
         else:
             data_ = self.data
-        xsize = self.nr_samples
-        ysize = len(feature_list_)
-        set_xticks = None
-        set_xticks_text = None
-        plot_array = np.empty((len(feature_list_), xsize))
-        feature_indices_list_ = []
-        for idx in feature_list_:
+        if type(features_) == str or type(features_) == int:
+            idx = features_
             if type(idx) == str:
                 idx = self.feature_shortnames_ref[idx]
-            feature_indices_list_.append(idx)
-        if self.all_annotations is None:
-            for k, idx in enumerate(feature_indices_list_):
-                plot_array[k, :] = [data_[i, idx] for i in range(self.nr_samples)]
+            self.function_plot(lambda i: data_[i, idx], "samples")
         else:
-            list_samples, set_xticks, set_xticks_text = self._samples_by_annotations()
-            for k, idx in enumerate(feature_indices_list_):
-                plot_array[k, :] = [data_[i, idx] for i in list_samples]
+            xsize = self.nr_samples
+            ysize = len(features_)
+            set_xticks = None
+            set_xticks_text = None
+            plot_array = np.empty((len(features_), xsize))
+            feature_indices_list_ = []
+            for idx in features_:
+                if type(idx) == str:
+                    idx = self.feature_shortnames_ref[idx]
+                feature_indices_list_.append(idx)
+            if self.all_annotations is None:
+                for k, idx in enumerate(feature_indices_list_):
+                    plot_array[k, :] = [data_[i, idx] for i in range(self.nr_samples)]
+            else:
+                (
+                    list_samples,
+                    set_xticks,
+                    set_xticks_text,
+                    boundaries,
+                ) = self._samples_by_annotations()
+                for k, idx in enumerate(feature_indices_list_):
+                    plot_array[k, :] = [data_[i, idx] for i in list_samples]
 
-        fig, ax = plt.subplots()
-        im = ax.imshow(plot_array, extent=[0, xsize, 0, ysize], aspect="auto")
-        if set_xticks is not None:
-            plt.xticks(set_xticks, set_xticks_text)
-        plt.yticks(
-            np.arange(ysize) + 0.5,
-            [self.feature_names[i].split("|")[1] for i in feature_indices_list_][::-1],
-        )
-        plt.tick_params(axis=u"both", which=u"both", length=0)
-        plt.colorbar(im)
-        plt.show()
+            fig, ax = plt.subplots()
+            im = ax.imshow(plot_array, extent=[0, xsize, 0, ysize], aspect="auto")
+            if set_xticks is not None:
+                plt.xticks(set_xticks, set_xticks_text)
+            plt.yticks(
+                np.arange(ysize) + 0.5,
+                [self.feature_names[i].split("|")[1] for i in feature_indices_list_][
+                    ::-1
+                ],
+            )
+            plt.tick_params(axis=u"both", which=u"both", length=0)
+            plt.colorbar(im)
+            plt.show()
 
     def umap_plot(
         self,
