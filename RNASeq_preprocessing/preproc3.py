@@ -7,6 +7,6 @@ data = RNASeqData()
 data.save_dir = output_dir + "/dataset/RNASeq/"
 
 data.load(["raw"])
-data.compute_log_data()
+data.compute_normalization("log")
 data.data_array["raw"] = None
 data.save()

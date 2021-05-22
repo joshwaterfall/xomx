@@ -7,96 +7,116 @@ import umap
 # from IPython import embed as e
 
 
+def identity_func(x):
+    return x
+
+
 class RNASeqData:
     """
-    Attributes (None if they do not exist):
+    Attributes:
 
-    save_id -> directory where data is saved
+        save_dir (str or NoneType):
+            directory where data is saved
 
-    sample_ids -> array of IDs: the i-th sample has ID sample_ids[i] (starting at 0)
+        sample_ids (np.ndarray or NoneType):
+            array of IDs: the i-th sample has ID sample_ids[i] (starting at 0)
 
-    sample_indices -> sample of ID "#" has index sample_indices["#"]
+        sample_indices (dict or NoneType):
+            sample of ID "#" has index sample_indices["#"]
 
-    sample_annotations -> the i-th sample has annotation sample_annotations[i]
+        sample_annotations (np.ndarray or NoneType):
+            the i-th sample has annotation sample_annotations[i]
 
-    sample_origins -> sample_origins[i] is a string characterizing the dataset of
-                      origin for the i-th sample
+        sample_origins (np.ndarray or NoneType):
+            sample_origins[i] is a string characterizing the dataset of origin for the
+            i-th sample
 
-    sample_origins_per_annotation -> sample_origins_per_annotation["#"] is the set
-                                     of different origins for all the samples of
-                                     annotation "#"
+        sample_origins_per_annotation (dict or NoneType):
+            sample_origins_per_annotation["#"] is the set of different origins for all
+            the samples of annotation "#"
 
-    all_annotations -> list of all annotations
+        all_annotations (np.ndarray or NoneType):
+            list of all annotations
 
-    sample_indices_per_annotation -> sample_indices_per_annotation["#"] is the list
-                                     of indices of the samples of annotation "#"
+        sample_indices_per_annotation (dict or NoneType):
+            sample_indices_per_annotation["#"] is the list of indices of the samples of
+            annotation "#"
 
-    nr_features -> the total number of features for each sample
+        nr_features (int or NoneType):
+            the total number of features for each sample
 
-    nr_samples -> the total number of samples
+        nr_samples (int or NoneType):
+            the total number of samples
 
-    feature_names -> the i-th feature name is feature_names[i]; it should be a string
-                     of the form "<long_featureID>|<feature_shortname>"
+        feature_names (np.ndarray or NoneType):
+            the i-th feature name is feature_names[i]; it must be a string of the form
+            "<long_featureID>|<feature_shortname>" (<long_featureID> can be empty)
 
-    mean_expressions -> mean_expression[i] is the mean value of the i-th feature
-                            accross all samples
+        mean_expressions (np.ndarray or NoneType):
+            mean_expression[i] is the mean value of the i-th feature (in raw data)
+            accross all samples
 
-    std_expressions -> similar to mean_expression but standard deviation instead of mean
+        std_expressions (np.ndarray or NoneType):
+            similar to mean_expressions, but standard deviation instead of mean
 
-    train_indices_per_annotation -> annot_index["#"] is the list of indices of the
-                                    samples of annotation "#" which belong to the
-                                    training set
+        train_indices_per_annotation (dict or NoneType):
+            annot_index["#"] is the list of indices of the samples of annotation "#"
+            which belong to the training set
 
-    test_indices_per_annotation -> annot_index["#"] is the list of indices of the
-                                   samples of annotation "#" which belong to the
-                                   validation set
+        test_indices_per_annotation (dict or NoneType):
+            annot_index["#"] is the list of indices of the samples of annotation "#"
+            which belong to the validation set
 
-    feature_shortnames_ref -> if features have short IDs: feature_shortnames_ref["#"]
-                              is the index of the feature of short name "#"
+        feature_shortnames_ref (dict or NoneType):
+            if features have short IDs: feature_shortnames_ref["#"] is the index of the
+            feature of short name "#"
 
-    std_values_on_training_sets -> std_values_on_training_sets["#"][j] is the mean
-                                   value of the j-th feature, normalized by mean and
-                                   std_dev, across all samples of annotation "#"
-                                   belonging to the training set ; it is useful to
-                                   determine whether a transcript is up-regulated
-                                   for a given diagnosis (positive value), or
-                                   down-regulated (negative value)
+        std_values_on_training_sets (dict or NoneType):
+            std_values_on_training_sets["#"][j] is the mean value of the j-th feature,
+            normalized by mean and std_dev, across all samples of annotation "#"
+            belonging to the training set ; it is useful to determine whether a
+            feature is up-regulated for a given annotation (positive value), or
+            down-regulated (negative value)
 
-    std_values_on_training_sets_argsort -> std_values_on_training_sets_argsort["#"]
-                                           is the list of feature indices sorted by
-                                           decreasing value in
-                                           std_values_on_training_sets["#"]
+        std_values_on_training_sets_argsort (dict or NoneType):
+            std_values_on_training_sets_argsort["#"] is the list of feature indices
+            sorted by decreasing value in std_values_on_training_sets["#"]
 
-    epsilon_shift -> the value of the shift used for log-normalization of the data
+        epsilon_shift (float or NoneType):
+            the value of the shift used for log-normalization of the data
 
-    maxlog -> maximum value of the log data; it is a parameter computed during
-              log-normalization
+        maxlog (float or NoneType):
+            maximum value of the log data; it is a parameter computed during
+            log-normalization
 
-    data_array["raw"] -> data_array["raw"][i, j]: value of the j-th feature of
-                         the i-th sample
-
-    data_array["std"] -> data normalized by mean and standard deviation; the original
-                         value is:
+        data_array (dict):
+            - data_array["raw"]:
+                data_array["raw"][i, j]: value of the j-th feature of the i-th sample
+            - data_array["std"]: data normalized by mean and standard deviation; the
+            original value is:
                 data_array["raw"][i, j] == data_array["std"][i, j] * std_expression[j]
                                   + mean_expression[j]
-
-    data_array["log"] -> log-normalized values; the original value is:
+            - data_array["log"]: log-normalized values; the original value is:
                 data_array["raw"][i, j] == np.exp(
                             data_array["log"][i,j] * (maxlog - np.log(epsilon_shift)
                         ) + np.log(epsilon_shift)) - epsilon_shift
 
-    normalization_type -> if normalization_type=="raw", then data = data_array["raw"]
-                          if normalization_type=="std", then data = data_array["std"]
-                          if normalization_type=="log", then data = data_array["log"]
+        normalization_type (str or NoneType):
+            if normalization_type=="raw", then data = data_array["raw"]
+            if normalization_type=="std", then data = data_array["std"]
+            if normalization_type=="log", then data = data_array["log"]
 
-    nr_non_zero_features -> nr_non_zero_features[i] is, for the i-th sample, the number
-                            of features with positive values (in raw data)
+        nr_non_zero_features (int or NoneType):
+            nr_non_zero_features[i] is, for the i-th sample, the number of features with
+            positive values (in raw data)
 
-    nr_non_zero_samples -> nr_non_zero_samples[i] is the number of samples with positive
-                           values on the i-th feature (in raw data)
+        nr_non_zero_samples (int or NoneType):
+            nr_non_zero_samples[i] is the number of samples with positive values on the
+            i-th feature (in raw data)
 
-    total_sums -> total_sums[i] is, for the i-th sample, the sum of values (in raw data)
-                  accross all features
+        total_sums (np.ndarray or NoneType):
+            total_sums[i] is, for the i-th sample, the sum of values (in raw data)
+            accross all features
     """
 
     def __init__(self):
@@ -381,48 +401,40 @@ class RNASeqData:
             np.std(self.data_array["raw"][:, i]) for i in range(self.nr_features)
         ]
 
-    def compute_std_data(self):
-        assert (
-            self.data_array["raw"] is not None
-            and self.mean_expressions is not None
-            and self.std_expressions is not None
-            and self.nr_features is not None
-        )
-        self.data_array["std"] = np.copy(self.data_array["raw"])
-        for i in range(self.nr_features):
-            if self.std_expressions[i] == 0.0:
-                self.data_array["std"][:, i] = 0.0
-            else:
-                self.data_array["std"][:, i] = (
-                    self.data_array["std"][:, i] - self.mean_expressions[i]
-                ) / self.std_expressions[i]
-            # for j in range(self.nr_samples):
-            #     if self.std_expressions[i] == 0.0:
-            #         self.data_array["std"][j, i] = 0.0
-            #     else:
-            #         self.data_array["std"][j, i] = (
-            #                                       self.data_array["std"][j, i] -
-            #                                       self.mean_expressions[i]
-            #                               ) / self.std_expressions[i]
-
-    def compute_log_data(self):
-        assert (
-            self.data_array["raw"] is not None
-            and self.mean_expressions is not None
-            and self.std_expressions is not None
-            and self.nr_features is not None
-        )
-        self.data_array["log"] = np.copy(self.data_array["raw"])
-        self.epsilon_shift = 1.0
-        for i in range(self.nr_features):
-            self.data_array["log"][:, i] = np.log(
-                self.data_array["log"][:, i] + self.epsilon_shift
+    def compute_normalization(self, normtype):
+        if normtype == "std":
+            assert (
+                self.data_array["raw"] is not None
+                and self.mean_expressions is not None
+                and self.std_expressions is not None
+                and self.nr_features is not None
             )
-        self.maxlog = np.max(self.data_array["log"])
-        for i in range(self.nr_features):
-            self.data_array["log"][:, i] = (
-                self.data_array["log"][:, i] - np.log(self.epsilon_shift)
-            ) / (self.maxlog - np.log(self.epsilon_shift))
+            self.data_array["std"] = np.copy(self.data_array["raw"])
+            for i in range(self.nr_features):
+                if self.std_expressions[i] == 0.0:
+                    self.data_array["std"][:, i] = 0.0
+                else:
+                    self.data_array["std"][:, i] = (
+                        self.data_array["std"][:, i] - self.mean_expressions[i]
+                    ) / self.std_expressions[i]
+        elif normtype == "log":
+            assert (
+                self.data_array["raw"] is not None
+                and self.mean_expressions is not None
+                and self.std_expressions is not None
+                and self.nr_features is not None
+            )
+            self.data_array["log"] = np.copy(self.data_array["raw"])
+            self.epsilon_shift = 1.0
+            for i in range(self.nr_features):
+                self.data_array["log"][:, i] = np.log(
+                    self.data_array["log"][:, i] + self.epsilon_shift
+                )
+            self.maxlog = np.max(self.data_array["log"])
+            for i in range(self.nr_features):
+                self.data_array["log"][:, i] = (
+                    self.data_array["log"][:, i] - np.log(self.epsilon_shift)
+                ) / (self.maxlog - np.log(self.epsilon_shift))
 
     def compute_train_and_test_indices_per_annotation(self):
         assert self.sample_indices_per_annotation is not None
@@ -592,9 +604,9 @@ class RNASeqData:
         return np.where([re.search(rexpr, s) for s in self.feature_names])[0]
 
     def feature_func(self, idx, cat_=None, func_=np.mean):
-        """applies a function to the array of values of the feature of index idx, across
-        either all samples, or samples with annotation cat_;
-        the short name of the feature can be given instead of the index"""
+        """applies the function func_ to the array of values of the feature of index
+        idx, across either all samples, or samples with annotation cat_;
+        the short name of the feature can be given instead of the index idx"""
         if type(idx) == str:
             idx = self.feature_shortnames_ref[idx]
         if not cat_:
@@ -654,10 +666,36 @@ class RNASeqData:
     #         plt.scatter(x, y, s=1)
     #     plt.show()
 
+    def _samples_by_annotations(self):
+        argsort_annotations = np.argsort(
+            [len(self.sample_indices_per_annotation[i]) for i in self.all_annotations]
+        )[::-1]
+        list_samples = np.concatenate(
+            [
+                self.sample_indices_per_annotation[self.all_annotations[i]]
+                for i in argsort_annotations
+            ]
+        )
+        set_xticks1 = np.cumsum(
+            [0]
+            + [
+                len(self.sample_indices_per_annotation[self.all_annotations[i]])
+                for i in argsort_annotations
+            ]
+        )
+        set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
+        set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
+        set_xticks_text = ["|"] + list(
+            np.concatenate(
+                [[str(self.all_annotations[i]), "|"] for i in argsort_annotations]
+            )
+        )
+        return list_samples, set_xticks, set_xticks_text
+
     def function_scatter(
         self,
-        func1_=lambda x: x,
-        func2_=lambda x: x,
+        func1_=identity_func,
+        func2_=identity_func,
         sof_="samples",
         cat_=None,
         violinplot_=False,
@@ -673,35 +711,11 @@ class RNASeqData:
         set_xticks = None
         if sof_ == "samples":
             if self.all_annotations is not None and function_plot_:
-                argsort_annotations = np.argsort(
-                    [
-                        len(self.sample_indices_per_annotation[i])
-                        for i in self.all_annotations
-                    ]
-                )[::-1]
-                list_samples = np.concatenate(
-                    [
-                        self.sample_indices_per_annotation[self.all_annotations[i]]
-                        for i in argsort_annotations
-                    ]
-                )
-                set_xticks1 = np.cumsum(
-                    [0]
-                    + [
-                        len(self.sample_indices_per_annotation[self.all_annotations[i]])
-                        for i in argsort_annotations
-                    ]
-                )
-                set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
-                set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
-                set_xticks_text = ["|"] + list(
-                    np.concatenate(
-                        [
-                            [str(self.all_annotations[i]), "|"]
-                            for i in argsort_annotations
-                        ]
-                    )
-                )
+                (
+                    list_samples,
+                    set_xticks,
+                    set_xticks_text,
+                ) = self._samples_by_annotations()
                 y = [func2_(i) for i in list_samples]
                 x = [i for i in range(self.nr_samples)]
             else:
@@ -786,7 +800,7 @@ class RNASeqData:
         plt.show()
 
     def function_plot(
-        self, func_=lambda x: x, sof_="samples", cat_=None, violinplot_=True
+        self, func_=identity_func, sof_="samples", cat_=None, violinplot_=True
     ):
         """plots the value of a function on every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
@@ -794,7 +808,7 @@ class RNASeqData:
         if sof== "samples" and cat_ is not None the samples of annotation cat_ have a
         different color"""
         self.function_scatter(
-            lambda x: x, func_, sof_, cat_, violinplot_, function_plot_=True
+            identity_func, func_, sof_, cat_, violinplot_, function_plot_=True
         )
 
     def feature_plot(self, feature_list_=None, normalization_type_="", cat_=None):
@@ -817,32 +831,7 @@ class RNASeqData:
             for k, idx in enumerate(feature_indices_list_):
                 plot_array[k, :] = [data_[i, idx] for i in range(self.nr_samples)]
         else:
-            argsort_annotations = np.argsort(
-                [
-                    len(self.sample_indices_per_annotation[i])
-                    for i in self.all_annotations
-                ]
-            )[::-1]
-            list_samples = np.concatenate(
-                [
-                    self.sample_indices_per_annotation[self.all_annotations[i]]
-                    for i in argsort_annotations
-                ]
-            )
-            set_xticks1 = np.cumsum(
-                [0]
-                + [
-                    len(self.sample_indices_per_annotation[self.all_annotations[i]])
-                    for i in argsort_annotations
-                ]
-            )
-            set_xticks2 = (set_xticks1[1:] + set_xticks1[:-1]) // 2
-            set_xticks = list(np.sort(np.concatenate((set_xticks1, set_xticks2))))
-            set_xticks_text = ["|"] + list(
-                np.concatenate(
-                    [[str(self.all_annotations[i]), "|"] for i in argsort_annotations]
-                )
-            )
+            list_samples, set_xticks, set_xticks_text = self._samples_by_annotations()
             for k, idx in enumerate(feature_indices_list_):
                 plot_array[k, :] = [data_[i, idx] for i in list_samples]
 
@@ -1206,92 +1195,92 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
         plt.show()
 
 
-def umap_plot(
-    data,
-    x,
-    indices,
-    save_dir=None,
-    metric="euclidean",
-    min_dist=0.0,
-    n_neighbors=120,
-    random_state=42,
-):
-    reducer = umap.UMAP(
-        metric=metric,
-        min_dist=min_dist,
-        n_neighbors=n_neighbors,
-        random_state=random_state,
-    )
-    print("Starting UMAP reduction...")
-    reducer.fit(x)
-    embedding = reducer.transform(x)
-    print("Done.")
-
-    all_colors = []
-
-    def color_function(id_):
-        label_ = data.sample_annotations[indices[id_]]
-        type_ = data.sample_origins[indices[id_]]
-        clo = (
-            np.where(data.all_annotations == label_)[0],
-            list(data.sample_origins_per_annotation[label_]).index(type_),
-        )
-        if clo in all_colors:
-            return all_colors.index(clo)
-        else:
-            all_colors.append(clo)
-            return len(all_colors) - 1
-
-    def hover_function(id_):
-        return "{} / {}".format(
-            data.sample_annotations[indices[id_]],
-            data.sample_origins[indices[id_]],
-        )
-
-    samples_color = np.empty_like(indices)
-    for i in range(len(indices)):
-        samples_color[i] = color_function(i)
-
-    fig, ax = plt.subplots()
-
-    sc = plt.scatter(
-        embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
-    )
-    plt.gca().set_aspect("equal", "datalim")
-
-    ann = ax.annotate(
-        "",
-        xy=(0, 0),
-        xytext=(20, 20),
-        textcoords="offset points",
-        bbox=dict(boxstyle="round", fc="w"),
-        arrowprops=dict(arrowstyle="->"),
-    )
-    ann.set_visible(False)
-
-    def update_annot(ind):
-        pos = sc.get_offsets()[ind["ind"][0]]
-        ann.xy = pos
-        text = hover_function(ind["ind"][0])
-        ann.set_text(text)
-
-    def hover(event):
-        vis = ann.get_visible()
-        if event.inaxes == ax:
-            cont, ind = sc.contains(event)
-            if cont:
-                update_annot(ind)
-                ann.set_visible(True)
-                fig.canvas.draw_idle()
-            else:
-                if vis:
-                    ann.set_visible(False)
-                    fig.canvas.draw_idle()
-
-    fig.canvas.mpl_connect("motion_notify_event", hover)
-
-    if save_dir:
-        os.makedirs(save_dir, exist_ok=True)
-        plt.savefig(save_dir + "/plot.png", dpi=200)
-    else:
-        plt.show()
+# def umap_plot(
+#     data,
+#     x,
+#     indices,
+#     save_dir=None,
+#     metric="euclidean",
+#     min_dist=0.0,
+#     n_neighbors=120,
+#     random_state=42,
+# ):
+#     reducer = umap.UMAP(
+#         metric=metric,
+#         min_dist=min_dist,
+#         n_neighbors=n_neighbors,
+#         random_state=random_state,
+#     )
+#     print("Starting UMAP reduction...")
+#     reducer.fit(x)
+#     embedding = reducer.transform(x)
+#     print("Done.")
+#
+#     all_colors = []
+#
+#     def color_function(id_):
+#         label_ = data.sample_annotations[indices[id_]]
+#         type_ = data.sample_origins[indices[id_]]
+#         clo = (
+#             np.where(data.all_annotations == label_)[0],
+#             list(data.sample_origins_per_annotation[label_]).index(type_),
+#         )
+#         if clo in all_colors:
+#             return all_colors.index(clo)
+#         else:
+#             all_colors.append(clo)
+#             return len(all_colors) - 1
+#
+#     def hover_function(id_):
+#         return "{} / {}".format(
+#             data.sample_annotations[indices[id_]],
+#             data.sample_origins[indices[id_]],
+#         )
+#
+#     samples_color = np.empty_like(indices)
+#     for i in range(len(indices)):
+#         samples_color[i] = color_function(i)
+#
+#     fig, ax = plt.subplots()
+#
+#     sc = plt.scatter(
+#         embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
+#     )
+#     plt.gca().set_aspect("equal", "datalim")
+#
+#     ann = ax.annotate(
+#         "",
+#         xy=(0, 0),
+#         xytext=(20, 20),
+#         textcoords="offset points",
+#         bbox=dict(boxstyle="round", fc="w"),
+#         arrowprops=dict(arrowstyle="->"),
+#     )
+#     ann.set_visible(False)
+#
+#     def update_annot(ind):
+#         pos = sc.get_offsets()[ind["ind"][0]]
+#         ann.xy = pos
+#         text = hover_function(ind["ind"][0])
+#         ann.set_text(text)
+#
+#     def hover(event):
+#         vis = ann.get_visible()
+#         if event.inaxes == ax:
+#             cont, ind = sc.contains(event)
+#             if cont:
+#                 update_annot(ind)
+#                 ann.set_visible(True)
+#                 fig.canvas.draw_idle()
+#             else:
+#                 if vis:
+#                     ann.set_visible(False)
+#                     fig.canvas.draw_idle()
+#
+#     fig.canvas.mpl_connect("motion_notify_event", hover)
+#
+#     if save_dir:
+#         os.makedirs(save_dir, exist_ok=True)
+#         plt.savefig(save_dir + "/plot.png", dpi=200)
+#     else:
+#         plt.show()

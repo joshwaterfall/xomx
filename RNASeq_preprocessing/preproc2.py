@@ -7,7 +7,7 @@ data = RNASeqData()
 data.save_dir = output_dir + "/dataset/RNASeq/"
 
 data.load(["raw"])
-data.compute_std_data()
+data.compute_normalization("std")
 data.compute_train_and_test_indices_per_annotation()
 data.compute_std_values_on_training_sets()
 data.compute_std_values_on_training_sets_argsort()
