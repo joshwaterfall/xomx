@@ -6,6 +6,8 @@ from tools.basic_tools import (
     matthews_coef,
 )
 from sklearn.cluster import KMeans
+
+# , OPTICS, SpectralClustering
 from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 from tools.classifiers.multiclass import ScoreBasedMulticlass
 from tools.normalization.sctransform import compute_sctransform
@@ -27,10 +29,19 @@ n_clusters = 9
 gene_list = []
 
 if False:
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(
+    # clustering = OPTICS(min_samples=2).fit(
+    #     data.data_array["logsct"]
+    # )
+
+    clustering = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42).fit(
         data.data_array["logsct"]
     )
-    data.sample_annotations = kmeans.labels_
+
+    # clustering = SpectralClustering(n_clusters=n_clusters,
+    #                                 assign_labels='discretize',
+    #                                 random_state=42).fit(data.data_array["logsct"])
+
+    data.sample_annotations = clustering.labels_
     data.compute_all_annotations()
     data.compute_sample_indices_per_annotation()
     data.compute_train_and_test_indices_per_annotation()
@@ -38,6 +49,9 @@ if False:
     data.compute_std_values_on_training_sets_argsort()
 
     data.save(output_dir + "/dataset/scRNASeqKMEANS/")
+
+    e()
+    quit()
 
 classifier = ScoreBasedMulticlass()
 classifier.all_annotations = data.all_annotations
@@ -76,6 +90,9 @@ if False:
         print(gene_list)
 
     classifier.save(output_dir + "/results/scRNASeq/" + xaio_tag + "/multiclassif/")
+
+    e()
+    quit()
 else:
     for annotation in data.all_annotations:
         classifier.binary_classifiers[annotation] = RFEExtraTrees(
@@ -97,8 +114,8 @@ gene_list = list(
     np.concatenate(
         [
             classifier.binary_classifiers[annot_].current_feature_indices
-            # for annot_ in [4, 2, 7, 3, 5 ,1 ,6 ,0]
-            for annot_ in range(n_clusters)
+            for annot_ in [4, 2, 7, 3, 1, 8, 5, 0, 6]
+            # for annot_ in range(n_clusters)
         ]
     )
 )
@@ -123,9 +140,10 @@ classifier.binary_classifiers[0].plot()
 
 data.function_plot(lambda i: all_predictions[i], "samples", violinplot_=False)
 
-data.umap_plot("log")
+data.umap_plot("logsct")
 
 data.feature_plot(gene_list, "logsct")
+data.feature_plot(list(range(data.nr_features)), "logsct")
 
 data.feature_plot(["IL7R", "CCR7"], "log")
 

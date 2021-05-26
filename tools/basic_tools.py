@@ -882,7 +882,7 @@ class RNASeqData:
         self,
         normalization_type="",
         save_dir=None,
-        metric="euclidean",
+        metric="cosine",
         min_dist=0.0,
         n_neighbors=30,
         random_state=42,
