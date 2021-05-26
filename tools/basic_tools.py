@@ -134,6 +134,7 @@ class RNASeqData:
         self.std_expressions = None
         self.data = None
         self.data_array = {}
+        self.params = None
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
         self.feature_shortnames_ref = None
@@ -146,7 +147,9 @@ class RNASeqData:
         self.nr_non_zero_samples = None
         self.total_sums = None
 
-    def save(self, normalization_types_list):
+    def save(self, normalization_types_list=None, save_dir=None):
+        if save_dir is not None:
+            self.save_dir = save_dir
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
@@ -245,6 +248,11 @@ class RNASeqData:
                 self.total_sums,
             )
             print("Saved: " + self.save_dir + "total_sums.npy")
+        if self.params is not None:
+            np.save(
+                self.save_dir + "params.npy",
+                self.params,
+            )
         for normtype in self.data_array:
             if (
                 self.data_array[normtype] is not None
@@ -351,6 +359,10 @@ class RNASeqData:
             self.total_sums = np.load(
                 self.save_dir + "total_sums.npy", allow_pickle=True
             )
+        if os.path.exists(self.save_dir + "params.npy"):
+            self.params = np.load(
+                self.save_dir + "params.npy", allow_pickle=True
+            ).item()
         for normtype in normalization_types_list:
             if os.path.exists(self.save_dir + normtype + "_data.bin"):
                 self.data_array[normtype] = np.array(
@@ -420,12 +432,7 @@ class RNASeqData:
                         self.data_array["std"][:, i] - self.mean_expressions[i]
                     ) / self.std_expressions[i]
         elif normtype == "log":
-            assert (
-                self.data_array["raw"] is not None
-                and self.mean_expressions is not None
-                and self.std_expressions is not None
-                and self.nr_features is not None
-            )
+            assert self.data_array["raw"] is not None and self.nr_features is not None
             self.data_array["log"] = np.copy(self.data_array["raw"])
             self.epsilon_shift = 1.0
             for i in range(self.nr_features):
@@ -699,7 +706,6 @@ class RNASeqData:
         func1_=identity_func,
         func2_=identity_func,
         sof_="samples",
-        cat_=None,
         violinplot_=False,
         function_plot_=False,
     ):
@@ -811,27 +817,19 @@ class RNASeqData:
 
         fig.canvas.mpl_connect("motion_notify_event", hover)
 
-        if sof_ == "samples" and cat_ is not None:
-            y = [func2_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
-            x = [func1_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
-            ax.scatter(x, y, s=1)
         if set_xticks is not None:
             plt.xticks(set_xticks, set_xticks_text)
         plt.show()
 
-    def function_plot(
-        self, func_=identity_func, sof_="samples", cat_=None, violinplot_=True
-    ):
+    def function_plot(self, func_=identity_func, sof_="samples", violinplot_=True):
         """plots the value of a function on every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
-        (the function must take indices in input);
-        if sof== "samples" and cat_ is not None the samples of annotation cat_ have a
-        different color"""
+        (the function must take indices in input)"""
         self.function_scatter(
-            identity_func, func_, sof_, cat_, violinplot_, function_plot_=True
+            identity_func, func_, sof_, violinplot_, function_plot_=True
         )
 
-    def feature_plot(self, features_=None, normalization_type_="", cat_=None):
+    def feature_plot(self, features_=None, normalization_type_=""):
         """displays """
         if normalization_type_ in self.data_array:
             data_ = self.data_array[normalization_type_]
@@ -886,7 +884,7 @@ class RNASeqData:
         save_dir=None,
         metric="euclidean",
         min_dist=0.0,
-        n_neighbors=120,
+        n_neighbors=30,
         random_state=42,
     ):
         reducer = umap.UMAP(
@@ -932,7 +930,7 @@ class RNASeqData:
         fig, ax = plt.subplots()
 
         sc = plt.scatter(
-            embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
+            embedding[:, 0], embedding[:, 1], c=samples_color, cmap="nipy_spectral", s=5
         )
         plt.gca().set_aspect("equal", "datalim")
 
