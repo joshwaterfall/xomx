@@ -140,6 +140,7 @@ classifier.binary_classifiers[0].plot()
 
 data.function_plot(lambda i: all_predictions[i], "samples", violinplot_=False)
 
+data.reduce_features(gene_list)
 data.umap_plot("logsct")
 
 data.feature_plot(gene_list, "logsct")
