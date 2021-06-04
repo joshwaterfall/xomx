@@ -4,6 +4,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 import umap
+from xaio_config import output_dir
 
 
 def identity_func(x):
@@ -33,6 +34,10 @@ class RNASeqData:
         sample_origins_per_annotation (dict or NoneType):
             sample_origins_per_annotation["#"] is the set of different origins for all
             the samples of annotation "#"
+
+        sample_infos (dict or NoneType):
+            sample_infos[i] is a dict containing additional information on the i-th
+            sample
 
         all_annotations (np.ndarray or NoneType):
             list of all annotations
@@ -125,6 +130,7 @@ class RNASeqData:
         self.sample_annotations = None
         self.sample_origins = None
         self.sample_origins_per_annotation = None
+        self.sample_infos = None
         self.all_annotations = None
         self.sample_indices_per_annotation = None
         self.nr_features = None
@@ -150,6 +156,7 @@ class RNASeqData:
     def save(self, normalization_types_list=None, save_dir=None):
         if save_dir is not None:
             self.save_dir = save_dir
+        assert self.save_dir.startswith(output_dir)
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
@@ -170,6 +177,12 @@ class RNASeqData:
                 self.sample_indices_per_annotation,
             )
             print("Saved: " + self.save_dir + "sample_indices_per_annotation.npy")
+        if self.sample_infos is not None:
+            np.save(
+                self.save_dir + "sample_infos.npy",
+                self.sample_infos,
+            )
+            print("Saved: " + self.save_dir + "sample_infos.npy")
         if self.sample_annotations is not None:
             np.save(self.save_dir + "sample_annotations.npy", self.sample_annotations)
             print("Saved: " + self.save_dir + "sample_annotations.npy")
@@ -289,6 +302,10 @@ class RNASeqData:
         if os.path.exists(self.save_dir + "sample_indices_per_annotation.npy"):
             self.sample_indices_per_annotation = np.load(
                 self.save_dir + "sample_indices_per_annotation.npy", allow_pickle=True
+            ).item()
+        if os.path.exists(self.save_dir + "sample_infos.npy"):
+            self.sample_infos = np.load(
+                self.save_dir + "sample_infos.npy", allow_pickle=True
             ).item()
         if os.path.exists(self.save_dir + "sample_annotations.npy"):
             self.sample_annotations = np.load(
@@ -917,7 +934,9 @@ class RNASeqData:
         #         return len(all_colors) - 1
 
         def hover_function(id_):
-            return "{}".format(str(self.sample_annotations[id_]))
+            return "{}".format(
+                self.sample_ids[id_] + ": " + str(self.sample_annotations[id_])
+            )
 
         annot_idxs = {}
         for i, annot_ in enumerate(self.all_annotations):
@@ -1220,6 +1239,7 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
     fig.canvas.mpl_connect("motion_notify_event", hover)
 
     if save_dir:
+        assert save_dir.startswith(output_dir)
         os.makedirs(save_dir, exist_ok=True)
         plt.savefig(save_dir + "/plot.png", dpi=200)
     else:

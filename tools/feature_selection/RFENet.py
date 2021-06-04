@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 from tools.basic_tools import confusion_matrix, naive_feature_selection, plot_scores
 from joblib import dump, load
+from xaio_config import output_dir
 
 # from IPython import embed as e
 
@@ -128,6 +129,7 @@ class RFENet:
         return self.net.score(x)
 
     def save(self, fpath):
+        assert fpath.startswith(output_dir)
         sdir = fpath + "/" + self.__class__.__name__
         os.makedirs(sdir, exist_ok=True)
         self.save_nets([self.net], sdir)

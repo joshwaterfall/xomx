@@ -9,7 +9,7 @@ root_dir is the root directory of the xaio library.
 
 xaioconfig = root_dir + "/xaio_config.txt"
 
-""" User-defined variables (run configure.py to define them): """
+""" User-defined variable (run configure.py to set it): """
 
 if os.path.exists(xaioconfig):
     with open(xaioconfig, "r") as f:
@@ -17,9 +17,5 @@ if os.path.exists(xaioconfig):
 
     output_dir = lines[0].rstrip()
     """
-    output_dir is the directory where all outputs will be saved.
+    output_dir is the directory in which all outputs should be saved.
     """
-
-""" Other config variables: """
-
-xaio_tag = "xaio_tag_1"

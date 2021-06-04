@@ -31,13 +31,22 @@ rnaseq_array = pd.read_table(CSV_RNASeq_data, header=0, engine="c").to_numpy()
 data.nr_features = rnaseq_array.shape[0]
 data.nr_samples = len(rnaseq_array[0][0].split(",")) - 1
 raw_data_transpose = np.zeros((data.nr_features, data.nr_samples))
-data.feature_names = np.empty((data.nr_samples,), dtype=object)
-for i in range(data.nr_samples):
+
+data.feature_names = np.empty((data.nr_features,), dtype=object)
+for i in range(data.nr_features):
     row_value = rnaseq_array[i][0].split(",")
     data.feature_names[i] = row_value[0]
     raw_data_transpose[i, :] = row_value[1:]
-    if not i % (data.nr_samples // 100):
-        print(i // (data.nr_samples // 100), "%\r", end="")
+    if not i % (data.nr_features // 100):
+        print(i // (data.nr_features // 100), "%\r", end="")
+
+# data.feature_names = np.empty((data.nr_samples,), dtype=object)
+# for i in range(data.nr_samples):
+#     row_value = rnaseq_array[i][0].split(",")
+#     data.feature_names[i] = row_value[0]
+#     raw_data_transpose[i, :] = row_value[1:]
+#     if not i % (data.nr_samples // 100):
+#         print(i // (data.nr_samples // 100), "%\r", end="")
 
 data.data_array["raw"] = raw_data_transpose.transpose()
 data.compute_mean_expressions()

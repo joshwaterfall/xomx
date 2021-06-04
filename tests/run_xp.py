@@ -1,4 +1,4 @@
-from xaio_config import output_dir, xaio_tag
+from xaio_config import output_dir
 
 # from RNASeq_preprocessing.load import loadRNASeq
 from tools.basic_tools import (
@@ -17,6 +17,8 @@ from tools.feature_selection.RFENet import RFENet
 from IPython import embed as e
 
 _ = RFEExtraTrees, RFENet
+
+xaio_tag = "xaio_tag_1"
 
 # data = loadRNASeq("log")
 # data = loadRNASeq("raw")
