@@ -538,6 +538,8 @@ class RNASeqData:
             self.sample_ids = np.take(self.sample_ids, idx_list)
         if self.sample_annotations is not None:
             self.sample_annotations = np.take(self.sample_annotations, idx_list)
+        if self.sample_infos is not None:
+            self.sample_infos = np.take(self.sample_infos, idx_list)
         if self.sample_indices is not None:
             self.compute_sample_indices()
         if self.all_annotations is not None:
@@ -1163,14 +1165,17 @@ def naive_feature_selection(
     annotation,
     selection_size,
 ):
-    feature_indices = np.array(
-        data.std_values_on_training_sets_argsort[annotation][
-            : (selection_size // 2)
-        ].tolist()
-        + data.std_values_on_training_sets_argsort[annotation][
-            -(selection_size - selection_size // 2) :
-        ].tolist()
-    )
+    if selection_size >= data.nr_features:
+        feature_indices = list(range(data.nr_features))
+    else:
+        feature_indices = np.array(
+            data.std_values_on_training_sets_argsort[annotation][
+                : (selection_size // 2)
+            ].tolist()
+            + data.std_values_on_training_sets_argsort[annotation][
+                -(selection_size - selection_size // 2) :
+            ].tolist()
+        )
     return feature_selection_from_list(data, annotation, feature_indices)
 
 
