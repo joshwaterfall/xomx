@@ -24,6 +24,8 @@ from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
 from IPython import embed as e
 
+assert e
+
 # _ = RFEExtraTrees, RFENet
 
 data = RNASeqData()

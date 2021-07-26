@@ -1,4 +1,7 @@
 import numpy as np
+from IPython import embed as e
+
+assert e
 
 
 def sequence_to_onehot(sequence):

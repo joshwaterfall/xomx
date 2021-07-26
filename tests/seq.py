@@ -1,7 +1,9 @@
 # from tools.sequence_analysis import sequence_to_onehot
-from IPython import embed as e
 import pandas as pd
 import numpy as np
+from IPython import embed as e
+
+assert e
 
 
 def kmers(seq, n):

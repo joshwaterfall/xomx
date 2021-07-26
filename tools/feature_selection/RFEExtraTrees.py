@@ -4,8 +4,9 @@ from sklearn.ensemble import ExtraTreesClassifier
 from tools.basic_tools import confusion_matrix, naive_feature_selection, plot_scores
 from joblib import dump, load
 from xaio_config import output_dir
+from IPython import embed as e
 
-# from IPython import embed as e
+assert e
 
 
 class RFEExtraTrees:

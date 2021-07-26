@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import f_regression
 from xaio_config import output_dir
+from IPython import embed as e
+
+assert e
 
 # , chi2, f_classif
 # from sklearn.feature_selection import f_classif

@@ -15,6 +15,8 @@ from tools.normalization.sctransform import compute_sctransform
 # compute_logsctransform
 from IPython import embed as e
 
+assert e
+
 data = RNASeqData()
 data.save_dir = output_dir + "/dataset/scRNASeqKMEANS/"
 data.load(["logsct", "std", "raw"])

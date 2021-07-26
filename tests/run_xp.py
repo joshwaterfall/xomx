@@ -16,6 +16,8 @@ from tools.feature_selection.RFENet import RFENet
 
 from IPython import embed as e
 
+assert e
+
 _ = RFEExtraTrees, RFENet
 
 xaio_tag = "xaio_tag_1"

@@ -3,6 +3,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from tools.basic_tools import confusion_matrix, feature_selection_from_list, plot_scores
 import numpy as np
+from IPython import embed as e
+
+assert e
 
 
 class LinearSGD:

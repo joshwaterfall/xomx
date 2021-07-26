@@ -5,6 +5,9 @@ import re
 import matplotlib.pyplot as plt
 import umap
 from xaio_config import output_dir
+from IPython import embed as e
+
+assert e
 
 
 def identity_func(x):

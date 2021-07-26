@@ -3,6 +3,9 @@ from SCTransform import SCTransform
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 import numpy as np
+from IPython import embed as e
+
+assert e
 
 
 def compute_sctransform(data: RNASeqData):

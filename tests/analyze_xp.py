@@ -13,6 +13,8 @@ import os
 
 from IPython import embed as e
 
+assert e
+
 _ = RFEExtraTrees, RFENet
 
 data = load()
