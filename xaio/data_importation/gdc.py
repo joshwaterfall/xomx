@@ -1,4 +1,5 @@
 import requests
+import os
 import pandas as pd
 from io import StringIO
 from IPython import embed as e
@@ -74,3 +75,35 @@ def gdc_create_manifest(disease_type, project_list, nr_of_cases_list):
         df = df[["id", "filename", "md5", "size", "state", "annotation"]]
         df_list.append(df)
     return df_list
+
+
+def gdc_create_data_matrix(dir_path, manifest_path, output_filename):
+    manifest = pd.read_table(manifest_path)
+    df_list = []
+    nr_of_samples = manifest.shape[0]
+    for i in range(nr_of_samples):
+        if not i % 10:
+            print("  " + str(i) + "/" + str(nr_of_samples), end="\r")
+        if os.path.exists(
+            os.path.join(dir_path, manifest["id"][i], manifest["filename"][i])
+        ):
+            df_list.append(
+                pd.read_table(
+                    os.path.join(dir_path, manifest["id"][i], manifest["filename"][i]),
+                    header=None,
+                )
+                .rename(columns={1: manifest["id"][i]})
+                .set_index(0)
+            )
+
+    df_total = df_list[0].join(df_list[1:])
+    df_total.index.name = None
+    df_total.to_csv(
+        os.path.join(dir_path, output_filename),
+        header=True,
+        index=True,
+        sep="\t",
+        mode="w",
+        compression="gzip",
+    )
+    return df_total
