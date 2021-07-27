@@ -19,7 +19,7 @@ if os.path.exists(xaioconfig):
     with open(xaioconfig, "r") as f:
         lines = f.readlines()
 
-    if lines == []:
+    if not lines:
         output_dir = tempfile.gettempdir()
     else:
         output_dir = lines[0].rstrip()

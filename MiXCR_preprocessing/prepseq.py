@@ -7,6 +7,7 @@ import numpy as np
 import random
 from biotransformers import BioTransformers
 
+assert BioTransformers
 # from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
 
