@@ -77,7 +77,7 @@ def gdc_create_manifest(disease_type, project_list, nr_of_cases_list):
     return df_list
 
 
-def gdc_create_data_matrix(dir_path, manifest_path, output_filename):
+def gdc_create_data_matrix(dir_path, manifest_path):
     manifest = pd.read_table(manifest_path)
     df_list = []
     nr_of_samples = manifest.shape[0]
@@ -98,12 +98,12 @@ def gdc_create_data_matrix(dir_path, manifest_path, output_filename):
 
     df_total = df_list[0].join(df_list[1:])
     df_total.index.name = None
-    df_total.to_csv(
-        os.path.join(dir_path, output_filename),
-        header=True,
-        index=True,
-        sep="\t",
-        mode="w",
-        compression="gzip",
-    )
+    # df_total.to_csv(
+    #     os.path.join(dir_path, output_filename),
+    #     header=True,
+    #     index=True,
+    #     sep="\t",
+    #     mode="w",
+    #     compression="gzip",
+    # )
     return df_total

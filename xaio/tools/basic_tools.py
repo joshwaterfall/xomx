@@ -126,6 +126,7 @@ class XAIOData:
         self.nr_features = None
         self.nr_samples = None
         self.feature_names = None
+        self.feature_indices = None
         self.mean_expressions = None
         self.std_expressions = None
         self.data = None
@@ -133,7 +134,6 @@ class XAIOData:
         self.params = None
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
-        self.feature_indices = None
         self.std_values_on_training_sets = None
         self.std_values_on_training_sets_argsort = None
         self.epsilon_shift = None
@@ -144,6 +144,8 @@ class XAIOData:
         self.total_sums = None
 
     def save(self, normalization_types_list=None, save_dir=None):
+        if normalization_types_list is None:
+            normalization_types_list = []
         if save_dir is not None:
             self.save_dir = save_dir
         assert self.save_dir is not None
@@ -293,12 +295,15 @@ class XAIOData:
                 del fp_data
                 print("Saved: " + os.path.join(self.save_dir, normtype + "_data.bin"))
 
-    def load(self, normalization_types_list, load_dir=None):
-        if load_dir is None and self.save_dir is not None:
+    def load(self, normalization_types_list=None, load_dir=None):
+        if normalization_types_list is None:
+            normalization_types_list = []
+        if load_dir is None:
+            assert self.save_dir is not None
             ldir = self.save_dir
         else:
             ldir = load_dir
-        assert ldir is not None
+            self.save_dir = load_dir
         if os.path.exists(os.path.join(ldir, "nr_features.npy")):
             self.nr_features = np.load(
                 os.path.join(ldir, "nr_features.npy"), allow_pickle=True
@@ -649,6 +654,20 @@ class XAIOData:
             return func_(
                 [self.data[i_, idx] for i_ in self.sample_indices_per_annotation[cat_]]
             )
+
+    def import_pandas(self, df):
+        self.sample_ids = df.columns.to_numpy()
+        self.nr_samples = len(self.sample_ids)
+        self.compute_sample_indices()
+        self.feature_names = df.index.to_numpy()
+        self.nr_features = len(self.feature_names)
+        self.compute_feature_indices()
+        self.data_array["raw"] = df.to_numpy().transpose()
+        self.compute_mean_expressions()
+        self.compute_std_expressions()
+        self.compute_nr_non_zero_features()
+        self.compute_nr_non_zero_samples()
+        self.compute_total_sums()
 
     # def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
     #     """plots the value of the feature of index idx for all samples;
