@@ -1,4 +1,5 @@
 from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
+from xaio.tools.basic_tools import XAIOData
 import pandas as pd
 import os
 import shutil
@@ -47,6 +48,7 @@ if not os.path.exists(os.path.join("TCGA_samples", "manifest.txt")):
         sep="\t",
         mode="w",
     )
+    print("STEP 1: done")
     quit()
 
 """
@@ -63,6 +65,7 @@ if (
         "gdc-client download -d TCGA_samples -m "
         + os.path.join("TCGA_samples", "manifest.txt")
     )
+    print("STEP 2: done")
     quit()
 
 """
@@ -79,9 +82,14 @@ if not os.path.exists(os.path.join("TCGA_samples", "data_matrix.csv.gz")):
     for sample_dir in next(os.walk("TCGA_samples"))[1]:
         shutil.rmtree(os.path.join("TCGA_samples", sample_dir), ignore_errors=True)
         # os.rmdir(os.path.join("TCGA_samples", sample_dir))
+
+    print("STEP 3: done")
     quit()
 
+xdata = XAIOData()
 df = pd.read_table(os.path.join("TCGA_samples", "data_matrix.csv.gz"))
+# xdata.import_panda(df)
+
 e()
 # manifest = pd.read_table(os.path.join("TCGA_samples", "manifest.txt"))
 # df_list = []

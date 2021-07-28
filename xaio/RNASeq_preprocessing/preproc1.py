@@ -1,6 +1,6 @@
-from xaio_config import output_dir
-from tools.basic_tools import RNASeqData
-from RNASeq_preprocessing.config import (
+from xaio.xaio_config import output_dir
+from xaio.tools.basic_tools import XAIOData
+from xaio.RNASeq_preprocessing.config import (
     CSV_RNASeq_data,
     CSV_annotations,
     CSV_annot_types,
@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from IPython import embed as e
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/RNASeq/"
 
 rnaseq_read = pd.read_table(CSV_RNASeq_data, sep=",", header=0, engine="c", nrows=1)

@@ -1,7 +1,7 @@
 import numpy as np
 from xaio.xaio_config import output_dir, xaio_tag
 from xaio.tools.basic_tools import (
-    RNASeqData,
+    XAIOData,
     confusion_matrix,
     matthews_coef,
 )
@@ -28,7 +28,7 @@ assert e
 
 # _ = RFEExtraTrees, RFENet
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/scRNASeq/"
 data.load(["raw", "std", "log"])
 

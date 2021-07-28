@@ -1,6 +1,6 @@
 # from tools.sequence_analysis import sequence_to_onehot_vec
-from tools.basic_tools import RNASeqData
-from xaio_config import output_dir
+from xaio.tools.basic_tools import XAIOData
+from xaio.xaio_config import output_dir
 from IPython import embed as e
 import pandas as pd
 import numpy as np
@@ -57,7 +57,7 @@ def analyze_seq(seq_rd, annotation_, seq_dict=None):
     #     del seq_dict[key]
 
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/MiXCR/subset_RECUR/"
 
 if False:

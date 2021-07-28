@@ -1,5 +1,5 @@
 import os
-from xaio_config import root_dir
+from xaio.xaio_config import root_dir
 
 scRNASeq_data = input("Input path for scRNASeq_data (see description in config.py):")
 scRNASeq_features = input(

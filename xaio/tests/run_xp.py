@@ -2,7 +2,7 @@ from xaio.xaio_config import output_dir
 
 # from RNASeq_preprocessing.load import loadRNASeq
 from xaio.tools.basic_tools import (
-    RNASeqData,
+    XAIOData,
     confusion_matrix,
     matthews_coef,
     umap_plot,
@@ -26,7 +26,7 @@ xaio_tag = "xaio_tag_1"
 # data = loadRNASeq("raw")
 # ft = FeatureTools(data)
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/RNASeq/"
 data.load(["std"])
 

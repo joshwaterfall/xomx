@@ -1,4 +1,4 @@
-from xaio_config import output_dir, xaio_tag
+from xaio.xaio_config import output_dir, xaio_tag
 from xaio.tools.basic_tools import (
     load,
     FeatureTools,

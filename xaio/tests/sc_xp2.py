@@ -1,7 +1,7 @@
 import numpy as np
 from xaio.xaio_config import output_dir, xaio_tag
 from xaio.tools.basic_tools import (
-    RNASeqData,
+    XAIOData,
     confusion_matrix,
     matthews_coef,
 )
@@ -17,7 +17,7 @@ from IPython import embed as e
 
 assert e
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/scRNASeqKMEANS/"
 data.load(["logsct", "std", "raw"])
 

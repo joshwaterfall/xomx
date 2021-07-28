@@ -1,6 +1,6 @@
-from xaio_config import output_dir
-from tools.basic_tools import RNASeqData
-from scRNASeq_preprocessing.config import (
+from xaio.xaio_config import output_dir
+from xaio.tools.basic_tools import XAIOData
+from xaio.scRNASeq_preprocessing.config import (
     scRNASeq_data,
     scRNASeq_features,
     scRNASeq_barcodes,
@@ -17,7 +17,7 @@ feature_ids = [
 ]
 barcodes = [row[0] for row in csv.reader(open(scRNASeq_barcodes), delimiter="\t")]
 
-data = RNASeqData()
+data = XAIOData()
 data.save_dir = output_dir + "/dataset/scRNASeq/"
 data.data_array["raw"] = mat.todense().transpose()
 data.nr_features = len(feature_ids)

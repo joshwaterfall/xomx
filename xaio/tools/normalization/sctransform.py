@@ -1,4 +1,4 @@
-from tools.basic_tools import RNASeqData
+from xaio.tools.basic_tools import XAIOData
 from SCTransform import SCTransform
 from anndata import AnnData
 from scipy.sparse import csr_matrix
@@ -8,7 +8,7 @@ from IPython import embed as e
 assert e
 
 
-def compute_sctransform(data: RNASeqData):
+def compute_sctransform(data: XAIOData):
     assert data.data_array["raw"] is not None
     tmp_csr = AnnData(csr_matrix(data.data_array["raw"]))
 
@@ -26,7 +26,7 @@ def compute_sctransform(data: RNASeqData):
     data.data_array["sct"] = sct_data.X.toarray()
 
 
-def compute_logsctransform(data: RNASeqData):
+def compute_logsctransform(data: XAIOData):
     assert data.data_array["sct"] is not None and data.nr_features is not None
     data.data_array["logsct"] = np.copy(data.data_array["sct"])
     if data.params is None:

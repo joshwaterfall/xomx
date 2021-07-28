@@ -13,7 +13,7 @@ def identity_func(x):
     return x
 
 
-class RNASeqData:
+class XAIOData:
     """
     Attributes:
 
@@ -55,8 +55,10 @@ class RNASeqData:
             the total number of samples
 
         feature_names (np.ndarray or NoneType):
-            the i-th feature name is feature_names[i]; it must be a string of the form
-            "<long_featureID>|<feature_shortname>" (<long_featureID> can be empty)
+            the i-th feature name is feature_names[i]
+
+        feature_indices (dict or NoneType):
+            feature_indices["#"] is the index of the feature of name "#"
 
         mean_expressions (np.ndarray or NoneType):
             mean_expression[i] is the mean value of the i-th feature (in raw data)
@@ -72,10 +74,6 @@ class RNASeqData:
         test_indices_per_annotation (dict or NoneType):
             annot_index["#"] is the list of indices of the samples of annotation "#"
             which belong to the validation set
-
-        feature_shortnames_ref (dict or NoneType):
-            if features have short IDs: feature_shortnames_ref["#"] is the index of the
-            feature of short name "#"
 
         std_values_on_training_sets (dict or NoneType):
             std_values_on_training_sets["#"][j] is the mean value of the j-th feature,
@@ -145,7 +143,7 @@ class RNASeqData:
         self.params = None
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
-        self.feature_shortnames_ref = None
+        self.feature_indices = None
         self.std_values_on_training_sets = None
         self.std_values_on_training_sets_argsort = None
         self.epsilon_shift = None
@@ -239,12 +237,12 @@ class RNASeqData:
         if self.maxlog is not None:
             np.save(self.save_dir + "maxlog.npy", self.maxlog)
             print("Saved: " + self.save_dir + "maxlog.npy")
-        if self.feature_shortnames_ref is not None:
+        if self.feature_indices is not None:
             np.save(
-                self.save_dir + "feature_shortnames_ref.npy",
-                self.feature_shortnames_ref,
+                self.save_dir + "feature_indices.npy",
+                self.feature_indices,
             )
-            print("Saved: " + self.save_dir + "feature_shortnames_ref.npy")
+            print("Saved: " + self.save_dir + "feature_indices.npy")
         if self.nr_non_zero_features is not None:
             np.save(
                 self.save_dir + "nr_non_zero_features.npy",
@@ -327,9 +325,9 @@ class RNASeqData:
             self.std_expressions = np.load(
                 ldir + "std_expressions.npy", allow_pickle=True
             )
-        if os.path.exists(ldir + "feature_shortnames_ref.npy"):
-            self.feature_shortnames_ref = np.load(
-                ldir + "feature_shortnames_ref.npy", allow_pickle=True
+        if os.path.exists(ldir + "feature_indices.npy"):
+            self.feature_indices = np.load(
+                ldir + "feature_indices.npy", allow_pickle=True
             ).item()
         if os.path.exists(ldir + "sample_origins.npy"):
             self.sample_origins = np.load(
@@ -466,11 +464,17 @@ class RNASeqData:
             self.test_indices_per_annotation[annot] = idxs[:cut]
             self.train_indices_per_annotation[annot] = idxs[cut:]
 
-    def compute_feature_shortnames_ref(self):
+    def compute_feature_indices(self):
         assert self.feature_names is not None
-        self.feature_shortnames_ref = {}
+        self.feature_indices = {}
         for i, elt in enumerate(self.feature_names):
-            self.feature_shortnames_ref[elt.split("|")[1]] = i
+            self.feature_indices[elt] = i
+
+    # def compute_feature_shortnames_ref(self):
+    #     assert self.feature_names is not None
+    #     self.feature_shortnames_ref = {}
+    #     for i, elt in enumerate(self.feature_names):
+    #         self.feature_shortnames_ref[elt.split("|")[1]] = i
 
     def compute_std_values_on_training_sets(self):
         assert (
@@ -580,8 +584,8 @@ class RNASeqData:
             self.mean_expressions = np.take(self.mean_expressions, idx_list)
         if self.std_expressions is not None:
             self.std_expressions = np.take(self.std_expressions, idx_list)
-        if self.feature_shortnames_ref is not None:
-            self.compute_feature_shortnames_ref()
+        if self.feature_indices is not None:
+            self.compute_feature_indices()
         for normtype in self.data_array:
             if self.data_array[normtype] is not None:
                 self.data_array[normtype] = np.take(
@@ -628,9 +632,9 @@ class RNASeqData:
     def feature_func(self, idx, cat_=None, func_=np.mean):
         """applies the function func_ to the array of values of the feature of index
         idx, across either all samples, or samples with annotation cat_;
-        the short name of the feature can be given instead of the index idx"""
+        the name of the feature can be given instead of the index idx"""
         if type(idx) == str:
-            idx = self.feature_shortnames_ref[idx]
+            idx = self.feature_indices[idx]
         if not cat_:
             return func_(self.data[:, idx])
         else:
@@ -852,7 +856,7 @@ class RNASeqData:
         if type(features_) == str or type(features_) == int:
             idx = features_
             if type(idx) == str:
-                idx = self.feature_shortnames_ref[idx]
+                idx = self.feature_indices[idx]
             self.function_plot(lambda i: data_[i, idx], "samples")
         else:
             xsize = self.nr_samples
@@ -863,7 +867,7 @@ class RNASeqData:
             feature_indices_list_ = []
             for idx in features_:
                 if type(idx) == str:
-                    idx = self.feature_shortnames_ref[idx]
+                    idx = self.feature_indices[idx]
                 feature_indices_list_.append(idx)
             if self.all_annotations is None:
                 for k, idx in enumerate(feature_indices_list_):
@@ -1121,7 +1125,7 @@ def feature_selection_from_list(
     f_indices = np.zeros_like(feature_indices, dtype=np.int64)
     for i in range(len(f_indices)):
         if type(feature_indices[i]) == str or type(feature_indices[i]) == np.str_:
-            f_indices[i] = data.feature_shortnames_ref[feature_indices[i]]
+            f_indices[i] = data.feature_indices[feature_indices[i]]
         else:
             f_indices[i] = feature_indices[i]
     # train_indices = sum(data.train_indices_per_annotation.values(), [])
