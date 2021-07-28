@@ -29,14 +29,6 @@ class XAIOData:
         sample_annotations (np.ndarray or NoneType):
             the i-th sample has annotation sample_annotations[i]
 
-        sample_origins (np.ndarray or NoneType):
-            sample_origins[i] is a string characterizing the dataset of origin for the
-            i-th sample
-
-        sample_origins_per_annotation (dict or NoneType):
-            sample_origins_per_annotation["#"] is the set of different origins for all
-            the samples of annotation "#"
-
         sample_infos (dict or NoneType):
             sample_infos[i] is a dict containing additional information on the i-th
             sample
@@ -128,8 +120,6 @@ class XAIOData:
         self.sample_ids = None
         self.sample_indices = None
         self.sample_annotations = None
-        self.sample_origins = None
-        self.sample_origins_per_annotation = None
         self.sample_infos = None
         self.all_annotations = None
         self.sample_indices_per_annotation = None
@@ -198,15 +188,6 @@ class XAIOData:
         if self.std_expressions is not None:
             np.save(self.save_dir + "std_expressions.npy", self.std_expressions)
             print("Saved: " + self.save_dir + "std_expressions.npy")
-        if self.sample_origins is not None:
-            np.save(self.save_dir + "sample_origins.npy", self.sample_origins)
-            print("Saved: " + self.save_dir + "sample_origins.npy")
-        if self.sample_origins_per_annotation is not None:
-            np.save(
-                self.save_dir + "sample_origins_per_annotation.npy",
-                self.sample_origins_per_annotation,
-            )
-            print("Saved: " + self.save_dir + "sample_origins_per_annotations.npy")
         if self.train_indices_per_annotation is not None:
             np.save(
                 self.save_dir + "train_indices_per_annotation.npy",
@@ -329,14 +310,6 @@ class XAIOData:
             self.feature_indices = np.load(
                 ldir + "feature_indices.npy", allow_pickle=True
             ).item()
-        if os.path.exists(ldir + "sample_origins.npy"):
-            self.sample_origins = np.load(
-                ldir + "sample_origins.npy", allow_pickle=True
-            )
-        if os.path.exists(ldir + "sample_origins_per_annotation.npy"):
-            self.sample_origins_per_annotation = np.load(
-                ldir + "sample_origins_per_annotation.npy", allow_pickle=True
-            ).item()
         if os.path.exists(ldir + "train_indices_per_annotation.npy"):
             self.train_indices_per_annotation = np.load(
                 ldir + "train_indices_per_annotation.npy", allow_pickle=True
@@ -403,14 +376,6 @@ class XAIOData:
     def compute_all_annotations(self):
         assert self.sample_annotations is not None
         self.all_annotations = np.array(list(dict.fromkeys(self.sample_annotations)))
-
-    def compute_sample_origins_per_annotation(self):
-        assert self.sample_annotations is not None and self.sample_origins is not None
-        self.sample_origins_per_annotation = {}
-        for i, annot in enumerate(self.sample_annotations):
-            self.sample_origins_per_annotation.setdefault(annot, set()).add(
-                self.sample_origins[i]
-            )
 
     def compute_mean_expressions(self):
         assert self.data_array["raw"] is not None and self.nr_features is not None
@@ -543,10 +508,6 @@ class XAIOData:
         if self.all_annotations is not None:
             self.compute_all_annotations()
         if self.sample_indices_per_annotation is not None:
-            self.compute_sample_indices_per_annotation()
-        if self.sample_origins is not None:
-            self.sample_origins = np.take(self.sample_origins, idx_list)
-        if self.sample_origins_per_annotation is not None:
             self.compute_sample_indices_per_annotation()
         for normtype in self.data_array:
             if self.data_array[normtype] is not None:
@@ -888,9 +849,7 @@ class XAIOData:
                 plt.xticks(set_xticks, set_xticks_text)
             plt.yticks(
                 np.arange(ysize) + 0.5,
-                [self.feature_names[i].split("|")[1] for i in feature_indices_list_][
-                    ::-1
-                ],
+                [self.feature_names[i] for i in feature_indices_list_][::-1],
             )
             plt.tick_params(axis=u"both", which=u"both", length=0)
             plt.colorbar(im)
