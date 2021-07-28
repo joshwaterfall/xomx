@@ -1,6 +1,7 @@
 from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
 import pandas as pd
 import os
+import shutil
 from IPython import embed as e
 
 assert e
@@ -76,9 +77,12 @@ if not os.path.exists(os.path.join("TCGA_samples", "data_matrix.csv.gz")):
         "data_matrix.csv.gz",
     )
     for sample_dir in next(os.walk("TCGA_samples"))[1]:
-        os.rmdir(os.path.join("TCGA_samples", sample_dir))
+        shutil.rmtree(os.path.join("TCGA_samples", sample_dir), ignore_errors=True)
+        # os.rmdir(os.path.join("TCGA_samples", sample_dir))
     quit()
 
+df = pd.read_table(os.path.join("TCGA_samples", "data_matrix.csv.gz"))
+e()
 # manifest = pd.read_table(os.path.join("TCGA_samples", "manifest.txt"))
 # df_list = []
 # nr_of_samples = manifest.shape[0]

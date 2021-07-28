@@ -1,15 +1,15 @@
-from xaio_config import output_dir
+from xaio.xaio_config import output_dir
 
 # from RNASeq_preprocessing.load import loadRNASeq
-from tools.basic_tools import (
+from xaio.tools.basic_tools import (
     RNASeqData,
     confusion_matrix,
     matthews_coef,
     umap_plot,
 )
-from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
+from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
-from tools.feature_selection.RFENet import RFENet
+from xaio.tools.feature_selection.RFENet import RFENet
 
 # from tools.classifiers.LinearSGD import LinearSGD
 # import os

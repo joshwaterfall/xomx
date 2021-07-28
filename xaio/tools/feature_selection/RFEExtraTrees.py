@@ -1,9 +1,12 @@
 import os
 import numpy as np
 from sklearn.ensemble import ExtraTreesClassifier
-from tools.basic_tools import confusion_matrix, naive_feature_selection, plot_scores
+from xaio.tools.basic_tools import (
+    confusion_matrix,
+    naive_feature_selection,
+    plot_scores,
+)
 from joblib import dump, load
-from xaio_config import output_dir
 from IPython import embed as e
 
 assert e
@@ -108,7 +111,6 @@ class RFEExtraTrees:
         )
 
     def save(self, fpath):
-        assert fpath.startswith(output_dir)
         sdir = fpath + "/" + self.__class__.__name__
         os.makedirs(sdir, exist_ok=True)
         dump(self.forest, sdir + "/model.joblib")

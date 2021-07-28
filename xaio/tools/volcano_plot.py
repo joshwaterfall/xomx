@@ -2,7 +2,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import f_regression
-from xaio_config import output_dir
 from IPython import embed as e
 
 assert e
@@ -156,7 +155,6 @@ class VolcanoPlot:
         fig.canvas.mpl_connect("motion_notify_event", hover)
 
         if save_dir:
-            assert save_dir.startswith(output_dir)
             os.makedirs(save_dir, exist_ok=True)
             plt.savefig(save_dir + "/volcano_plot.png", dpi=200)
         else:

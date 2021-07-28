@@ -1,12 +1,12 @@
 import numpy as np
-from xaio_config import output_dir, xaio_tag
-from tools.basic_tools import (
+from xaio.xaio_config import output_dir, xaio_tag
+from xaio.tools.basic_tools import (
     RNASeqData,
     confusion_matrix,
     matthews_coef,
 )
 from sklearn.cluster import KMeans
-from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
+from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
 # from tools.basic_tools import (
 #     FeatureTools,

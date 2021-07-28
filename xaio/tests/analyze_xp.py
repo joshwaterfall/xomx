@@ -1,12 +1,12 @@
 from xaio_config import output_dir, xaio_tag
-from tools.basic_tools import (
+from xaio.tools.basic_tools import (
     load,
     FeatureTools,
 )
-from tools.volcano_plot import VolcanoPlot
-from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
+from xaio.tools.volcano_plot import VolcanoPlot
+from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 
-from tools.feature_selection.RFENet import RFENet
+from xaio.tools.feature_selection.RFENet import RFENet
 
 # from tools.classifiers.LinearSGD import LinearSGD
 import os

@@ -1,6 +1,6 @@
 import numpy as np
-from xaio_config import output_dir, xaio_tag
-from tools.basic_tools import (
+from xaio.xaio_config import output_dir, xaio_tag
+from xaio.tools.basic_tools import (
     RNASeqData,
     confusion_matrix,
     matthews_coef,
@@ -8,9 +8,9 @@ from tools.basic_tools import (
 from sklearn.cluster import KMeans
 
 # , OPTICS, SpectralClustering
-from tools.feature_selection.RFEExtraTrees import RFEExtraTrees
-from tools.classifiers.multiclass import ScoreBasedMulticlass
-from tools.normalization.sctransform import compute_sctransform
+from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
+from xaio.tools.classifiers.multiclass import ScoreBasedMulticlass
+from xaio.tools.normalization.sctransform import compute_sctransform
 
 # compute_logsctransform
 from IPython import embed as e

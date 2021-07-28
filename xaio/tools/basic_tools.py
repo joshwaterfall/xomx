@@ -4,7 +4,6 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 import umap
-from xaio_config import output_dir
 from IPython import embed as e
 
 assert e
@@ -159,7 +158,7 @@ class RNASeqData:
     def save(self, normalization_types_list=None, save_dir=None):
         if save_dir is not None:
             self.save_dir = save_dir
-        assert self.save_dir.startswith(output_dir)
+        assert self.save_dir is not None
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
@@ -284,110 +283,102 @@ class RNASeqData:
                 del fp_data
                 print("Saved: " + self.save_dir + normtype + "_data.bin")
 
-    def load(self, normalization_types_list):
-        assert self.save_dir is not None
-        if os.path.exists(self.save_dir + "nr_features.npy"):
+    def load(self, normalization_types_list, load_dir=None):
+        if load_dir is None and self.save_dir is not None:
+            ldir = self.save_dir
+        else:
+            ldir = load_dir
+        assert ldir is not None
+        if os.path.exists(ldir + "nr_features.npy"):
             self.nr_features = np.load(
-                self.save_dir + "nr_features.npy", allow_pickle=True
+                ldir + "nr_features.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "nr_samples.npy"):
-            self.nr_samples = np.load(
-                self.save_dir + "nr_samples.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(self.save_dir + "sample_ids.npy"):
-            self.sample_ids = np.load(
-                self.save_dir + "sample_ids.npy", allow_pickle=True
-            )
-        if os.path.exists(self.save_dir + "sample_indices.npy"):
+        if os.path.exists(ldir + "nr_samples.npy"):
+            self.nr_samples = np.load(ldir + "nr_samples.npy", allow_pickle=True).item()
+        if os.path.exists(ldir + "sample_ids.npy"):
+            self.sample_ids = np.load(ldir + "sample_ids.npy", allow_pickle=True)
+        if os.path.exists(ldir + "sample_indices.npy"):
             self.sample_indices = np.load(
-                self.save_dir + "sample_indices.npy", allow_pickle=True
+                ldir + "sample_indices.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "sample_indices_per_annotation.npy"):
+        if os.path.exists(ldir + "sample_indices_per_annotation.npy"):
             self.sample_indices_per_annotation = np.load(
-                self.save_dir + "sample_indices_per_annotation.npy", allow_pickle=True
+                ldir + "sample_indices_per_annotation.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "sample_infos.npy"):
+        if os.path.exists(ldir + "sample_infos.npy"):
             self.sample_infos = np.load(
-                self.save_dir + "sample_infos.npy", allow_pickle=True
+                ldir + "sample_infos.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "sample_annotations.npy"):
+        if os.path.exists(ldir + "sample_annotations.npy"):
             self.sample_annotations = np.load(
-                self.save_dir + "sample_annotations.npy", allow_pickle=True
+                ldir + "sample_annotations.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "all_annotations.npy"):
+        if os.path.exists(ldir + "all_annotations.npy"):
             self.all_annotations = np.load(
-                self.save_dir + "all_annotations.npy", allow_pickle=True
+                ldir + "all_annotations.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "feature_names.npy"):
-            self.feature_names = np.load(
-                self.save_dir + "feature_names.npy", allow_pickle=True
-            )
-        if os.path.exists(self.save_dir + "mean_expressions.npy"):
+        if os.path.exists(ldir + "feature_names.npy"):
+            self.feature_names = np.load(ldir + "feature_names.npy", allow_pickle=True)
+        if os.path.exists(ldir + "mean_expressions.npy"):
             self.mean_expressions = np.load(
-                self.save_dir + "mean_expressions.npy", allow_pickle=True
+                ldir + "mean_expressions.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "std_expressions.npy"):
+        if os.path.exists(ldir + "std_expressions.npy"):
             self.std_expressions = np.load(
-                self.save_dir + "std_expressions.npy", allow_pickle=True
+                ldir + "std_expressions.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "feature_shortnames_ref.npy"):
+        if os.path.exists(ldir + "feature_shortnames_ref.npy"):
             self.feature_shortnames_ref = np.load(
-                self.save_dir + "feature_shortnames_ref.npy", allow_pickle=True
+                ldir + "feature_shortnames_ref.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "sample_origins.npy"):
+        if os.path.exists(ldir + "sample_origins.npy"):
             self.sample_origins = np.load(
-                self.save_dir + "sample_origins.npy", allow_pickle=True
+                ldir + "sample_origins.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "sample_origins_per_annotation.npy"):
+        if os.path.exists(ldir + "sample_origins_per_annotation.npy"):
             self.sample_origins_per_annotation = np.load(
-                self.save_dir + "sample_origins_per_annotation.npy", allow_pickle=True
+                ldir + "sample_origins_per_annotation.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "train_indices_per_annotation.npy"):
+        if os.path.exists(ldir + "train_indices_per_annotation.npy"):
             self.train_indices_per_annotation = np.load(
-                self.save_dir + "train_indices_per_annotation.npy", allow_pickle=True
+                ldir + "train_indices_per_annotation.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "test_indices_per_annotation.npy"):
+        if os.path.exists(ldir + "test_indices_per_annotation.npy"):
             self.test_indices_per_annotation = np.load(
-                self.save_dir + "test_indices_per_annotation.npy", allow_pickle=True
+                ldir + "test_indices_per_annotation.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "std_values_on_training_sets.npy"):
+        if os.path.exists(ldir + "std_values_on_training_sets.npy"):
             self.std_values_on_training_sets = np.load(
-                self.save_dir + "std_values_on_training_sets.npy", allow_pickle=True
+                ldir + "std_values_on_training_sets.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "std_values_on_training_sets_argsort.npy"):
+        if os.path.exists(ldir + "std_values_on_training_sets_argsort.npy"):
             self.std_values_on_training_sets_argsort = np.load(
-                self.save_dir + "std_values_on_training_sets_argsort.npy",
+                ldir + "std_values_on_training_sets_argsort.npy",
                 allow_pickle=True,
             ).item()
-        if os.path.exists(self.save_dir + "epsilon_shift.npy"):
+        if os.path.exists(ldir + "epsilon_shift.npy"):
             self.epsilon_shift = np.load(
-                self.save_dir + "epsilon_shift.npy", allow_pickle=True
+                ldir + "epsilon_shift.npy", allow_pickle=True
             ).item()
-        if os.path.exists(self.save_dir + "maxlog.npy"):
-            self.maxlog = np.load(
-                self.save_dir + "maxlog.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(self.save_dir + "nr_non_zero_samples.npy"):
+        if os.path.exists(ldir + "maxlog.npy"):
+            self.maxlog = np.load(ldir + "maxlog.npy", allow_pickle=True).item()
+        if os.path.exists(ldir + "nr_non_zero_samples.npy"):
             self.nr_non_zero_samples = np.load(
-                self.save_dir + "nr_non_zero_samples.npy", allow_pickle=True
+                ldir + "nr_non_zero_samples.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "nr_non_zero_features.npy"):
+        if os.path.exists(ldir + "nr_non_zero_features.npy"):
             self.nr_non_zero_features = np.load(
-                self.save_dir + "nr_non_zero_features.npy", allow_pickle=True
+                ldir + "nr_non_zero_features.npy", allow_pickle=True
             )
-        if os.path.exists(self.save_dir + "total_sums.npy"):
-            self.total_sums = np.load(
-                self.save_dir + "total_sums.npy", allow_pickle=True
-            )
-        if os.path.exists(self.save_dir + "params.npy"):
-            self.params = np.load(
-                self.save_dir + "params.npy", allow_pickle=True
-            ).item()
+        if os.path.exists(ldir + "total_sums.npy"):
+            self.total_sums = np.load(ldir + "total_sums.npy", allow_pickle=True)
+        if os.path.exists(ldir + "params.npy"):
+            self.params = np.load(ldir + "params.npy", allow_pickle=True).item()
         for normtype in normalization_types_list:
-            if os.path.exists(self.save_dir + normtype + "_data.bin"):
+            if os.path.exists(ldir + normtype + "_data.bin"):
                 self.data_array[normtype] = np.array(
                     np.memmap(
-                        self.save_dir + normtype + "_data.bin",
+                        ldir + normtype + "_data.bin",
                         dtype="float32",
                         mode="r",
                         shape=(self.nr_features, self.nr_samples),
@@ -739,6 +730,7 @@ class RNASeqData:
         a different color"""
         assert sof_ == "samples" or sof_ == "features"
         set_xticks = None
+        set_xticks_text = None
         violinplots_done = False
         fig, ax = plt.subplots()
         if sof_ == "samples":
@@ -1247,7 +1239,6 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
     fig.canvas.mpl_connect("motion_notify_event", hover)
 
     if save_dir:
-        assert save_dir.startswith(output_dir)
         os.makedirs(save_dir, exist_ok=True)
         plt.savefig(save_dir + "/plot.png", dpi=200)
     else:
