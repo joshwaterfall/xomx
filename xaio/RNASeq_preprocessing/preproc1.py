@@ -22,10 +22,10 @@ data.compute_sample_indices()
 data.compute_all_annotations()
 data.compute_sample_indices_per_annotation()
 origins_dict = dict(pd.read_csv(CSV_annot_types, sep=",").to_numpy())
-data.sample_origins = np.empty_like(data.sample_ids)
+data.sample_infos = np.empty_like(data.sample_ids)
 for i, s_id in enumerate(data.sample_ids):
-    data.sample_origins[i] = origins_dict[s_id]
-data.compute_sample_origins_per_annotation()
+    data.sample_infos[i] = origins_dict[s_id]
+# data.compute_sample_origins_per_annotation()
 
 rnaseq_array = pd.read_table(CSV_RNASeq_data, header=0, engine="c").to_numpy()
 data.nr_features = rnaseq_array.shape[0]

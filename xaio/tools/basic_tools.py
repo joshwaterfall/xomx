@@ -150,101 +150,132 @@ class XAIOData:
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
         if self.nr_features is not None:
-            np.save(self.save_dir + "nr_features.npy", self.nr_features)
-            print("Saved: " + self.save_dir + "nr_features.npy")
+            np.save(os.path.join(self.save_dir, "nr_features.npy"), self.nr_features)
+            print("Saved: " + os.path.join(self.save_dir, "nr_features.npy"))
         if self.nr_samples is not None:
-            np.save(self.save_dir + "nr_samples.npy", self.nr_samples)
-            print("Saved: " + self.save_dir + "nr_samples.npy")
+            np.save(os.path.join(self.save_dir, "nr_samples.npy"), self.nr_samples)
+            print("Saved: " + os.path.join(self.save_dir, "nr_samples.npy"))
         if self.sample_ids is not None:
-            np.save(self.save_dir + "sample_ids.npy", self.sample_ids)
-            print("Saved: " + self.save_dir + "sample_ids.npy")
+            np.save(os.path.join(self.save_dir, "sample_ids.npy"), self.sample_ids)
+            print("Saved: " + os.path.join(self.save_dir, "sample_ids.npy"))
         if self.sample_indices is not None:
-            np.save(self.save_dir + "sample_indices.npy", self.sample_indices)
-            print("Saved: " + self.save_dir + "sample_indices.npy")
+            np.save(
+                os.path.join(self.save_dir, "sample_indices.npy"), self.sample_indices
+            )
+            print("Saved: " + os.path.join(self.save_dir, "sample_indices.npy"))
         if self.sample_indices_per_annotation is not None:
             np.save(
-                self.save_dir + "sample_indices_per_annotation.npy",
+                os.path.join(self.save_dir, "sample_indices_per_annotation.npy"),
                 self.sample_indices_per_annotation,
             )
-            print("Saved: " + self.save_dir + "sample_indices_per_annotation.npy")
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "sample_indices_per_annotation.npy")
+            )
         if self.sample_infos is not None:
             np.save(
-                self.save_dir + "sample_infos.npy",
+                os.path.join(self.save_dir, "sample_infos.npy"),
                 self.sample_infos,
             )
-            print("Saved: " + self.save_dir + "sample_infos.npy")
+            print("Saved: " + os.path.join(self.save_dir, "sample_infos.npy"))
         if self.sample_annotations is not None:
-            np.save(self.save_dir + "sample_annotations.npy", self.sample_annotations)
-            print("Saved: " + self.save_dir + "sample_annotations.npy")
+            np.save(
+                os.path.join(self.save_dir, "sample_annotations.npy"),
+                self.sample_annotations,
+            )
+            print("Saved: " + os.path.join(self.save_dir, "sample_annotations.npy"))
         if self.all_annotations is not None:
-            np.save(self.save_dir + "all_annotations.npy", self.all_annotations)
-            print("Saved: " + self.save_dir + "all_annotations.npy")
+            np.save(
+                os.path.join(self.save_dir, "all_annotations.npy"), self.all_annotations
+            )
+            print("Saved: " + os.path.join(self.save_dir, "all_annotations.npy"))
         if self.feature_names is not None:
-            np.save(self.save_dir + "feature_names.npy", self.feature_names)
-            print("Saved: " + self.save_dir + "feature_names.npy")
+            np.save(
+                os.path.join(self.save_dir, "feature_names.npy"), self.feature_names
+            )
+            print("Saved: " + os.path.join(self.save_dir, "feature_names.npy"))
         if self.mean_expressions is not None:
-            np.save(self.save_dir + "mean_expressions.npy", self.mean_expressions)
-            print("Saved: " + self.save_dir + "mean_expressions.npy")
+            np.save(
+                os.path.join(self.save_dir, "mean_expressions.npy"),
+                self.mean_expressions,
+            )
+            print("Saved: " + os.path.join(self.save_dir, "mean_expressions.npy"))
         if self.std_expressions is not None:
-            np.save(self.save_dir + "std_expressions.npy", self.std_expressions)
-            print("Saved: " + self.save_dir + "std_expressions.npy")
+            np.save(
+                os.path.join(self.save_dir, "std_expressions.npy"), self.std_expressions
+            )
+            print("Saved: " + os.path.join(self.save_dir, "std_expressions.npy"))
         if self.train_indices_per_annotation is not None:
             np.save(
-                self.save_dir + "train_indices_per_annotation.npy",
+                os.path.join(self.save_dir, "train_indices_per_annotation.npy"),
                 self.train_indices_per_annotation,
             )
-            print("Saved: " + self.save_dir + "train_indices_per_annotation.npy")
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "train_indices_per_annotation.npy")
+            )
         if self.test_indices_per_annotation is not None:
             np.save(
-                self.save_dir + "test_indices_per_annotation.npy",
+                os.path.join(self.save_dir, "test_indices_per_annotation.npy"),
                 self.test_indices_per_annotation,
             )
-            print("Saved: " + self.save_dir + "test_indices_per_annotation.npy")
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "test_indices_per_annotation.npy")
+            )
         if self.std_values_on_training_sets is not None:
             np.save(
-                self.save_dir + "std_values_on_training_sets.npy",
+                os.path.join(self.save_dir, "std_values_on_training_sets.npy"),
                 self.std_values_on_training_sets,
             )
-            print("Saved: " + self.save_dir + "std_values_on_training_sets.npy")
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "std_values_on_training_sets.npy")
+            )
         if self.std_values_on_training_sets_argsort is not None:
             np.save(
-                self.save_dir + "std_values_on_training_sets_argsort.npy",
+                os.path.join(self.save_dir, "std_values_on_training_sets_argsort.npy"),
                 self.std_values_on_training_sets_argsort,
             )
-            print("Saved: " + self.save_dir + "std_values_on_training_sets_argsort.npy")
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "std_values_on_training_sets_argsort.npy")
+            )
         if self.epsilon_shift is not None:
-            np.save(self.save_dir + "epsilon_shift.npy", self.epsilon_shift)
-            print("Saved: " + self.save_dir + "epsilon_shift.npy")
+            np.save(
+                os.path.join(self.save_dir, "epsilon_shift.npy"), self.epsilon_shift
+            )
+            print("Saved: " + os.path.join(self.save_dir, "epsilon_shift.npy"))
         if self.maxlog is not None:
-            np.save(self.save_dir + "maxlog.npy", self.maxlog)
-            print("Saved: " + self.save_dir + "maxlog.npy")
+            np.save(os.path.join(self.save_dir, "maxlog.npy"), self.maxlog)
+            print("Saved: " + os.path.join(self.save_dir, "maxlog.npy"))
         if self.feature_indices is not None:
             np.save(
-                self.save_dir + "feature_indices.npy",
+                os.path.join(self.save_dir, "feature_indices.npy"),
                 self.feature_indices,
             )
-            print("Saved: " + self.save_dir + "feature_indices.npy")
+            print("Saved: " + os.path.join(self.save_dir, "feature_indices.npy"))
         if self.nr_non_zero_features is not None:
             np.save(
-                self.save_dir + "nr_non_zero_features.npy",
+                os.path.join(self.save_dir, "nr_non_zero_features.npy"),
                 self.nr_non_zero_features,
             )
-            print("Saved: " + self.save_dir + "nr_non_zero_features.npy")
+            print("Saved: " + os.path.join(self.save_dir, "nr_non_zero_features.npy"))
         if self.nr_non_zero_samples is not None:
             np.save(
-                self.save_dir + "nr_non_zero_samples.npy",
+                os.path.join(self.save_dir, "nr_non_zero_samples.npy"),
                 self.nr_non_zero_samples,
             )
-            print("Saved: " + self.save_dir + "nr_non_zero_samples.npy")
+            print("Saved: " + os.path.join(self.save_dir, "nr_non_zero_samples.npy"))
         if self.total_sums is not None:
             np.save(
-                self.save_dir + "total_sums.npy",
+                os.path.join(self.save_dir, "total_sums.npy"),
                 self.total_sums,
             )
-            print("Saved: " + self.save_dir + "total_sums.npy")
+            print("Saved: " + os.path.join(self.save_dir, "total_sums.npy"))
         if self.params is not None:
             np.save(
-                self.save_dir + "params.npy",
+                os.path.join(self.save_dir, "params.npy"),
                 self.params,
             )
         for normtype in self.data_array:
@@ -253,14 +284,14 @@ class XAIOData:
                 and normtype in normalization_types_list
             ):
                 fp_data = np.memmap(
-                    self.save_dir + normtype + "_data.bin",
+                    os.path.join(self.save_dir, normtype + "_data.bin"),
                     dtype="float32",
                     mode="w+",
                     shape=(self.nr_features, self.nr_samples),
                 )
                 fp_data[:] = self.data_array[normtype].transpose()[:]
                 del fp_data
-                print("Saved: " + self.save_dir + normtype + "_data.bin")
+                print("Saved: " + os.path.join(self.save_dir, normtype + "_data.bin"))
 
     def load(self, normalization_types_list, load_dir=None):
         if load_dir is None and self.save_dir is not None:
@@ -268,88 +299,104 @@ class XAIOData:
         else:
             ldir = load_dir
         assert ldir is not None
-        if os.path.exists(ldir + "nr_features.npy"):
+        if os.path.exists(os.path.join(ldir, "nr_features.npy")):
             self.nr_features = np.load(
-                ldir + "nr_features.npy", allow_pickle=True
+                os.path.join(ldir, "nr_features.npy"), allow_pickle=True
             ).item()
-        if os.path.exists(ldir + "nr_samples.npy"):
-            self.nr_samples = np.load(ldir + "nr_samples.npy", allow_pickle=True).item()
-        if os.path.exists(ldir + "sample_ids.npy"):
-            self.sample_ids = np.load(ldir + "sample_ids.npy", allow_pickle=True)
-        if os.path.exists(ldir + "sample_indices.npy"):
+        if os.path.exists(os.path.join(ldir, "nr_samples.npy")):
+            self.nr_samples = np.load(
+                os.path.join(ldir, "nr_samples.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "sample_ids.npy")):
+            self.sample_ids = np.load(
+                os.path.join(ldir, "sample_ids.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "sample_indices.npy")):
             self.sample_indices = np.load(
-                ldir + "sample_indices.npy", allow_pickle=True
+                os.path.join(ldir, "sample_indices.npy"), allow_pickle=True
             ).item()
-        if os.path.exists(ldir + "sample_indices_per_annotation.npy"):
+        if os.path.exists(os.path.join(ldir, "sample_indices_per_annotation.npy")):
             self.sample_indices_per_annotation = np.load(
-                ldir + "sample_indices_per_annotation.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "sample_infos.npy"):
-            self.sample_infos = np.load(
-                ldir + "sample_infos.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "sample_annotations.npy"):
-            self.sample_annotations = np.load(
-                ldir + "sample_annotations.npy", allow_pickle=True
-            )
-        if os.path.exists(ldir + "all_annotations.npy"):
-            self.all_annotations = np.load(
-                ldir + "all_annotations.npy", allow_pickle=True
-            )
-        if os.path.exists(ldir + "feature_names.npy"):
-            self.feature_names = np.load(ldir + "feature_names.npy", allow_pickle=True)
-        if os.path.exists(ldir + "mean_expressions.npy"):
-            self.mean_expressions = np.load(
-                ldir + "mean_expressions.npy", allow_pickle=True
-            )
-        if os.path.exists(ldir + "std_expressions.npy"):
-            self.std_expressions = np.load(
-                ldir + "std_expressions.npy", allow_pickle=True
-            )
-        if os.path.exists(ldir + "feature_indices.npy"):
-            self.feature_indices = np.load(
-                ldir + "feature_indices.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "train_indices_per_annotation.npy"):
-            self.train_indices_per_annotation = np.load(
-                ldir + "train_indices_per_annotation.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "test_indices_per_annotation.npy"):
-            self.test_indices_per_annotation = np.load(
-                ldir + "test_indices_per_annotation.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "std_values_on_training_sets.npy"):
-            self.std_values_on_training_sets = np.load(
-                ldir + "std_values_on_training_sets.npy", allow_pickle=True
-            ).item()
-        if os.path.exists(ldir + "std_values_on_training_sets_argsort.npy"):
-            self.std_values_on_training_sets_argsort = np.load(
-                ldir + "std_values_on_training_sets_argsort.npy",
+                os.path.join(ldir, "sample_indices_per_annotation.npy"),
                 allow_pickle=True,
             ).item()
-        if os.path.exists(ldir + "epsilon_shift.npy"):
-            self.epsilon_shift = np.load(
-                ldir + "epsilon_shift.npy", allow_pickle=True
+        if os.path.exists(os.path.join(ldir, "sample_infos.npy")):
+            self.sample_infos = np.load(
+                os.path.join(ldir, "sample_infos.npy"), allow_pickle=True
             ).item()
-        if os.path.exists(ldir + "maxlog.npy"):
-            self.maxlog = np.load(ldir + "maxlog.npy", allow_pickle=True).item()
-        if os.path.exists(ldir + "nr_non_zero_samples.npy"):
+        if os.path.exists(os.path.join(ldir, "sample_annotations.npy")):
+            self.sample_annotations = np.load(
+                os.path.join(ldir, "sample_annotations.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "all_annotations.npy")):
+            self.all_annotations = np.load(
+                os.path.join(ldir, "all_annotations.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "feature_names.npy")):
+            self.feature_names = np.load(
+                os.path.join(ldir, "feature_names.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "mean_expressions.npy")):
+            self.mean_expressions = np.load(
+                os.path.join(ldir, "mean_expressions.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "std_expressions.npy")):
+            self.std_expressions = np.load(
+                os.path.join(ldir, "std_expressions.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "feature_indices.npy")):
+            self.feature_indices = np.load(
+                os.path.join(ldir, "feature_indices.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "train_indices_per_annotation.npy")):
+            self.train_indices_per_annotation = np.load(
+                os.path.join(ldir, "train_indices_per_annotation.npy"),
+                allow_pickle=True,
+            ).item()
+        if os.path.exists(os.path.join(ldir, "test_indices_per_annotation.npy")):
+            self.test_indices_per_annotation = np.load(
+                os.path.join(ldir, "test_indices_per_annotation.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "std_values_on_training_sets.npy")):
+            self.std_values_on_training_sets = np.load(
+                os.path.join(ldir, "std_values_on_training_sets.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(
+            os.path.join(ldir, "std_values_on_training_sets_argsort.npy")
+        ):
+            self.std_values_on_training_sets_argsort = np.load(
+                os.path.join(ldir, "std_values_on_training_sets_argsort.npy"),
+                allow_pickle=True,
+            ).item()
+        if os.path.exists(os.path.join(ldir, "epsilon_shift.npy")):
+            self.epsilon_shift = np.load(
+                os.path.join(ldir, "epsilon_shift.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "maxlog.npy")):
+            self.maxlog = np.load(
+                os.path.join(ldir, "maxlog.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "nr_non_zero_samples.npy")):
             self.nr_non_zero_samples = np.load(
-                ldir + "nr_non_zero_samples.npy", allow_pickle=True
+                os.path.join(ldir, "nr_non_zero_samples.npy"), allow_pickle=True
             )
-        if os.path.exists(ldir + "nr_non_zero_features.npy"):
+        if os.path.exists(os.path.join(ldir, "nr_non_zero_features.npy")):
             self.nr_non_zero_features = np.load(
-                ldir + "nr_non_zero_features.npy", allow_pickle=True
+                os.path.join(ldir, "nr_non_zero_features.npy"), allow_pickle=True
             )
-        if os.path.exists(ldir + "total_sums.npy"):
-            self.total_sums = np.load(ldir + "total_sums.npy", allow_pickle=True)
-        if os.path.exists(ldir + "params.npy"):
-            self.params = np.load(ldir + "params.npy", allow_pickle=True).item()
+        if os.path.exists(os.path.join(ldir, "total_sums.npy")):
+            self.total_sums = np.load(
+                os.path.join(ldir, "total_sums.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "params.npy")):
+            self.params = np.load(
+                os.path.join(ldir, "params.npy"), allow_pickle=True
+            ).item()
         for normtype in normalization_types_list:
-            if os.path.exists(ldir + normtype + "_data.bin"):
+            if os.path.exists(os.path.join(ldir, normtype + "_data.bin")):
                 self.data_array[normtype] = np.array(
                     np.memmap(
-                        ldir + normtype + "_data.bin",
+                        os.path.join(ldir, normtype + "_data.bin"),
                         dtype="float32",
                         mode="r",
                         shape=(self.nr_features, self.nr_samples),
@@ -946,7 +993,7 @@ class XAIOData:
 
         if save_dir:
             os.makedirs(save_dir, exist_ok=True)
-            plt.savefig(save_dir + "/plot.png", dpi=200)
+            plt.savefig(os.path.join(save_dir, "plot.png"), dpi=200)
         else:
             plt.show()
 
@@ -1203,7 +1250,7 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
 
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
-        plt.savefig(save_dir + "/plot.png", dpi=200)
+        plt.savefig(os.path.join(save_dir, "plot.png"), dpi=200)
     else:
         plt.show()
 
