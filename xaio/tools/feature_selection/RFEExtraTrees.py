@@ -17,26 +17,25 @@ class RFEExtraTrees:
         self,
         data,
         annotation,
-        init_selection_size=4000,
+        init_selection_size=None,
         n_estimators=450,
         random_state=0,
     ):
         self.data = data
         self.annotation = annotation
         self.init_selection_size = init_selection_size
-        self.n_estimators = 450
-        self.random_state = 0
-        (
-            self.current_feature_indices,
-            self.train_indices,
-            self.test_indices,
-            self.data_train,
-            self.target_train,
-            self.data_test,
-            self.target_test,
-        ) = naive_feature_selection(
-            self.data, self.annotation, self.init_selection_size
-        )
+        self.n_estimators = n_estimators
+        self.random_state = random_state
+        if self.init_selection_size is not None:
+            (
+                self.current_feature_indices,
+                self.data_train,
+                self.target_train,
+                self.data_test,
+                self.target_test,
+            ) = naive_feature_selection(
+                self.data, self.annotation, self.init_selection_size
+            )
         self.forest = None
         self.confusion_matrix = None
         self.log = []
@@ -94,12 +93,14 @@ class RFEExtraTrees:
         return self.forest.predict(x)
 
     def score(self, x):
-        x_tmp = x
-        if len(x.shape) > 0:
-            if x.shape[1] == self.data.nr_features:
-                x_tmp = np.take(
-                    x.transpose(), self.current_feature_indices, axis=0
-                ).transpose()
+        if len(x.shape) < 2:
+            x_tmp = np.expand_dims(x, axis=0)
+        else:
+            x_tmp = x
+        if x_tmp.shape[1] == self.data.nr_features:
+            x_tmp = np.take(
+                x_tmp.transpose(), self.current_feature_indices, axis=0
+            ).transpose()
         return (
             np.array(
                 sum(
@@ -111,17 +112,19 @@ class RFEExtraTrees:
         )
 
     def save(self, fpath):
-        sdir = fpath + "/" + self.__class__.__name__
+        sdir = fpath
         os.makedirs(sdir, exist_ok=True)
-        dump(self.forest, sdir + "/model.joblib")
-        dump(self.log, sdir + "/log.joblib")
+        dump(self.forest, os.path.join(sdir, "model.joblib"))
+        dump(self.log, os.path.join(sdir, "log.joblib"))
 
     def load(self, fpath):
-        sdir = fpath + "/" + self.__class__.__name__
-        if os.path.isfile(sdir + "/model.joblib") and os.path.isfile(
-            sdir + "/log.joblib"
+        # The initialization before load() must be the same as the initialization of
+        # the RFEExtraTrees that was saved (but init() does not need to be executed).
+        sdir = fpath
+        if os.path.isfile(os.path.join(sdir, "model.joblib")) and os.path.isfile(
+            os.path.join(sdir, "log.joblib")
         ):
-            self.log = load(sdir + "/log.joblib")
+            self.log = load(os.path.join(sdir, "log.joblib"))
             feat_indices = np.copy(self.log[-1]["feature_indices"])
             featpos = {
                 self.current_feature_indices[i]: i
@@ -135,11 +138,11 @@ class RFEExtraTrees:
                 self.data_test.transpose(), reduced_feats, axis=0
             ).transpose()
             self.current_feature_indices = feat_indices
-            self.forest = load(sdir + "/model.joblib")
+            self.forest = load(os.path.join(sdir, "model.joblib"))
             return True
         else:
             return False
 
     def plot(self, annotation=None, save_dir=None):
         res = self.score(self.data_test)
-        plot_scores(self.data, res, 0.5, self.test_indices, annotation, save_dir)
+        plot_scores(self.data, res, 0.5, self.data.test_indices, annotation, save_dir)

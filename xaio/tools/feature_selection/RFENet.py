@@ -28,8 +28,6 @@ class RFENet:
         self.init_selection_size = init_selection_size
         (
             self.current_feature_indices,
-            self.train_indices,
-            self.test_indices,
             self.data_train,
             self.target_train,
             self.data_test,
@@ -196,7 +194,7 @@ class RFENet:
 
     def plot(self, annotation=None, save_dir=None):
         res = self.score(self.data_test)
-        plot_scores(self.data, res, 0.0, self.test_indices, annotation, save_dir)
+        plot_scores(self.data, res, 0.0, self.data.test_indices, annotation, save_dir)
 
 
 class NNet(nn.Module):

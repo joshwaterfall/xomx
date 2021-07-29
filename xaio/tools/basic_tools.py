@@ -59,13 +59,19 @@ class XAIOData:
         std_expressions (np.ndarray or NoneType):
             similar to mean_expressions, but standard deviation instead of mean
 
+        train_indices (np.ndarray or NoneType):
+            the list of indices of the samples belonging to the training set
+
+        test_indices (np.ndarray or NoneType):
+            the list of indices of the samples belonging to the test set
+
         train_indices_per_annotation (dict or NoneType):
             annot_index["#"] is the list of indices of the samples of annotation "#"
             which belong to the training set
 
         test_indices_per_annotation (dict or NoneType):
             annot_index["#"] is the list of indices of the samples of annotation "#"
-            which belong to the validation set
+            which belong to the test set
 
         std_values_on_training_sets (dict or NoneType):
             std_values_on_training_sets["#"][j] is the mean value of the j-th feature,
@@ -132,6 +138,8 @@ class XAIOData:
         self.data = None
         self.data_array = {}
         self.params = None
+        self.train_indices = None
+        self.test_indices = None
         self.train_indices_per_annotation = None
         self.test_indices_per_annotation = None
         self.std_values_on_training_sets = None
@@ -207,6 +215,18 @@ class XAIOData:
                 os.path.join(self.save_dir, "std_expressions.npy"), self.std_expressions
             )
             print("Saved: " + os.path.join(self.save_dir, "std_expressions.npy"))
+        if self.train_indices is not None:
+            np.save(
+                os.path.join(self.save_dir, "train_indices.npy"),
+                self.train_indices,
+            )
+            print("Saved: " + os.path.join(self.save_dir, "train_indices.npy"))
+        if self.test_indices is not None:
+            np.save(
+                os.path.join(self.save_dir, "test_indices.npy"),
+                self.test_indices,
+            )
+            print("Saved: " + os.path.join(self.save_dir, "test_indices.npy"))
         if self.train_indices_per_annotation is not None:
             np.save(
                 os.path.join(self.save_dir, "train_indices_per_annotation.npy"),
@@ -353,6 +373,14 @@ class XAIOData:
             self.feature_indices = np.load(
                 os.path.join(ldir, "feature_indices.npy"), allow_pickle=True
             ).item()
+        if os.path.exists(os.path.join(ldir, "train_indices.npy")):
+            self.train_indices = np.load(
+                os.path.join(ldir, "train_indices.npy"), allow_pickle=True
+            )
+        if os.path.exists(os.path.join(ldir, "test_indices.npy")):
+            self.test_indices = np.load(
+                os.path.join(ldir, "test_indices.npy"), allow_pickle=True
+            )
         if os.path.exists(os.path.join(ldir, "train_indices_per_annotation.npy")):
             self.train_indices_per_annotation = np.load(
                 os.path.join(ldir, "train_indices_per_annotation.npy"),
@@ -471,7 +499,7 @@ class XAIOData:
                     self.data_array["log"][:, i] - np.log(self.epsilon_shift)
                 ) / (self.maxlog - np.log(self.epsilon_shift))
 
-    def compute_train_and_test_indices_per_annotation(self):
+    def compute_train_and_test_indices(self):
         assert self.sample_indices_per_annotation is not None
         self.train_indices_per_annotation = {}
         self.test_indices_per_annotation = {}
@@ -480,6 +508,12 @@ class XAIOData:
             cut = len(idxs) // 4 + 1
             self.test_indices_per_annotation[annot] = idxs[:cut]
             self.train_indices_per_annotation[annot] = idxs[cut:]
+        self.train_indices = np.concatenate(
+            list(self.train_indices_per_annotation.values())
+        )
+        self.test_indices = np.concatenate(
+            list(self.test_indices_per_annotation.values())
+        )
 
     def compute_feature_indices(self):
         assert self.feature_names is not None
@@ -546,6 +580,20 @@ class XAIOData:
         for i in range(self.nr_samples):
             self.total_sums[i] = np.sum(self.data_array["raw"][i, :])
 
+    def normalize_feature_sums(self, sum_value):
+        """
+        Normalizes feature values, so that for every sample, the total sum of
+        the feature values becomes equal to sum_value.
+        normalize_feature_sums() is supposed to be an early normalization of the raw
+        data, before the computation of values based on features, and before any
+        other normalization.
+        """
+        assert self.data_array["raw"] is not None and self.nr_samples is not None
+        self.compute_total_sums()
+        for i in range(self.nr_samples):
+            self.data_array["raw"][i, :] *= sum_value / self.total_sums[i]
+            self.total_sums[i] = sum_value
+
     def reduce_samples(self, idx_list):
         if self.nr_samples is not None:
             self.nr_samples = len(idx_list)
@@ -574,9 +622,9 @@ class XAIOData:
             self.compute_std_expressions()
         if (
             self.train_indices_per_annotation is not None
-            and self.test_indices_per_annotation is not None
+            or self.test_indices_per_annotation is not None
         ):
-            self.compute_train_and_test_indices_per_annotation()
+            self.compute_train_and_test_indices()
         if self.std_values_on_training_sets is not None:
             self.compute_std_values_on_training_sets()
         if self.std_values_on_training_sets_argsort is not None:
@@ -623,7 +671,7 @@ class XAIOData:
             self.compute_total_sums()
 
     def percentage_feature_set(self, idx_list, sample_idx=None):
-        """computes the sum of values (in raw data), across all samples or for one
+        """Computes the sum of values (in raw data), across all samples or for one
         given sample, for features of indices in idx_list, divided by the sum of values
         for all the features"""
         assert self.data_array["raw"] is not None
@@ -637,13 +685,13 @@ class XAIOData:
             )
 
     def regex_search(self, rexpr):
-        """tests for every feature name whether it matches the regular expression
+        """Tests for every feature name whether it matches the regular expression
         rexpr; returns the list of indices of the features that do match
         """
         return np.where([re.search(rexpr, s) for s in self.feature_names])[0]
 
     def feature_func(self, idx, cat_=None, func_=np.mean):
-        """applies the function func_ to the array of values of the feature of index
+        """Applies the function func_ to the array of values of the feature of index
         idx, across either all samples, or samples with annotation cat_;
         the name of the feature can be given instead of the index idx"""
         if type(idx) == str:
@@ -662,12 +710,7 @@ class XAIOData:
         self.feature_names = df.index.to_numpy()
         self.nr_features = len(self.feature_names)
         self.compute_feature_indices()
-        self.data_array["raw"] = df.to_numpy().transpose()
-        self.compute_mean_expressions()
-        self.compute_std_expressions()
-        self.compute_nr_non_zero_features()
-        self.compute_nr_non_zero_samples()
-        self.compute_total_sums()
+        self.data_array["raw"] = df.to_numpy(dtype=np.float64).transpose()
 
     # def feature_plot(self, idx, cat_=None, v_min=None, v_max=None):
     #     """plots the value of the feature of index idx for all samples;
@@ -719,10 +762,16 @@ class XAIOData:
     #         plt.scatter(x, y, s=1)
     #     plt.show()
 
-    def _samples_by_annotations(self):
-        argsort_annotations = np.argsort(
-            [len(self.sample_indices_per_annotation[i]) for i in self.all_annotations]
-        )[::-1]
+    def _samples_by_annotations(self, sort_annot=False):
+        if sort_annot:
+            argsort_annotations = np.argsort(
+                [
+                    len(self.sample_indices_per_annotation[i])
+                    for i in self.all_annotations
+                ]
+            )[::-1]
+        else:
+            argsort_annotations = np.arange(len(self.all_annotations))
         list_samples = np.concatenate(
             [
                 self.sample_indices_per_annotation[self.all_annotations[i]]
@@ -753,7 +802,7 @@ class XAIOData:
         violinplot_=False,
         function_plot_=False,
     ):
-        """displays a scatter plot, with coordinates computed by applying two
+        """Displays a scatter plot, with coordinates computed by applying two
         functions (func1_ and func2_) to every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
         (both functions must take indices in input);
@@ -771,24 +820,25 @@ class XAIOData:
                     set_xticks,
                     set_xticks_text,
                     boundaries,
-                ) = self._samples_by_annotations()
+                ) = self._samples_by_annotations(sort_annot=True)
                 y = [func2_(i) for i in list_samples]
                 x = [i for i in range(self.nr_samples)]
-                for i in range(len(boundaries) - 1):
-                    parts = ax.violinplot(
-                        y[boundaries[i] : boundaries[i + 1]],
-                        [(boundaries[i + 1] + boundaries[i]) / 2.0],
-                        points=60,
-                        widths=(boundaries[i + 1] - boundaries[i]) * 0.8,
-                        showmeans=False,
-                        showextrema=False,
-                        showmedians=False,
-                        bw_method=0.5,
-                    )
-                    for pc in parts["bodies"]:
-                        pc.set_facecolor("#D43F3A")
-                        pc.set_edgecolor("grey")
-                        pc.set_alpha(0.5)
+                if violinplot_:
+                    for i in range(len(boundaries) - 1):
+                        parts = ax.violinplot(
+                            y[boundaries[i] : boundaries[i + 1]],
+                            [(boundaries[i + 1] + boundaries[i]) / 2.0],
+                            points=60,
+                            widths=(boundaries[i + 1] - boundaries[i]) * 0.8,
+                            showmeans=False,
+                            showextrema=False,
+                            showmedians=False,
+                            bw_method=0.5,
+                        )
+                        for pc in parts["bodies"]:
+                            pc.set_facecolor("#D43F3A")
+                            pc.set_edgecolor("grey")
+                            pc.set_alpha(0.5)
                 violinplots_done = True
             else:
                 y = [func2_(i) for i in range(self.nr_samples)]
@@ -867,7 +917,7 @@ class XAIOData:
         plt.show()
 
     def function_plot(self, func_=identity_func, sof_="samples", violinplot_=True):
-        """plots the value of a function on every sample or every feature, depending
+        """Plots the value of a function on every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
         (the function must take indices in input)"""
         self.function_scatter(
@@ -875,7 +925,7 @@ class XAIOData:
         )
 
     def feature_plot(self, features_=None, normalization_type_=""):
-        """displays """
+        """ """
         if normalization_type_ in self.data_array:
             data_ = self.data_array[normalization_type_]
         else:
@@ -905,7 +955,7 @@ class XAIOData:
                     set_xticks,
                     set_xticks_text,
                     boundaries,
-                ) = self._samples_by_annotations()
+                ) = self._samples_by_annotations(sort_annot=False)
                 for k, idx in enumerate(feature_indices_list_):
                     plot_array[k, :] = [data_[i, idx] for i in list_samples]
 
@@ -1153,30 +1203,26 @@ def feature_selection_from_list(
             f_indices[i] = data.feature_indices[feature_indices[i]]
         else:
             f_indices[i] = feature_indices[i]
-    # train_indices = sum(data.train_indices_per_annotation.values(), [])
-    # test_indices = sum(data.test_indices_per_annotation.values(), [])
-    train_indices = np.concatenate(list(data.train_indices_per_annotation.values()))
-    test_indices = np.concatenate(list(data.test_indices_per_annotation.values()))
+    # train_indices = np.concatenate(list(data.train_indices_per_annotation.values()))
+    # test_indices = np.concatenate(list(data.test_indices_per_annotation.values()))
     data_train = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
-        train_indices,
+        data.train_indices,
         axis=1,
     ).transpose()
     target_train = np.zeros(data.nr_samples)
     target_train[data.train_indices_per_annotation[annotation]] = 1.0
-    target_train = np.take(target_train, train_indices, axis=0)
+    target_train = np.take(target_train, data.train_indices, axis=0)
     data_test = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
-        test_indices,
+        data.test_indices,
         axis=1,
     ).transpose()
     target_test = np.zeros(data.nr_samples)
     target_test[data.test_indices_per_annotation[annotation]] = 1.0
-    target_test = np.take(target_test, test_indices, axis=0)
+    target_test = np.take(target_test, data.test_indices, axis=0)
     return (
         feature_indices,
-        train_indices,
-        test_indices,
         data_train,
         target_train,
         data_test,
