@@ -426,15 +426,15 @@ class XAIOData:
                 os.path.join(ldir, "params.npy"), allow_pickle=True
             ).item()
         for normtype in normalization_types_list:
-            if os.path.exists(os.path.join(ldir, normtype + "_data.bin")):
-                self.data_array[normtype] = np.array(
-                    np.memmap(
-                        os.path.join(ldir, normtype + "_data.bin"),
-                        dtype="float32",
-                        mode="r",
-                        shape=(self.nr_features, self.nr_samples),
-                    )
-                ).transpose()
+            assert os.path.exists(os.path.join(ldir, normtype + "_data.bin"))
+            self.data_array[normtype] = np.array(
+                np.memmap(
+                    os.path.join(ldir, normtype + "_data.bin"),
+                    dtype="float32",
+                    mode="r",
+                    shape=(self.nr_features, self.nr_samples),
+                )
+            ).transpose()
         if len(normalization_types_list) > 0:
             print("Normalization type: " + normalization_types_list[0])
             self.data = self.data_array[normalization_types_list[0]]

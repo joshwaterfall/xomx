@@ -89,15 +89,17 @@ if not os.path.exists(os.path.join(savedir, "xdata")):
         tmpdir,
         os.path.join(savedir, "manifest.txt"),
     )
-    # We drop the last 5 rows that contain special information which we will not use:
+    # We drop the last 5 rows containing special information which we will not use:
     df = df.drop(index=df.index[-5:])
 
     xdata = XAIOData()
+    # Import raw data:
     xdata.import_pandas(df)
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
-    # WARNING: we use this relatively naive post-processing to keep the tutorial simple.
-    # For more advanced applications, a more sophisticated post-processing is required.
+    # WARNING: we use this post-processing only to keep the tutorial simple.
+    # For more advanced applications, a more sophisticated post-processing can be
+    # required.
     xdata.normalize_feature_sums(1e6)
     # We compute the mean and standard deviation (across samples) for all the features:
     xdata.compute_mean_expressions()
@@ -138,7 +140,6 @@ if not os.path.exists(
 STEP 5: Keep only the 4000 features with largest standard deviation, normalize data,
 and randomly separate samples in training and test datasets.
 """
-
 if not os.path.exists(os.path.join(savedir, "xdata_small")):
     xdata = XAIOData()
     xdata.load(["raw"], os.path.join(savedir, "xdata"))
@@ -190,6 +191,9 @@ if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors"))
     quit()
 
 
+"""
+STEP 7: Visualizing results.
+"""
 xdata = XAIOData()
 xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
 xdata.compute_normalization("log")
