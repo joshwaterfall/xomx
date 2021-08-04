@@ -126,14 +126,18 @@ feature_selector[0].plot()
 "Scores on the test dataset for the 'TCGA-KIRC' binary classifier")
 
 
-+ 2D UMAP projection of the log-normalized data on the 30 selected features (10 for each 
-type of cancer), suggesting a division into 4 categories of samples rather than 3:
++ 2D UMAP projection of the log-normalized data limited to the 30 selected features
+(10 for each type of cancer):
 
 ```python
 xdata.umap_plot("log")
 ```
 ![alt text](imgs/tuto1_UMAP.png 
 "2D UMAP plot")
+
+This plot suggests a division into 4 categories of samples rather than 3. A possible 
+interpretation is that the samples in the bottom left cluster may have been 
+miscategorized, and are in fact not cases of KIRC, KIRP or KICH.
 
 + Log-normalized values accross all samples, for the 30 genes that have been 
 selected:
