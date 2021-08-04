@@ -22,13 +22,7 @@ See kidney_classif.md for detailed explanations.
 # The data and outputs will be saved in the following folder:
 savedir = os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif")
 os.makedirs(savedir, exist_ok=True)
-# The 3 categories of cancers studied in this tutorial correspond to the following
-# TCGA projects, which are different types of adenocarcinomas:
-project_list = ["TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"]
-disease_type = "Adenomas and Adenocarcinomas"
-# We will fetch 200 cases of KIRC, 200 cases of KIRP, and 66 cases of KICH
-# from the GDC database:
-case_numbers = [200, 200, 66]
+
 """
 STEP 1: Use the gdc_create_manifest function (from xaio/data_importation/gdc.py)
 to create a manifest.txt file that will be used to import data with the GDC
@@ -37,6 +31,13 @@ for each of them 150 samples corresponding to cases of adenocarcinomas.
 """
 
 if not os.path.exists(os.path.join(savedir, "manifest.txt")):
+    # The 3 categories of cancers studied in this tutorial correspond to the following
+    # TCGA projects, which are different types of adenocarcinomas:
+    project_list = ["TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"]
+    disease_type = "Adenomas and Adenocarcinomas"
+    # We will fetch 200 cases of KIRC, 200 cases of KIRP, and 66 cases of KICH
+    # from the GDC database:
+    case_numbers = [200, 200, 66]
     df_list = gdc_create_manifest(
         disease_type,
         project_list,
