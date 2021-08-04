@@ -1285,7 +1285,10 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
     def update_annot(ind, sc):
         pos = sc.get_offsets()[ind["ind"][0]]
         ann.xy = pos
-        text = "{}".format(data.sample_annotations[indices[ind["ind"][0]]])
+        text = "{}: {}".format(
+            data.sample_ids[indices[ind["ind"][0]]],
+            data.sample_annotations[indices[ind["ind"][0]]],
+        )
         ann.set_text(text)
 
     def hover(event):

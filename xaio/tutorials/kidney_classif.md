@@ -26,7 +26,7 @@ https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
 to import data from the Cancer Genome Atlas (TCGA). 
 This involves creating a `manifest.txt` file that describes the files to be imported.
 
-The function `gdc_create_manifest()` (`from xaio import gdc_create_manifest`) 
+The `gdc_create_manifest()` function (`from xaio import gdc_create_manifest`) 
 facilitates the creation of this manifest. It is designed to import files of gene 
 expression counts performed with [HTSeq](https://github.com/simon-anders/htseq). 
 
@@ -64,3 +64,101 @@ df.to_csv(
 
 ## Step 2: Importing the data
 
+Once the manifest is written, individual samples are downloaded to a temporary folder
+(`tmpdir_GDCsamples/`) with the following command:
+
+`gdc-client download -d tmpdir_GDCsamples -m /path/to/manifest.txt`
+
+This requires the `gdc-client`, which can be downloaded at: 
+https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
+
+## Step 3: Creating and saving the XAIOData object
+
+First, we use the `gdc_create_data_matrix()` function...
+
+## Step 4: Annotating the samples
+
+## Step 5: Basic pre-processing
+
+## Step 6: Training binary classifiers and performing recursive feature elimination
+
+```python
+nr_annotations = len(xdata.all_annotations)
+feature_selector = np.empty(nr_annotations, dtype=object)
+for i in range(nr_annotations):
+    print("Annotation: " + xdata.all_annotations[i])
+    feature_selector[i] = RFEExtraTrees(
+        xdata,
+        xdata.all_annotations[i],
+        init_selection_size=4000,
+        n_estimators=450,
+        random_state=0,
+    )
+    feature_selector[i].init()
+    for siz in [100, 30, 20, 15, 10]:
+        print("Selecting", siz, "features...")
+        feature_selector[i].select_features(siz)
+    feature_selector[i].save(
+        os.path.join(
+            savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
+        )
+    )
+```
+
+## Step 7: Visualizing results
+
++ Standard deviation vs. mean value for all features:
+```python
+xdata.function_scatter(
+    lambda idx: xdata.mean_expressions[idx], 
+    lambda idx: xdata.std_expressions[idx], 
+    "features")
+```
+![alt text](imgs/tuto1_mean_vs_std_deviation.png 
+"Standard deviation vs. mean value for all features")
+
++ Scores on the test dataset for the "TCGA-KIRC" binary classifier 
+(positive samples are above the y=0.5 line):
+```python
+feature_selector[0].plot()
+```
+![alt text](imgs/tuto1_KIRC_scores.png 
+"Scores on the test dataset for the 'TCGA-KIRC' binary classifier")
+
+
++ 2D UMAP projection of the log-normalized data on the 30 selected features (10 for each 
+type of cancer), suggesting a division into 4 categories of samples rather than 3:
+
+```python
+xdata.umap_plot("log")
+```
+![alt text](imgs/tuto1_UMAP.png 
+"2D UMAP plot")
+
++ Log-normalized values accross all samples, for the 30 genes that have been 
+selected:
+```python
+xdata.feature_plot(gene_list, "log")
+```
+
+![alt text](imgs/tuto1_30features.png 
+"Log-normalized values accross all samples for the 30 selected features")
+
+For the first gene at the top, ENSG00000185633.9, the differential expression 
+(KIRC vs. other samples) seems particularly pronounced.
+
++ Read counts for ENSG00000185633.9 accross all samples:
+```python
+xdata.feature_plot("ENSG00000185633.9", "raw")
+```
+![alt text](imgs/tuto1_geneNDUFA4L2.png 
+"Read counts for ENSG00000185633.9")
+
+It turns out that ENSG00000185633.9 is the gene "NDUFA4L2", which is known to be a 
+biomarker of KIRC. See the following publication:
+
+D. R. Minton et al., *Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear 
+cell renal cell carcinoma*, 
+Clin Cancer Res. 2016 Jun 1;22(11):2791-801. doi: [10.1158/1078-0432.CCR-15-1511](
+doi.org/10.1158/1078-0432.CCR-15-1511
+)

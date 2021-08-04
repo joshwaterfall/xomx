@@ -103,8 +103,8 @@ if not os.path.exists(os.path.join(savedir, "xdata")):
     xdata.import_pandas(df)
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
-    # WARNING: we use this post-processing only to keep the tutorial simple.
-    # For more advanced applications, a more sophisticated post-processing can be
+    # WARNING: we use this basic pre-processing to keep the tutorial simple.
+    # For more advanced applications, a more sophisticated pre-processing can be
     # required.
     xdata.normalize_feature_sums(1e6)
     # We compute the mean and standard deviation (across samples) for all the features:
@@ -166,8 +166,9 @@ elimination to keep 10 features per classifier.
 if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors")):
     xdata = XAIOData()
     xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
-    feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
-    for i in range(len(feature_selector)):
+    nr_annotations = len(xdata.all_annotations)
+    feature_selector = np.empty(nr_annotations, dtype=object)
+    for i in range(nr_annotations):
         print("Annotation: " + xdata.all_annotations[i])
         feature_selector[i] = RFEExtraTrees(
             xdata,
