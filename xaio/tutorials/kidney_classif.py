@@ -1,7 +1,12 @@
-from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
-from xaio.tools.basic_tools import XAIOData, confusion_matrix, matthews_coef
-from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
-from xaio.tools.classifiers.multiclass import ScoreBasedMulticlass
+from xaio import gdc_create_manifest, gdc_create_data_matrix
+from xaio import XAIOData, confusion_matrix, matthews_coef
+from xaio import RFEExtraTrees
+from xaio import ScoreBasedMulticlass
+
+# from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
+# from xaio.tools.basic_tools import XAIOData, confusion_matrix, matthews_coef
+# from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
+# from xaio.tools.classifiers.multiclass import ScoreBasedMulticlass
 import pandas as pd
 import numpy as np
 import os
@@ -33,8 +38,8 @@ for each of them 150 samples corresponding to cases of adenocarcinomas.
 if not os.path.exists(os.path.join(savedir, "manifest.txt")):
     # The 3 categories of cancers studied in this tutorial correspond to the following
     # TCGA projects, which are different types of adenocarcinomas:
-    project_list = ["TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"]
     disease_type = "Adenomas and Adenocarcinomas"
+    project_list = ["TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"]
     # We will fetch 200 cases of KIRC, 200 cases of KIRP, and 66 cases of KICH
     # from the GDC database:
     case_numbers = [200, 200, 66]
