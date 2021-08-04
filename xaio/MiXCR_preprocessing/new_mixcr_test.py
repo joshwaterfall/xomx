@@ -6,6 +6,7 @@ from IPython import embed as e
 import pandas as pd
 import numpy as np
 import os
+from collections import Counter
 
 # import random
 from biotransformers import BioTransformers  # pip install bio-transformers
@@ -23,11 +24,7 @@ def get_reads(filename):
         engine="c",
     ).to_numpy()
     trb_indices = np.where(
-        # [seq_read[i, 4].startswith("IGKV3D") for i in range(seq_read.shape[0])]
-        # [seq_read[i, 4].startswith("IGL") for i in range(seq_read.shape[0])]
-        # [seq_read[i, 4].startswith("TRA") for i in range(seq_read.shape[0])]
-        # [seq_read[i, 4].startswith("IGK") for i in range(seq_read.shape[0])]
-        [seq_read[i_, 4].startswith("IGH") for i_ in range(seq_read.shape[0])]
+        [seq_read[i_, 4].startswith("TRB") for i_ in range(seq_read.shape[0])]
     )[0]
     seq_read = np.take(seq_read, trb_indices, axis=0)
     seq_read = np.take(
@@ -63,6 +60,21 @@ def analyze_seq(seq_rd, annotation_, seq_dict=None):
     #     del seq_dict[key]
 
 
+def indiv_rep_seq(seq_rd, annotation_):
+    seq_dict = {}
+    annot_dict = {}
+    for elt in seq_rd:
+        seq_dict.setdefault(elt[0], []).append(elt[1])
+        annot_dict[elt[0]] = annotation_
+    for key in seq_dict.keys():
+        s = np.zeros(100)
+        cter = Counter(seq_dict[key]).most_common()[:100]
+        for i_ in range(len(cter)):
+            s += protvec(cter[i_][0])
+        seq_dict[key] = s
+    return seq_dict, annot_dict
+
+
 if True:
     dico_3mers = {}
     df = pd.read_csv(
@@ -86,4 +98,74 @@ data = XAIOData()
 data.save_dir = "/home/perrin/Desktop/data/xaio/dataset/MiXCR/subset_new/"
 
 if not os.path.exists(data.save_dir):
-    pass
+    prefix = (
+        "/home/perrin/Desktop/data/"
+        + "MiXCR/TCGA_MiXCR/TCGA_MiXCR_NicolasPerrin/Legacy_fileIDs/"
+    )
+    sdic = {}
+    adic = {}
+
+    for annotation in [
+        "ACC",
+        "BLCA",
+        "BRCA",
+        "CESC",
+        "CHOL",
+        "COAD",
+        "DLBC",
+        "ESCA",
+        "GBM",
+        "HNSC",
+        "KICH",
+        "KIRC",
+        "KIRP",
+        "LGG",
+        "LIHC",
+        "LUAD",
+        "LUSC",
+        "MESO",
+        "OV",
+        "PAAD",
+        "PCPG",
+        "PRAD",
+        "READ",
+        "SARC",
+        "SKCM",
+        "STAD",
+        "TGCT",
+        "THCA",
+        "THYM",
+        "UCEC",
+        "UCS",
+        "UVM",
+    ]:
+        # for annotation in ["PAAD", "STAD"]:
+        # for annotation in ["ACC", "BLCA"]:
+        print(annotation)
+        gr = get_reads(prefix + "tcga_" + annotation + "_legacy_file_ids.txt")
+        sd, ad = indiv_rep_seq(gr, annotation)
+        sdic.update(sd)
+        adic.update(ad)
+
+    data.sample_ids = np.array(list(sdic.keys()))
+    data.sample_annotations = np.empty_like(data.sample_ids)
+    for i, s_id in enumerate(data.sample_ids):
+        data.sample_annotations[i] = adic[s_id]
+    data.compute_sample_indices()
+    data.compute_all_annotations()
+    data.compute_sample_indices_per_annotation()
+    data.nr_samples = len(data.sample_ids)
+    data.nr_features = 100
+    darray = np.zeros((data.nr_samples, data.nr_features))
+    for i in range(data.nr_samples):
+        darray[i, :] = sdic[data.sample_ids[i]]
+    data.data_array["raw"] = darray
+    data.save(["raw"])
+    e()
+    quit()
+
+if os.path.exists(os.path.join(data.save_dir, "raw_data.bin")):
+    data.load(["raw"])
+    data.umap_plot("raw")
+    e()
+    quit()
