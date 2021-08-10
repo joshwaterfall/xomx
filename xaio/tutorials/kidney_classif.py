@@ -28,27 +28,37 @@ See kidney_classif.md for detailed explanations.
 savedir = os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif")
 os.makedirs(savedir, exist_ok=True)
 
+# We use the file next_step.txt to know which step to execute next. 7 consecutive
+# executions of the code are needed to complete the 7 steps of the tutorial.
+os.makedirs(savedir, exist_ok=True)
+if not os.path.exists(os.path.join(savedir, "next_step.txt")):
+    step = 1
+else:
+    step = np.loadtxt(os.path.join(savedir, "next_step.txt"), dtype="int")
+print("STEP", step)
+
+
 """
 STEP 1: Use the gdc_create_manifest function (from xaio/data_importation/gdc.py)
 to create a manifest.txt file that will be used to import data with the GDC
 Data Transfer Tool (gdc-client). 10 types of cancers are considered, with
 for each of them 150 samples corresponding to cases of adenocarcinomas.
 """
-
-if not os.path.exists(os.path.join(savedir, "manifest.txt")):
+if step == 1:
+    disease_type = "Adenomas and Adenocarcinomas"
     # The 3 categories of cancers studied in this tutorial correspond to the following
     # TCGA projects, which are different types of adenocarcinomas:
-    disease_type = "Adenomas and Adenocarcinomas"
     project_list = ["TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"]
-    # We will fetch 200 cases of KIRC, 200 cases of KIRP, and 66 cases of KICH
-    # from the GDC database:
-    case_numbers = [200, 200, 66]
+    # We fetch 200 cases of KIRC, 200 cases of KIRP, and 65 cases of KICH from the
+    # GDC database:
+    case_numbers = [200, 200, 65]
     df_list = gdc_create_manifest(
         disease_type,
         project_list,
         case_numbers,
     )
     df = pd.concat(df_list)
+    # noinspection PyTypeChecker
     df.to_csv(
         os.path.join(savedir, "manifest.txt"),
         header=True,
@@ -57,24 +67,20 @@ if not os.path.exists(os.path.join(savedir, "manifest.txt")):
         mode="w",
     )
     print("STEP 1: done")
-    quit()
 
 
 """
 STEP 2: Collect the data with gdc-client (which can be downloaded at
 https://gdc.cancer.gov/access-data/gdc-data-transfer-tool).
-If all downloads succeed, it creates 1500 subfolders in the TCGA_samples directory.
+If all downloads succeed, 465 directories are created in a temporary directory
+named tmpdir_GDCsamples.
 """
 
-# We put the data collected with gdc-client in a temporary folder:
 tmpdir = "tmpdir_GDCsamples"
-if not os.path.exists(os.path.join(savedir, "xdata")) and (
-    not os.path.exists(tmpdir)
-    or len(next(os.walk(tmpdir))[1]) <= 0.95 * len(case_numbers)
-):
+if step == 2:
     os.makedirs(tmpdir, exist_ok=True)
     commandstring = (
-        "gdc-client download -d "
+        "./gdc-client download -d "
         + tmpdir
         + " -m "
         + os.path.join(savedir, "manifest.txt")
@@ -302,6 +308,5 @@ STEP 7: Compute the multi-class classifier based on the binary classifiers.
 # Now we plot the value of this feature accross all samples:
 # xdata.function_plot(lambda idx: xdata.data[idx, ube2q1_index], "samples")
 
-
-e()
-quit()
+# noinspection PyTypeChecker
+np.savetxt(os.path.join(savedir, "next_step.txt"), [min(step + 1, 7)], fmt="%u")

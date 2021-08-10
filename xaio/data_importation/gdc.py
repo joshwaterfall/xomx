@@ -33,6 +33,13 @@ def gdc_create_manifest(disease_type, project_list, nr_of_cases_list):
                 {
                     "op": "in",
                     "content": {
+                        "field": "cases.samples.sample_type",
+                        "value": ["Primary Tumor"],
+                    },
+                },
+                {
+                    "op": "in",
+                    "content": {
                         "field": "files.data_category",
                         "value": ["Transcriptome Profiling"],
                     },

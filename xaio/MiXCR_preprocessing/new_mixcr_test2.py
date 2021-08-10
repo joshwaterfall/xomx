@@ -63,13 +63,12 @@ def analyze_seq(seq_rd, annotation_, seq_dict=None):
 def indiv_rep_seq(seq_rd, annotation_):
     seq_dict = {}
     annot_dict = {}
-    nr_seqs = 100
     for elt in seq_rd:
         seq_dict.setdefault(elt[0], []).append(elt[1])
         annot_dict[elt[0]] = annotation_
     for key in seq_dict.keys():
         s = np.zeros(100)
-        cter = Counter(seq_dict[key]).most_common()[:nr_seqs]
+        cter = Counter(seq_dict[key]).most_common()[:100]
         for i_ in range(len(cter)):
             s += protvec(cter[i_][0])
         seq_dict[key] = s
@@ -96,7 +95,7 @@ if True:
 
 
 data = XAIOData()
-data.save_dir = "/home/perrin/Desktop/data/xaio/dataset/MiXCR/subset_new/"
+data.save_dir = "/home/perrin/Desktop/data/xaio/dataset/MiXCR/subset_new2/"
 
 if not os.path.exists(data.save_dir):
     prefix = (
@@ -140,15 +139,34 @@ if not os.path.exists(data.save_dir):
     #     "UCS",
     #     "UVM",
     # ]:
-    annot_list = ["BRCA", "STAD", "ACC", "LUAD", "PAAD"]
-    annot_list = ["STAD", "ACC"]
+    annot_list = ["STAD", "BRCA"]
     for annotation in annot_list:
         # for annotation in ["ACC", "BLCA"]:
         print(annotation)
         gr = get_reads(prefix + "tcga_" + annotation + "_legacy_file_ids.txt")
-        sd, ad = indiv_rep_seq(gr, annotation)
-        sdic.update(sd)
-        adic.update(ad)
+        analyze_seq(gr, annotation, sdic)
+        # sd, ad = indiv_rep_seq(gr, annotation)
+        # sdic.update(sd)
+        # adic.update(ad)
+
+    best_key = ""
+    best_diff = 0
+    key_rank = {}
+    for key in sdic:
+        if "STAD" not in sdic[key]:
+            stad_cnt = 0
+        else:
+            stad_cnt = len(sdic[key]["STAD"])
+        if "BRCA" not in sdic[key]:
+            brca_cnt = 0
+        else:
+            brca_cnt = len(sdic[key]["BRCA"])
+        if abs(brca_cnt - stad_cnt) > best_diff:
+            best_key = key
+            best_diff = abs(brca_cnt - stad_cnt)
+
+    e()
+    quit()
 
     data.sample_ids = np.array(list(sdic.keys()))
     data.sample_annotations = np.empty_like(data.sample_ids)
@@ -169,9 +187,6 @@ if not os.path.exists(data.save_dir):
 
 if os.path.exists(os.path.join(data.save_dir, "raw_data.bin")):
     data.load(["raw"])
-    data.compute_mean_expressions()
-    data.compute_std_expressions()
-    data.compute_normalization("std")
-    data.umap_plot("std")
+    data.umap_plot("raw")
     e()
     quit()
