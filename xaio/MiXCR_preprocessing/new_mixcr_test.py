@@ -25,6 +25,8 @@ def get_reads(filename):
     ).to_numpy()
     trb_indices = np.where(
         [seq_read[i_, 4].startswith("TRB") for i_ in range(seq_read.shape[0])]
+        # [seq_read[i_, 4].startswith(
+        #     ("IGL", "TRB", "TRA", "IGK", "IGH")) for i_ in range(seq_read.shape[0])]
     )[0]
     seq_read = np.take(seq_read, trb_indices, axis=0)
     seq_read = np.take(
@@ -63,9 +65,10 @@ def analyze_seq(seq_rd, annotation_, seq_dict=None):
 def indiv_rep_seq(seq_rd, annotation_):
     seq_dict = {}
     annot_dict = {}
-    nr_seqs = 100
+    nr_seqs = 5
     for elt in seq_rd:
         seq_dict.setdefault(elt[0], []).append(elt[1])
+        # annot_dict[elt[0]] = annotation_ + str(len(seq_dict[elt[0]]))
         annot_dict[elt[0]] = annotation_
     for key in seq_dict.keys():
         s = np.zeros(100)
@@ -142,6 +145,7 @@ if not os.path.exists(data.save_dir):
     # ]:
     annot_list = ["BRCA", "STAD", "ACC", "LUAD", "PAAD"]
     annot_list = ["STAD", "ACC"]
+    annot_list = ["LUAD", "LUSC"]
     for annotation in annot_list:
         # for annotation in ["ACC", "BLCA"]:
         print(annotation)

@@ -24,7 +24,7 @@ def get_reads(filename):
         engine="c",
     ).to_numpy()
     trb_indices = np.where(
-        [seq_read[i_, 4].startswith("TRB") for i_ in range(seq_read.shape[0])]
+        [seq_read[i_, 4].startswith("IGL") for i_ in range(seq_read.shape[0])]
     )[0]
     seq_read = np.take(seq_read, trb_indices, axis=0)
     seq_read = np.take(
@@ -105,41 +105,41 @@ if not os.path.exists(data.save_dir):
     sdic = {}
     adic = {}
 
-    # for annotation in [
-    #     "ACC",
-    #     "BLCA",
-    #     "BRCA",
-    #     "CESC",
-    #     "CHOL",
-    #     "COAD",
-    #     "DLBC",
-    #     "ESCA",
-    #     "GBM",
-    #     "HNSC",
-    #     "KICH",
-    #     "KIRC",
-    #     "KIRP",
-    #     "LGG",
-    #     "LIHC",
-    #     "LUAD",
-    #     "LUSC",
-    #     "MESO",
-    #     "OV",
-    #     "PAAD",
-    #     "PCPG",
-    #     "PRAD",
-    #     "READ",
-    #     "SARC",
-    #     "SKCM",
-    #     "STAD",
-    #     "TGCT",
-    #     "THCA",
-    #     "THYM",
-    #     "UCEC",
-    #     "UCS",
-    #     "UVM",
-    # ]:
-    annot_list = ["STAD", "BRCA"]
+    annot_list = [
+        "ACC",
+        "BLCA",
+        "BRCA",
+        "CESC",
+        "CHOL",
+        "COAD",
+        "DLBC",
+        "ESCA",
+        "GBM",
+        "HNSC",
+        "KICH",
+        "KIRC",
+        "KIRP",
+        "LGG",
+        "LIHC",
+        "LUAD",
+        # "LUSC",
+        # "MESO",
+        # "OV",
+        # "PAAD",
+        # "PCPG",
+        # "PRAD",
+        # "READ",
+        # "SARC",
+        # "SKCM",
+        # "STAD",
+        # "TGCT",
+        # "THCA",
+        # "THYM",
+        # "UCEC",
+        # "UCS",
+        # "UVM",
+    ]
+    # annot_list = ["STAD", "BRCA", "LUAD", "ACC"]
     for annotation in annot_list:
         # for annotation in ["ACC", "BLCA"]:
         print(annotation)
@@ -152,23 +152,22 @@ if not os.path.exists(data.save_dir):
     best_key = ""
     best_diff = 0
     key_rank = {}
-    for key in sdic:
-        if "STAD" not in sdic[key]:
-            stad_cnt = 0
-        else:
-            stad_cnt = len(sdic[key]["STAD"])
-        if "BRCA" not in sdic[key]:
-            brca_cnt = 0
-        else:
-            brca_cnt = len(sdic[key]["BRCA"])
-        if abs(brca_cnt - stad_cnt) > best_diff:
-            best_key = key
-            best_diff = abs(brca_cnt - stad_cnt)
+    adic = {}
+    for key_ in sdic:
+        cnt = {}
+        for annotation in annot_list:
+            if annotation not in sdic[key_]:
+                cnt[annotation] = 0
+            else:
+                cnt[annotation] = len(sdic[key_][annotation])
+        lv = list(cnt.values())
+        lv.sort()
+        key_rank[key_] = lv[-1] - lv[-2]
+        adic[key_] = max(cnt, key=lambda k: cnt[k])
 
-    e()
-    quit()
+    krs = sorted(key_rank, key=lambda k: key_rank[k])
 
-    data.sample_ids = np.array(list(sdic.keys()))
+    data.sample_ids = np.array(krs[-5000:])
     data.sample_annotations = np.empty_like(data.sample_ids)
     for i, s_id in enumerate(data.sample_ids):
         data.sample_annotations[i] = adic[s_id]
@@ -179,7 +178,7 @@ if not os.path.exists(data.save_dir):
     data.nr_features = 100
     darray = np.zeros((data.nr_samples, data.nr_features))
     for i in range(data.nr_samples):
-        darray[i, :] = sdic[data.sample_ids[i]]
+        darray[i, :] = protvec(data.sample_ids[i])
     data.data_array["raw"] = darray
     data.save(["raw"])
     e()
@@ -187,6 +186,9 @@ if not os.path.exists(data.save_dir):
 
 if os.path.exists(os.path.join(data.save_dir, "raw_data.bin")):
     data.load(["raw"])
+    data.compute_mean_expressions()
+    data.compute_std_expressions()
+    data.compute_normalization("std")
     data.umap_plot("raw")
     e()
     quit()
