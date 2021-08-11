@@ -173,8 +173,8 @@ if not os.path.exists(data.save_dir):
 
 if os.path.exists(os.path.join(data.save_dir, "raw_data.bin")):
     data.load(["raw"])
-    data.compute_mean_expressions()
-    data.compute_std_expressions()
+    data.compute_feature_mean_values()
+    data.compute_feature_standard_deviations()
     data.compute_normalization("std")
     data.umap_plot("std")
     e()

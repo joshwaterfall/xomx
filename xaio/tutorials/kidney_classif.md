@@ -108,10 +108,11 @@ for i in range(nr_annotations):
 ## Step 7: Visualizing results
 
 + Standard deviation vs. mean value for all features:
+
 ```python
 xdata.function_scatter(
-    lambda idx: xdata.mean_expressions[idx], 
-    lambda idx: xdata.std_expressions[idx], 
+    lambda idx: xdata.feature_mean_values[idx],
+    lambda idx: xdata.feature_standard_deviations[idx],
     "features")
 ```
 ![alt text](imgs/tuto1_mean_vs_std_deviation.png 
@@ -164,5 +165,5 @@ biomarker of KIRC. See the following publication:
 D. R. Minton et al., *Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear 
 cell renal cell carcinoma*, 
 Clin Cancer Res. 2016 Jun 1;22(11):2791-801. doi: [10.1158/1078-0432.CCR-15-1511](
-doi.org/10.1158/1078-0432.CCR-15-1511
+https://doi.org/10.1158/1078-0432.CCR-15-1511
 )

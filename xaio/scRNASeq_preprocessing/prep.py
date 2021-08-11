@@ -29,21 +29,18 @@ data.sample_ids = np.empty((data.nr_samples,), dtype=object)
 for i in range(data.nr_samples):
     data.sample_ids[i] = barcodes[i]
 data.compute_sample_indices()
-data.compute_mean_expressions()
-data.compute_std_expressions()
+data.compute_feature_mean_values()
+data.compute_feature_standard_deviations()
 data.compute_feature_shortnames_ref()
 data.compute_normalization("std")
 data.compute_normalization("log")
 data.compute_nr_non_zero_features()
 data.compute_nr_non_zero_samples()
-data.compute_total_sums()
+data.compute_total_feature_sums()
 
 mitochondrial_genes = data.regex_search(r"\|MT\-")
 mt_percents = np.array(
-    [
-        data.percentage_feature_set(mitochondrial_genes, i)
-        for i in range(data.nr_samples)
-    ]
+    [data.feature_values_ratio(mitochondrial_genes, i) for i in range(data.nr_samples)]
 )
 
 data.reduce_samples(np.where(mt_percents < 0.05)[0])

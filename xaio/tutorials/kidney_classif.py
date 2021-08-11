@@ -1,7 +1,6 @@
 from xaio import gdc_create_manifest, gdc_create_data_matrix
 from xaio import XAIOData, confusion_matrix, matthews_coef
 from xaio import RFEExtraTrees
-from xaio import ScoreBasedMulticlass
 
 # from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
 # from xaio.tools.basic_tools import XAIOData, confusion_matrix, matthews_coef
@@ -75,7 +74,6 @@ https://gdc.cancer.gov/access-data/gdc-data-transfer-tool).
 If all downloads succeed, 465 directories are created in a temporary directory
 named tmpdir_GDCsamples.
 """
-
 tmpdir = "tmpdir_GDCsamples"
 if step == 2:
     os.makedirs(tmpdir, exist_ok=True)
@@ -94,7 +92,6 @@ STEP 3: Gather all individual cases to create the data matrix, and save it in
 a folder named "xdata".
 After that, all the individual files imported with gdc-client are erased.
 """
-
 if step == 3:
     df = gdc_create_data_matrix(
         tmpdir,
@@ -104,71 +101,68 @@ if step == 3:
     df = df.drop(index=df.index[-5:])
 
     xdata = XAIOData()
-    # Import raw data:
+    # Importing raw data:
     xdata.import_pandas(df)
+
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
     # WARNING: basic pre-processing is used here for simplicity, but for more advanced
     # applications, a more sophisticated pre-processing may be required.
     xdata.normalize_feature_sums(1e6)
+
     # We compute the mean and standard deviation (across samples) for all the features:
-    xdata.compute_mean_expressions()
-    xdata.compute_mean_expressions()
-    xdata.compute_std_expressions()
-    # Although it will not be used in this tutorial, we compute the number of
-    # non-zero features for each sample, and of non-zero samples for each feature:
-    xdata.compute_nr_non_zero_features()
-    xdata.compute_nr_non_zero_samples()
+    xdata.compute_feature_mean_values()
+    xdata.compute_feature_standard_deviations()
+
+    # Saving the XAIOData object and its "raw" data array to the disk:
     xdata.save(["raw"], os.path.join(savedir, "xdata"))
+
+    # We erase the individual sample directories downloaded with gdc-client:
     shutil.rmtree(tmpdir, ignore_errors=True)
     print("STEP 3: done")
-    quit()
 
 
 """
 STEP 4: Annotate the samples.
 Annotations are fetched from the previously created file manifest.txt.
 """
-if not os.path.exists(
-    os.path.join(savedir, "xdata", "sample_indices_per_annotation.npy")
-):
+if step == 4:
     xdata = XAIOData()
-    xdata.load(["raw"], os.path.join(savedir, "xdata"))
+    # Loading the XAIOData object (with normalization_types_list=None, the data array
+    # is not loaded):
+    xdata.load(normalization_types_list=None, load_dir=os.path.join(savedir, "xdata"))
     manifest = pd.read_table(os.path.join(savedir, "manifest.txt"), header=0)
     xdata.sample_annotations = np.empty(xdata.nr_samples, dtype=object)
     for i in range(xdata.nr_samples):
         xdata.sample_annotations[xdata.sample_indices[manifest["id"][i]]] = manifest[
             "annotation"
         ][i]
+    # Computing the list of different annotations:
     xdata.compute_all_annotations()
+    # Computing the list of sample indices for every annotation:
     xdata.compute_sample_indices_per_annotation()
-    xdata.save(["raw"])
+    xdata.save()
     print("STEP 4: done")
-    quit()
 
 
 """
 STEP 5: Keep only the 4000 features with largest standard deviation, normalize data,
 and randomly separate samples in training and test datasets.
 """
-if not os.path.exists(os.path.join(savedir, "xdata_small")):
+if step == 5:
     xdata = XAIOData()
     xdata.load(["raw"], os.path.join(savedir, "xdata"))
-    xdata.reduce_features(np.argsort(xdata.std_expressions)[-4000:])
-    xdata.compute_normalization("std")
-    xdata.compute_train_and_test_indices()
-    xdata.compute_std_values_on_training_sets()
-    xdata.compute_std_values_on_training_sets_argsort()
-    xdata.save(["raw", "std"], os.path.join(savedir, "xdata_small"))
+    xdata.reduce_features(np.argsort(xdata.feature_standard_deviations)[-4000:])
+    xdata.compute_train_and_test_indices(test_train_ratio=0.25)
+    xdata.save(["raw"], os.path.join(savedir, "xdata_small"))
     print("STEP 5: done")
-    quit()
 
 
 """
 STEP 6: Train binary classifiers for every annotation, with recursive feature
 elimination to keep 10 features per classifier.
 """
-if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors")):
+if step == 6:
     xdata = XAIOData()
     xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
     nr_annotations = len(xdata.all_annotations)
@@ -178,7 +172,6 @@ if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors"))
         feature_selector[i] = RFEExtraTrees(
             xdata,
             xdata.all_annotations[i],
-            init_selection_size=4000,
             n_estimators=450,
             random_state=0,
         )
@@ -200,23 +193,30 @@ if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors"))
         print("Done.")
 
     print("STEP 6: done")
-    quit()
 
 
 """
 STEP 7: Visualizing results.
 """
-if False:
+if step == 7:
     xdata = XAIOData()
     xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
-    xdata.compute_normalization("log")
+
+    xdata.compute_normalization("std")
+    xdata.function_scatter(
+        lambda idx: xdata.feature_mean_values[idx],
+        lambda idx: xdata.feature_standard_deviations[idx],
+        "features",
+        xlog_scale=True,
+        ylog_scale=True,
+    )
+
     feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
     gene_list = []
     for i in range(len(feature_selector)):
         feature_selector[i] = RFEExtraTrees(
             xdata,
             xdata.all_annotations[i],
-            init_selection_size=4000,
             n_estimators=450,
             random_state=0,
         )
@@ -225,85 +225,46 @@ if False:
                 savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
             )
         )
-        # feature_selector[i].plot()
-        gene_list = gene_list + [
-            xdata.feature_names[feature_selector[i].current_feature_indices[j]]
-            for j in range(len(feature_selector[i].current_feature_indices))
+        gene_list += [
+            xdata.feature_names[idx_]
+            for idx_ in feature_selector[i].current_feature_indices
         ]
 
-    # xdata.feature_plot(gene_list, "log")
+    feature_selector[0].plot()
+
+    xdata.reduce_features(gene_list)
+    xdata.compute_normalization("log")
+    xdata.umap_plot("log")
+
+    xdata.feature_plot(gene_list, "log")
+    xdata.feature_plot("ENSG00000168269.8")  # FOXI1
+    xdata.feature_plot("ENSG00000163435.14")  # ELF3
+    xdata.feature_plot("ENSG00000185633.9")  # NDUFA4L2
+    e()
+    quit()
+
+    # Some of the most remarkable genes on this plot:
+    # ENSG00000185633.9
+    # ENSG00000168269.8 for KICH: FOXI1, known in
+    # "Cell-Type-Specific Gene Programs of the Normal Human
+    # Nephron Define Kidney Cancer Subtypes"
+
+    # For KIRP: ELF3 ENSG00000163435.14
+    # Diagnostic
+    # biomarkers
+    # for renal cell carcinoma: selection
+    # using
+    # novel
+    # bioinformatics
+    # systems
+    # for microarray data analysis
+
     # The Gene ENSG00000185633.9 (NDUFA4L2) seems associated to KIRC
     # (Kidney Renal Clear Cell Carcinoma).
     # This is confirmed by the publication:
     # Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear cell
     # renal cell carcinoma
     # xdata.feature_plot("ENSG00000185633.9", "raw")
-
-    classifier = ScoreBasedMulticlass(xdata.all_annotations, feature_selector)
-
-# all_predictions = classifier.predict(xdata.data_array["raw"][:])
-# annot_map = {project_list[i]: i for i in range(len(project_list))}
-#
-#
-# def multi_output(idx):
-#     if idx in xdata.test_indices:
-#         return annot_map[all_predictions[idx]]
-#     else:
-#         return -1
-#
-#
-# xdata.function_plot(multi_output, "samples", violinplot_=False)
-
-
-"""
-STEP 7: Compute the multi-class classifier based on the binary classifiers.
-"""
-
-
-# xdata = XAIOData()
-# xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
-# xdata.compute_normalization("log")
-# feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
-# gene_list = []
-# for i in range(len(feature_selector)):
-#     feature_selector[i] = RFEExtraTrees(
-#         xdata, xdata.all_annotations[i], init_selection_size=4000
-#     )
-#     feature_selector[i].load(os.path.join(savedir, "xdata_small",
-#                                           "feature_selectors",
-#                                           xdata.all_annotations[i]))
-#     feature_selector[i].plot()
-#     gene_list = gene_list + [
-#             xdata.feature_names[
-#                 feature_selector[i].current_feature_indices[j]
-#             ]
-#             for j in range(len(feature_selector[i].current_feature_indices))
-#         ]
-# print(gene_list)
-# xdata.feature_plot(gene_list, "log")
-
-# # gene: KLK3
-# feat_i = xdata.regex_search(r"ENSG00000142515")[0]
-# xdata.function_plot(lambda idx: xdata.data[idx, feat_i], "samples")
-
-# # 1) Plotting the total sum of counts for each sample:
-# xdata.function_plot(lambda idx: xdata.total_sums[idx], "samples")
-#
-# # 2) Plotting mean value vs. std deviation for all features:
-# xdata.function_scatter(lambda idx: xdata.mean_expressions[idx],
-#                        lambda idx: xdata.std_expressions[idx],
-#                        "features")
-
-# The gene UBE2Q1 is known as a potential biomarker for Lung Adenocarcinoma (LUAD).
-# Its Gene ID is ENSG00000160714. We can look for its feature index in our data
-# with a regex search:
-# ube2q1_index = xdata.regex_search(r"ENSG00000160714")[0]
-# ube2q1_index = xdata.regex_search(r"ENSG00000232931")[0]
-# ube2q1_index = xdata.regex_search(r"ENSG00000237424")[0]
-# ube2q1_index = xdata.regex_search(r"ENSG00000164932")[0]
-# assert ube2q1_index == 10516
-# Now we plot the value of this feature accross all samples:
-# xdata.function_plot(lambda idx: xdata.data[idx, ube2q1_index], "samples")
 
 # noinspection PyTypeChecker
 np.savetxt(os.path.join(savedir, "next_step.txt"), [min(step + 1, 7)], fmt="%u")

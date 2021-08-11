@@ -13,10 +13,10 @@ def loadscRNASeq(normalization=""):
         data.save_dir + "nr_samples.npy", allow_pickle=True
     ).item()
     data.feature_names = np.load(data.save_dir + "transcripts.npy", allow_pickle=True)
-    data.mean_expressions = np.load(
+    data.feature_mean_values = np.load(
         data.save_dir + "mean_expressions.npy", allow_pickle=True
     )
-    data.std_expressions = np.load(
+    data.feature_standard_deviations = np.load(
         data.save_dir + "std_expressions.npy", allow_pickle=True
     )
     data.feature_shortnames_ref = np.load(

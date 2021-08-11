@@ -51,11 +51,11 @@ mitochondrial_genes = data.regex_search(r"\|MT\-")
 
 
 def tsums(i):
-    return data.total_sums[i]
+    return data.total_feature_sums[i]
 
 
 def mt_p(i):
-    return data.percentage_feature_set(mitochondrial_genes, i)
+    return data.feature_values_ratio(mitochondrial_genes, i)
 
 
 def nzfeats(i):
@@ -63,11 +63,11 @@ def nzfeats(i):
 
 
 def stdval(i):
-    return data.std_expressions[i]
+    return data.feature_standard_deviations[i]
 
 
 def mval(i):
-    return data.mean_expressions[i]
+    return data.feature_mean_values[i]
 
 
 # data.function_plot(tsums, "samples")
@@ -79,7 +79,7 @@ def mval(i):
 # data.function_plot(lambda i: data.data[i, data.feature_shortnames_ref['MALAT1']],
 #                    "samples", violinplot_=False)
 
-data.reduce_features(np.argsort(data.std_expressions)[-4000:])
+data.reduce_features(np.argsort(data.feature_standard_deviations)[-4000:])
 
 n_clusters = 6
 

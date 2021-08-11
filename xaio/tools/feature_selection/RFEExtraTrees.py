@@ -23,19 +23,21 @@ class RFEExtraTrees:
     ):
         self.data = data
         self.annotation = annotation
-        self.init_selection_size = init_selection_size
+        if init_selection_size is None:
+            self.init_selection_size = self.data.nr_features
+        else:
+            self.init_selection_size = init_selection_size
         self.n_estimators = n_estimators
         self.random_state = random_state
-        if self.init_selection_size is not None:
-            (
-                self.current_feature_indices,
-                self.data_train,
-                self.target_train,
-                self.data_test,
-                self.target_test,
-            ) = naive_feature_selection(
-                self.data, self.annotation, self.init_selection_size
-            )
+        (
+            self.current_feature_indices,
+            self.data_train,
+            self.target_train,
+            self.data_test,
+            self.target_test,
+        ) = naive_feature_selection(
+            self.data, self.annotation, self.init_selection_size
+        )
         self.forest = None
         self.confusion_matrix = None
         self.log = []
@@ -119,7 +121,8 @@ class RFEExtraTrees:
 
     def load(self, fpath):
         # The initialization before load() must be the same as the initialization of
-        # the RFEExtraTrees that was saved (but init() does not need to be executed).
+        # the RFEExtraTrees object that was saved (but init() does not need to be
+        # executed).
         sdir = fpath
         if os.path.isfile(os.path.join(sdir, "model.joblib")) and os.path.isfile(
             os.path.join(sdir, "log.joblib")

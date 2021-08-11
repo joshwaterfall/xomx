@@ -40,24 +40,18 @@ class XAIOData:
             sample_indices_per_annotation["#"] is the list of indices of the samples of
             annotation "#"
 
-        nr_features (int or NoneType):
-            the total number of features for each sample
-
-        nr_samples (int or NoneType):
-            the total number of samples
-
         feature_names (np.ndarray or NoneType):
             the i-th feature name is feature_names[i]
 
         feature_indices (dict or NoneType):
             feature_indices["#"] is the index of the feature of name "#"
 
-        mean_expressions (np.ndarray or NoneType):
-            mean_expression[i] is the mean value of the i-th feature (in raw data)
+        feature_mean_values (np.ndarray or NoneType):
+            feature_mean_values[i] is the mean value of the i-th feature (in raw data)
             accross all samples
 
-        std_expressions (np.ndarray or NoneType):
-            similar to mean_expressions, but standard deviation instead of mean
+        feature_standard_deviations (np.ndarray or NoneType):
+            similar to feature_mean_values, but standard deviation instead of mean
 
         train_indices (np.ndarray or NoneType):
             the list of indices of the samples belonging to the training set
@@ -85,20 +79,22 @@ class XAIOData:
             sorted by decreasing value in std_values_on_training_sets["#"]
 
         epsilon_shift (float or NoneType):
-            the value of the shift used for log-normalization of the data
+            the value of the shift used for log-normalization of the data; this
+            parameter is computed during log-normalization
 
         maxlog (float or NoneType):
-            maximum value of the log data; it is a parameter computed during
+            maximum value of the log data; this parameter is computed during
             log-normalization
 
         data_array (dict):
             - data_array["raw"]:
                 data_array["raw"][i, j]: value of the j-th feature of the i-th sample
-            - data_array["std"]: data normalized by mean and standard deviation; the
-            original value is:
-                data_array["raw"][i, j] == data_array["std"][i, j] * std_expression[j]
-                                  + mean_expression[j]
-            - data_array["log"]: log-normalized values; the original value is:
+            - data_array["std"]: data normalized by mean and standard deviation, such
+            that:
+                data_array["raw"][i, j] ==
+                            data_array["std"][i, j] * feature_standard_deviations[j]
+                            + feature_mean_values[j]
+            - data_array["log"]: log-normalized values, such that:
                 data_array["raw"][i, j] == np.exp(
                             data_array["log"][i,j] * (maxlog - np.log(epsilon_shift)
                         ) + np.log(epsilon_shift)) - epsilon_shift
@@ -116,9 +112,9 @@ class XAIOData:
             nr_non_zero_samples[i] is the number of samples with positive values on the
             i-th feature (in raw data)
 
-        total_sums (np.ndarray or NoneType):
-            total_sums[i] is, for the i-th sample, the sum of values (in raw data)
-            accross all features
+        total_feature_sums (np.ndarray or NoneType):
+            total_feature_sums[i] is, for the i-th sample, the sum of values (in raw
+            data) accross all features
     """
 
     def __init__(self):
@@ -129,12 +125,10 @@ class XAIOData:
         self.sample_infos = None
         self.all_annotations = None
         self.sample_indices_per_annotation = None
-        self.nr_features = None
-        self.nr_samples = None
         self.feature_names = None
         self.feature_indices = None
-        self.mean_expressions = None
-        self.std_expressions = None
+        self.feature_mean_values = None
+        self.feature_standard_deviations = None
         self.data = None
         self.data_array = {}
         self.params = None
@@ -149,7 +143,28 @@ class XAIOData:
         self.normalization_type = None
         self.nr_non_zero_features = None
         self.nr_non_zero_samples = None
-        self.total_sums = None
+        self.total_feature_sums = None
+
+    @property
+    def nr_samples(self):
+        """
+        the total number of samples, or None if self.sample_ids is None
+        """
+        if self.sample_ids is None:
+            return None
+        else:
+            return len(self.sample_ids)
+
+    @property
+    def nr_features(self):
+        """
+        the total number of features for each sample, or None if
+        self.feature_names is None
+        """
+        if self.feature_names is None:
+            return None
+        else:
+            return len(self.feature_names)
 
     def save(self, normalization_types_list=None, save_dir=None):
         if normalization_types_list is None:
@@ -159,12 +174,6 @@ class XAIOData:
         assert self.save_dir is not None
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
-        if self.nr_features is not None:
-            np.save(os.path.join(self.save_dir, "nr_features.npy"), self.nr_features)
-            print("Saved: " + os.path.join(self.save_dir, "nr_features.npy"))
-        if self.nr_samples is not None:
-            np.save(os.path.join(self.save_dir, "nr_samples.npy"), self.nr_samples)
-            print("Saved: " + os.path.join(self.save_dir, "nr_samples.npy"))
         if self.sample_ids is not None:
             np.save(os.path.join(self.save_dir, "sample_ids.npy"), self.sample_ids)
             print("Saved: " + os.path.join(self.save_dir, "sample_ids.npy"))
@@ -204,17 +213,24 @@ class XAIOData:
                 os.path.join(self.save_dir, "feature_names.npy"), self.feature_names
             )
             print("Saved: " + os.path.join(self.save_dir, "feature_names.npy"))
-        if self.mean_expressions is not None:
+        if self.feature_mean_values is not None:
             np.save(
-                os.path.join(self.save_dir, "mean_expressions.npy"),
-                self.mean_expressions,
+                os.path.join(self.save_dir, "feature_mean_values.npy"),
+                self.feature_mean_values,
             )
-            print("Saved: " + os.path.join(self.save_dir, "mean_expressions.npy"))
-        if self.std_expressions is not None:
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "feature_standard_deviations.npy")
+            )
+        if self.feature_standard_deviations is not None:
             np.save(
-                os.path.join(self.save_dir, "std_expressions.npy"), self.std_expressions
+                os.path.join(self.save_dir, "feature_standard_deviations.npy"),
+                self.feature_standard_deviations,
             )
-            print("Saved: " + os.path.join(self.save_dir, "std_expressions.npy"))
+            print(
+                "Saved: "
+                + os.path.join(self.save_dir, "feature_standard_deviations.npy")
+            )
         if self.train_indices is not None:
             np.save(
                 os.path.join(self.save_dir, "train_indices.npy"),
@@ -289,12 +305,12 @@ class XAIOData:
                 self.nr_non_zero_samples,
             )
             print("Saved: " + os.path.join(self.save_dir, "nr_non_zero_samples.npy"))
-        if self.total_sums is not None:
+        if self.total_feature_sums is not None:
             np.save(
-                os.path.join(self.save_dir, "total_sums.npy"),
-                self.total_sums,
+                os.path.join(self.save_dir, "total_feature_sums.npy"),
+                self.total_feature_sums,
             )
-            print("Saved: " + os.path.join(self.save_dir, "total_sums.npy"))
+            print("Saved: " + os.path.join(self.save_dir, "total_feature_sums.npy"))
         if self.params is not None:
             np.save(
                 os.path.join(self.save_dir, "params.npy"),
@@ -324,14 +340,6 @@ class XAIOData:
         else:
             ldir = load_dir
             self.save_dir = load_dir
-        if os.path.exists(os.path.join(ldir, "nr_features.npy")):
-            self.nr_features = np.load(
-                os.path.join(ldir, "nr_features.npy"), allow_pickle=True
-            ).item()
-        if os.path.exists(os.path.join(ldir, "nr_samples.npy")):
-            self.nr_samples = np.load(
-                os.path.join(ldir, "nr_samples.npy"), allow_pickle=True
-            ).item()
         if os.path.exists(os.path.join(ldir, "sample_ids.npy")):
             self.sample_ids = np.load(
                 os.path.join(ldir, "sample_ids.npy"), allow_pickle=True
@@ -361,13 +369,13 @@ class XAIOData:
             self.feature_names = np.load(
                 os.path.join(ldir, "feature_names.npy"), allow_pickle=True
             )
-        if os.path.exists(os.path.join(ldir, "mean_expressions.npy")):
-            self.mean_expressions = np.load(
-                os.path.join(ldir, "mean_expressions.npy"), allow_pickle=True
+        if os.path.exists(os.path.join(ldir, "feature_mean_values.npy")):
+            self.feature_mean_values = np.load(
+                os.path.join(ldir, "feature_mean_values.npy"), allow_pickle=True
             )
-        if os.path.exists(os.path.join(ldir, "std_expressions.npy")):
-            self.std_expressions = np.load(
-                os.path.join(ldir, "std_expressions.npy"), allow_pickle=True
+        if os.path.exists(os.path.join(ldir, "feature_standard_deviations.npy")):
+            self.feature_standard_deviations = np.load(
+                os.path.join(ldir, "feature_standard_deviations.npy"), allow_pickle=True
             )
         if os.path.exists(os.path.join(ldir, "feature_indices.npy")):
             self.feature_indices = np.load(
@@ -417,9 +425,9 @@ class XAIOData:
             self.nr_non_zero_features = np.load(
                 os.path.join(ldir, "nr_non_zero_features.npy"), allow_pickle=True
             )
-        if os.path.exists(os.path.join(ldir, "total_sums.npy")):
-            self.total_sums = np.load(
-                os.path.join(ldir, "total_sums.npy"), allow_pickle=True
+        if os.path.exists(os.path.join(ldir, "total_feature_sums.npy")):
+            self.total_feature_sums = np.load(
+                os.path.join(ldir, "total_feature_sums.npy"), allow_pickle=True
             )
         if os.path.exists(os.path.join(ldir, "params.npy")):
             self.params = np.load(
@@ -457,15 +465,15 @@ class XAIOData:
         assert self.sample_annotations is not None
         self.all_annotations = np.array(list(dict.fromkeys(self.sample_annotations)))
 
-    def compute_mean_expressions(self):
+    def compute_feature_mean_values(self):
         assert self.data_array["raw"] is not None and self.nr_features is not None
-        self.mean_expressions = [
+        self.feature_mean_values = [
             np.mean(self.data_array["raw"][:, i]) for i in range(self.nr_features)
         ]
 
-    def compute_std_expressions(self):
+    def compute_feature_standard_deviations(self):
         assert self.data_array["raw"] is not None and self.nr_features is not None
-        self.std_expressions = [
+        self.feature_standard_deviations = [
             np.std(self.data_array["raw"][:, i]) for i in range(self.nr_features)
         ]
 
@@ -473,18 +481,18 @@ class XAIOData:
         if normtype == "std":
             assert (
                 self.data_array["raw"] is not None
-                and self.mean_expressions is not None
-                and self.std_expressions is not None
+                and self.feature_mean_values is not None
+                and self.feature_standard_deviations is not None
                 and self.nr_features is not None
             )
             self.data_array["std"] = np.copy(self.data_array["raw"])
             for i in range(self.nr_features):
-                if self.std_expressions[i] == 0.0:
+                if self.feature_standard_deviations[i] == 0.0:
                     self.data_array["std"][:, i] = 0.0
                 else:
                     self.data_array["std"][:, i] = (
-                        self.data_array["std"][:, i] - self.mean_expressions[i]
-                    ) / self.std_expressions[i]
+                        self.data_array["std"][:, i] - self.feature_mean_values[i]
+                    ) / self.feature_standard_deviations[i]
         elif normtype == "log":
             assert self.data_array["raw"] is not None and self.nr_features is not None
             self.data_array["log"] = np.copy(self.data_array["raw"])
@@ -499,13 +507,14 @@ class XAIOData:
                     self.data_array["log"][:, i] - np.log(self.epsilon_shift)
                 ) / (self.maxlog - np.log(self.epsilon_shift))
 
-    def compute_train_and_test_indices(self):
+    def compute_train_and_test_indices(self, test_train_ratio=0.25):
         assert self.sample_indices_per_annotation is not None
         self.train_indices_per_annotation = {}
         self.test_indices_per_annotation = {}
         for annot in self.sample_indices_per_annotation:
             idxs = np.random.permutation(self.sample_indices_per_annotation[annot])
-            cut = len(idxs) // 4 + 1
+            # cut = len(idxs) // 4 + 1
+            cut = np.floor(len(idxs) * test_train_ratio).astype("int") + 1
             self.test_indices_per_annotation[annot] = idxs[:cut]
             self.train_indices_per_annotation[annot] = idxs[cut:]
         self.train_indices = np.concatenate(
@@ -520,12 +529,6 @@ class XAIOData:
         self.feature_indices = {}
         for i, elt in enumerate(self.feature_names):
             self.feature_indices[elt] = i
-
-    # def compute_feature_shortnames_ref(self):
-    #     assert self.feature_names is not None
-    #     self.feature_shortnames_ref = {}
-    #     for i, elt in enumerate(self.feature_names):
-    #         self.feature_shortnames_ref[elt.split("|")[1]] = i
 
     def compute_std_values_on_training_sets(self):
         assert (
@@ -574,35 +577,41 @@ class XAIOData:
                 np.where(self.data_array["raw"][:, i] > 0.0)[0]
             )
 
-    def compute_total_sums(self):
+    def compute_total_feature_sums(self):
         assert self.data_array["raw"] is not None and self.nr_samples is not None
-        self.total_sums = np.empty((self.nr_samples,), dtype=float)
+        self.total_feature_sums = np.empty((self.nr_samples,), dtype=float)
         for i in range(self.nr_samples):
-            self.total_sums[i] = np.sum(self.data_array["raw"][i, :])
+            self.total_feature_sums[i] = np.sum(self.data_array["raw"][i, :])
 
     def normalize_feature_sums(self, sum_value):
         """
         Normalizes feature values, so that for every sample, the total sum of
         the feature values becomes equal to sum_value.
         normalize_feature_sums() is supposed to be an early normalization of the raw
-        data, before the computation of values based on features, and before any
-        other normalization.
+        data, before any other normalization.
         """
         assert self.data_array["raw"] is not None and self.nr_samples is not None
-        self.compute_total_sums()
+        self.compute_total_feature_sums()
         for i in range(self.nr_samples):
-            self.data_array["raw"][i, :] *= sum_value / self.total_sums[i]
-            self.total_sums[i] = sum_value
+            self.data_array["raw"][i, :] *= sum_value / self.total_feature_sums[i]
+            self.total_feature_sums[i] = sum_value
+        if self.feature_mean_values is not None:
+            self.compute_feature_mean_values()
+        if self.feature_standard_deviations is not None:
+            self.compute_feature_standard_deviations()
 
     def reduce_samples(self, idx_list):
-        if self.nr_samples is not None:
-            self.nr_samples = len(idx_list)
+        idx_list_ = np.copy(idx_list)
+        for i_, idx in enumerate(idx_list_):
+            if type(idx) == str or type(idx) == np.str_:
+                idx_list_[i_] = self.sample_indices[idx]
+        idx_list_ = idx_list_.astype("int")
         if self.sample_ids is not None:
-            self.sample_ids = np.take(self.sample_ids, idx_list)
+            self.sample_ids = np.take(self.sample_ids, idx_list_)
         if self.sample_annotations is not None:
-            self.sample_annotations = np.take(self.sample_annotations, idx_list)
+            self.sample_annotations = np.take(self.sample_annotations, idx_list_)
         if self.sample_infos is not None:
-            self.sample_infos = np.take(self.sample_infos, idx_list)
+            self.sample_infos = np.take(self.sample_infos, idx_list_)
         if self.sample_indices is not None:
             self.compute_sample_indices()
         if self.all_annotations is not None:
@@ -612,14 +621,14 @@ class XAIOData:
         for normtype in self.data_array:
             if self.data_array[normtype] is not None:
                 self.data_array[normtype] = np.take(
-                    self.data_array[normtype], idx_list, axis=0
+                    self.data_array[normtype], idx_list_, axis=0
                 )
         if self.normalization_type is not None:
             self.data = self.data_array[self.normalization_type]
-        if self.mean_expressions is not None:
-            self.compute_mean_expressions()
-        if self.std_expressions is not None:
-            self.compute_std_expressions()
+        if self.feature_mean_values is not None:
+            self.compute_feature_mean_values()
+        if self.feature_standard_deviations is not None:
+            self.compute_feature_standard_deviations()
         if (
             self.train_indices_per_annotation is not None
             or self.test_indices_per_annotation is not None
@@ -633,24 +642,29 @@ class XAIOData:
             self.compute_nr_non_zero_features()
         if self.nr_non_zero_samples is not None:
             self.compute_nr_non_zero_samples()
-        if self.total_sums is not None:
-            self.compute_total_sums()
+        if self.total_feature_sums is not None:
+            self.compute_total_feature_sums()
 
     def reduce_features(self, idx_list):
-        if self.nr_features is not None:
-            self.nr_features = len(idx_list)
+        idx_list_ = np.copy(idx_list)
+        for i_, idx in enumerate(idx_list_):
+            if type(idx) == str or type(idx) == np.str_:
+                idx_list_[i_] = self.feature_indices[idx]
+        idx_list_ = idx_list_.astype("int")
         if self.feature_names is not None:
-            self.feature_names = np.take(self.feature_names, idx_list)
-        if self.mean_expressions is not None:
-            self.mean_expressions = np.take(self.mean_expressions, idx_list)
-        if self.std_expressions is not None:
-            self.std_expressions = np.take(self.std_expressions, idx_list)
+            self.feature_names = np.take(self.feature_names, idx_list_)
+        if self.feature_mean_values is not None:
+            self.feature_mean_values = np.take(self.feature_mean_values, idx_list_)
+        if self.feature_standard_deviations is not None:
+            self.feature_standard_deviations = np.take(
+                self.feature_standard_deviations, idx_list_
+            )
         if self.feature_indices is not None:
             self.compute_feature_indices()
         for normtype in self.data_array:
             if self.data_array[normtype] is not None:
                 self.data_array[normtype] = np.take(
-                    self.data_array[normtype].transpose(), idx_list, axis=0
+                    self.data_array[normtype].transpose(), idx_list_, axis=0
                 ).transpose()
         if self.normalization_type is not None:
             self.data = self.data_array[self.normalization_type]
@@ -660,17 +674,17 @@ class XAIOData:
         ):
             for cat in self.all_annotations:
                 self.std_values_on_training_sets[cat] = list(
-                    np.take(self.std_values_on_training_sets[cat], idx_list)
+                    np.take(self.std_values_on_training_sets[cat], idx_list_)
                 )
             self.compute_std_values_on_training_sets_argsort()
         if self.nr_non_zero_features is not None:
             self.compute_nr_non_zero_features()
         if self.nr_non_zero_samples is not None:
             self.compute_nr_non_zero_samples()
-        if self.total_sums is not None:
-            self.compute_total_sums()
+        if self.total_feature_sums is not None:
+            self.compute_total_feature_sums()
 
-    def percentage_feature_set(self, idx_list, sample_idx=None):
+    def feature_values_ratio(self, idx_list, sample_idx=None):
         """Computes the sum of values (in raw data), across all samples or for one
         given sample, for features of indices in idx_list, divided by the sum of values
         for all the features"""
@@ -694,7 +708,7 @@ class XAIOData:
         """Applies the function func_ to the array of values of the feature of index
         idx, across either all samples, or samples with annotation cat_;
         the name of the feature can be given instead of the index idx"""
-        if type(idx) == str:
+        if type(idx) == str or type(idx) == np.str_:
             idx = self.feature_indices[idx]
         if not cat_:
             return func_(self.data[:, idx])
@@ -705,10 +719,8 @@ class XAIOData:
 
     def import_pandas(self, df):
         self.sample_ids = df.columns.to_numpy()
-        self.nr_samples = len(self.sample_ids)
         self.compute_sample_indices()
         self.feature_names = df.index.to_numpy()
-        self.nr_features = len(self.feature_names)
         self.compute_feature_indices()
         self.data_array["raw"] = df.to_numpy(dtype=np.float64).transpose()
 
@@ -798,8 +810,10 @@ class XAIOData:
         self,
         func1_=identity_func,
         func2_=identity_func,
-        sof_="samples",
-        violinplot_=False,
+        samples_or_features="samples",
+        violinplot=False,
+        xlog_scale=False,
+        ylog_scale=False,
         function_plot_=False,
     ):
         """Displays a scatter plot, with coordinates computed by applying two
@@ -808,12 +822,12 @@ class XAIOData:
         (both functions must take indices in input);
         if sof=="samples" and cat_ is not None the samples of annotation cat_ have
         a different color"""
-        assert sof_ == "samples" or sof_ == "features"
+        assert samples_or_features == "samples" or samples_or_features == "features"
         set_xticks = None
         set_xticks_text = None
         violinplots_done = False
         fig, ax = plt.subplots()
-        if sof_ == "samples":
+        if samples_or_features == "samples":
             if self.all_annotations is not None and function_plot_:
                 (
                     list_samples,
@@ -823,7 +837,7 @@ class XAIOData:
                 ) = self._samples_by_annotations(sort_annot=True)
                 y = [func2_(i) for i in list_samples]
                 x = [i for i in range(self.nr_samples)]
-                if violinplot_:
+                if violinplot:
                     for i in range(len(boundaries) - 1):
                         parts = ax.violinplot(
                             y[boundaries[i] : boundaries[i + 1]],
@@ -848,7 +862,7 @@ class XAIOData:
             x = [func1_(i) for i in range(self.nr_features)]
         xmax = np.max(x)
         xmin = np.min(x)
-        if violinplot_ and not violinplots_done:
+        if violinplot and not violinplots_done:
             parts = ax.violinplot(
                 y,
                 [(xmax + xmin) / 2.0],
@@ -877,7 +891,7 @@ class XAIOData:
         def update_annot(ind, sc):
             pos = sc.get_offsets()[ind["ind"][0]]
             ann.xy = pos
-            if sof_ == "samples":
+            if samples_or_features == "samples":
                 if self.all_annotations is not None and function_plot_:
                     text = "{}".format(self.sample_ids[list_samples[ind["ind"][0]]])
                 else:
@@ -914,36 +928,54 @@ class XAIOData:
 
         if set_xticks is not None:
             plt.xticks(set_xticks, set_xticks_text)
+        if xlog_scale:
+            plt.xscale("log")
+        if ylog_scale:
+            plt.yscale("log")
         plt.show()
 
-    def function_plot(self, func_=identity_func, sof_="samples", violinplot_=True):
+    def function_plot(
+        self,
+        func=identity_func,
+        samples_or_features="samples",
+        violinplot=True,
+        ylog_scale=False,
+    ):
         """Plots the value of a function on every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
         (the function must take indices in input)"""
         self.function_scatter(
-            identity_func, func_, sof_, violinplot_, function_plot_=True
+            identity_func,
+            func,
+            samples_or_features,
+            violinplot,
+            xlog_scale=False,
+            ylog_scale=ylog_scale,
+            function_plot_=True,
         )
 
-    def feature_plot(self, features_=None, normalization_type_=""):
+    def feature_plot(self, features=None, normalization_type="", ylog_scale=False):
         """ """
-        if normalization_type_ in self.data_array:
-            data_ = self.data_array[normalization_type_]
+        if normalization_type in self.data_array:
+            data_ = self.data_array[normalization_type]
         else:
             data_ = self.data
-        if type(features_) == str or type(features_) == int:
-            idx = features_
-            if type(idx) == str:
+        if type(features) == str or type(features) == np.str_ or type(features) == int:
+            idx = features
+            if type(idx) == str or type(idx) == np.str_:
                 idx = self.feature_indices[idx]
-            self.function_plot(lambda i: data_[i, idx], "samples")
+            self.function_plot(
+                lambda i: data_[i, idx], "samples", ylog_scale=ylog_scale
+            )
         else:
             xsize = self.nr_samples
-            ysize = len(features_)
+            ysize = len(features)
             set_xticks = None
             set_xticks_text = None
-            plot_array = np.empty((len(features_), xsize))
+            plot_array = np.empty((len(features), xsize))
             feature_indices_list_ = []
-            for idx in features_:
-                if type(idx) == str:
+            for idx in features:
+                if type(idx) == str or type(idx) == np.str_:
                     idx = self.feature_indices[idx]
                 feature_indices_list_.append(idx)
             if self.all_annotations is None:
@@ -1065,108 +1097,6 @@ class XAIOData:
             plt.savefig(os.path.join(save_dir, "plot.png"), dpi=200)
         else:
             plt.show()
-
-    # def color_plot(
-    #     self,
-    #     func_list_=None,
-    #     sof_="samples",
-    #     cat_=None
-    # ):
-    #     """displays """
-    #     assert sof_ == "samples" or sof_ == "features"
-    #     xsize = self.nr_samples if sof_ == "samples" else self.nr_features
-    #     set_xticks = None
-    #     plot_array = np.empty((len(func_list_), xsize))
-    #     if sof_ == "features":
-    #         for k, func_ in enumerate(func_list_):
-    #             plot_array[k, :] = [func_(i) for i in range(self.nr_features)]
-    #     else:
-    #         if self.all_annotations is None:
-    #             for k, func_ in enumerate(func_list_):
-    #                 plot_array[k, :] = [func_(i) for i in range(self.nr_samples)]
-    #         else:
-    #             argsort_annotations = np.argsort(
-    #                 [len(self.sample_indices_per_annotation[i]) for i
-    #                  in self.all_annotations]
-    #             )[::-1]
-    #             list_samples = np.concatenate(
-    #                 [self.sample_indices_per_annotation[self.all_annotations[i]]
-    #                  for i in argsort_annotations]
-    #             )
-    #             set_xticks = list(np.cumsum(
-    #                 [0] +
-    #                 [len(self.sample_indices_per_annotation[
-    #                          self.all_annotations[i]])
-    #                  for i in argsort_annotations]
-    #             ))
-    #             for k, func_ in enumerate(func_list_):
-    #                 plot_array[k, :] = [func_(i) for i in list_samples]
-    #
-    #     e()
-    #             # x = list_samples
-    #     # xmax = np.max(x)
-    #     # xmin = np.min(x)
-    #     fig, ax = plt.subplots()
-    #     # im = ax.imshow(np.arange(100).reshape((2, 50)))
-    #     # im = ax.imshow(np.array(y).reshape((1, self.nr_samples)),
-    #     #                extent=[0, self.nr_samples, 0, 1], aspect='auto')
-    #     im = ax.imshow(plot_array,
-    #                    extent=[0, xsize, 0, 1], aspect='auto')
-    #     if set_xticks is not None:
-    #         plt.xticks(set_xticks, [''] * len(set_xticks))
-    #     plt.colorbar(im)
-    #
-    #     # if sof_ == "samples" and cat_ is not None:
-    #     #     y = [func_(i_) for i_ in self.sample_indices_per_annotation[cat_]]
-    #     #     x = [i_ for i_ in self.sample_indices_per_annotation[cat_]]
-    #     #     ax.scatter(x, y, s=1)
-    #     plt.show()
-
-
-# class FeatureTools:
-#     def __init__(self, data):
-#         self.data = data.data
-#         self.nr_samples = data.nr_samples
-#         self.gene_dict = data.feature_shortnames_ref
-#         self.annot_index = data.sample_indices_per_annotation
-#
-#     def mean(self, idx, cat_=None, func_=None):
-#         # returns the mean value of the feature of index idx, across either all
-#         # samples, or samples with annotation cat_
-#         # the short id of the feature can be given instead of the index
-#         if type(idx) == str:
-#             idx = self.gene_dict[idx]
-#         if not func_:
-#             func_ = np.mean
-#         if not cat_:
-#             return func_(self.data[:, idx])
-#         else:
-#             return func_([self.data[i_, idx] for i_ in self.annot_index[cat_]])
-#
-#     def std(self, idx, cat_=None):
-#         # returns the standard deviation of the feature of index idx, across either
-#         # all samples, or samples with annotation cat_;
-#         # the short id of the feature can be given instead of the index
-#         return self.mean(idx, cat_, np.std)
-#
-#     def plot(self, idx, cat_=None, v_min=None, v_max=None):
-#         # plots the value of the feature of index idx for all samples
-#         # if cat_ is not None the samples of annotation cat_ have a different color
-#         # the short id of the feature can be given instead of the index
-#         if type(idx) == str:
-#             idx = self.gene_dict[idx]
-#         y = self.data[:, idx]
-#         if v_min is not None and v_max is not None:
-#             y = np.clip(y, v_min, v_max)
-#         x = np.arange(0, self.nr_samples) / self.nr_samples
-#         plt.scatter(x, y, s=1)
-#         if cat_:
-#             y = [self.data[i_, idx] for i_ in self.annot_index[cat_]]
-#             if v_min is not None and v_max is not None:
-#                 y = np.clip(y, v_min, v_max)
-#             x = np.array(self.annot_index[cat_]) / self.nr_samples
-#             plt.scatter(x, y, s=1)
-#         plt.show()
 
 
 def confusion_matrix(classifier, data_test, target_test):
@@ -1321,94 +1251,3 @@ def plot_scores(data, scores, score_threshold, indices, annotation=None, save_di
         plt.savefig(os.path.join(save_dir, "plot.png"), dpi=200)
     else:
         plt.show()
-
-
-# def umap_plot(
-#     data,
-#     x,
-#     indices,
-#     save_dir=None,
-#     metric="euclidean",
-#     min_dist=0.0,
-#     n_neighbors=120,
-#     random_state=42,
-# ):
-#     reducer = umap.UMAP(
-#         metric=metric,
-#         min_dist=min_dist,
-#         n_neighbors=n_neighbors,
-#         random_state=random_state,
-#     )
-#     print("Starting UMAP reduction...")
-#     reducer.fit(x)
-#     embedding = reducer.transform(x)
-#     print("Done.")
-#
-#     all_colors = []
-#
-#     def color_function(id_):
-#         label_ = data.sample_annotations[indices[id_]]
-#         type_ = data.sample_origins[indices[id_]]
-#         clo = (
-#             np.where(data.all_annotations == label_)[0],
-#             list(data.sample_origins_per_annotation[label_]).index(type_),
-#         )
-#         if clo in all_colors:
-#             return all_colors.index(clo)
-#         else:
-#             all_colors.append(clo)
-#             return len(all_colors) - 1
-#
-#     def hover_function(id_):
-#         return "{} / {}".format(
-#             data.sample_annotations[indices[id_]],
-#             data.sample_origins[indices[id_]],
-#         )
-#
-#     samples_color = np.empty_like(indices)
-#     for i in range(len(indices)):
-#         samples_color[i] = color_function(i)
-#
-#     fig, ax = plt.subplots()
-#
-#     sc = plt.scatter(
-#         embedding[:, 0], embedding[:, 1], c=samples_color, cmap="winter", s=5
-#     )
-#     plt.gca().set_aspect("equal", "datalim")
-#
-#     ann = ax.annotate(
-#         "",
-#         xy=(0, 0),
-#         xytext=(20, 20),
-#         textcoords="offset points",
-#         bbox=dict(boxstyle="round", fc="w"),
-#         arrowprops=dict(arrowstyle="->"),
-#     )
-#     ann.set_visible(False)
-#
-#     def update_annot(ind):
-#         pos = sc.get_offsets()[ind["ind"][0]]
-#         ann.xy = pos
-#         text = hover_function(ind["ind"][0])
-#         ann.set_text(text)
-#
-#     def hover(event):
-#         vis = ann.get_visible()
-#         if event.inaxes == ax:
-#             cont, ind = sc.contains(event)
-#             if cont:
-#                 update_annot(ind)
-#                 ann.set_visible(True)
-#                 fig.canvas.draw_idle()
-#             else:
-#                 if vis:
-#                     ann.set_visible(False)
-#                     fig.canvas.draw_idle()
-#
-#     fig.canvas.mpl_connect("motion_notify_event", hover)
-#
-#     if save_dir:
-#         os.makedirs(save_dir, exist_ok=True)
-#         plt.savefig(save_dir + "/plot.png", dpi=200)
-#     else:
-#         plt.show()

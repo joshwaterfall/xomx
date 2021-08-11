@@ -126,16 +126,20 @@ gene_list = list(
 e()
 quit()
 
-data.function_plot(lambda i: data.total_sums[i], "samples")
+data.function_plot(lambda i: data.total_feature_sums[i], "samples")
 
 data.function_plot(lambda i: data.nr_non_zero_features[i], "samples")
 
 data.function_scatter(
-    lambda i: data.total_sums[i], lambda i: data.nr_non_zero_features[i], "samples"
+    lambda i: data.total_feature_sums[i],
+    lambda i: data.nr_non_zero_features[i],
+    "samples",
 )
 
 data.function_scatter(
-    lambda i: data.mean_expressions[i], lambda i: data.std_expressions[i], "features"
+    lambda i: data.feature_mean_values[i],
+    lambda i: data.feature_standard_deviations[i],
+    "features",
 )
 
 classifier.binary_classifiers[0].plot()

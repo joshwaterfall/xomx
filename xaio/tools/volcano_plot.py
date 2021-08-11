@@ -64,11 +64,11 @@ class VolcanoPlot:
         self.ok_indices = None
 
     def init(self, feature_indices=None):
-        reference_values = self.data.mean_expressions
+        reference_values = self.data.feature_mean_values
         on_annotation_values = (
             self.data.std_values_on_training_sets[self.annotation]
-            * self.data.std_expressions
-            + self.data.mean_expressions
+            * self.data.feature_standard_deviations
+            + self.data.feature_mean_values
         )
         if feature_indices is not None:
             reference_values = reference_values[feature_indices]
