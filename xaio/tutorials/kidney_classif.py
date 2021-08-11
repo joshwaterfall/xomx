@@ -24,12 +24,12 @@ See kidney_classif.md for detailed explanations.
 """
 
 
-# The data and outputs will be saved in the following folder:
+# The data and outputs will be saved in the directory: ~/xaiodata/kidney_classif
 savedir = os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif")
 os.makedirs(savedir, exist_ok=True)
 
 # We use the file next_step.txt to know which step to execute next. 7 consecutive
-# executions of the code are needed to complete the 7 steps of the tutorial.
+# executions of the code complete the 7 steps of the tutorial.
 os.makedirs(savedir, exist_ok=True)
 if not os.path.exists(os.path.join(savedir, "next_step.txt")):
     step = 1
@@ -87,7 +87,6 @@ if step == 2:
     )
     os.system(commandstring)
     print("STEP 2: done")
-    quit()
 
 
 """
@@ -96,7 +95,7 @@ a folder named "xdata".
 After that, all the individual files imported with gdc-client are erased.
 """
 
-if not os.path.exists(os.path.join(savedir, "xdata")):
+if step == 3:
     df = gdc_create_data_matrix(
         tmpdir,
         os.path.join(savedir, "manifest.txt"),
@@ -109,11 +108,11 @@ if not os.path.exists(os.path.join(savedir, "xdata")):
     xdata.import_pandas(df)
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
-    # WARNING: we use this basic pre-processing to keep the tutorial simple.
-    # For more advanced applications, a more sophisticated pre-processing can be
-    # required.
+    # WARNING: basic pre-processing is used here for simplicity, but for more advanced
+    # applications, a more sophisticated pre-processing may be required.
     xdata.normalize_feature_sums(1e6)
     # We compute the mean and standard deviation (across samples) for all the features:
+    xdata.compute_mean_expressions()
     xdata.compute_mean_expressions()
     xdata.compute_std_expressions()
     # Although it will not be used in this tutorial, we compute the number of
@@ -207,40 +206,40 @@ if not os.path.exists(os.path.join(savedir, "xdata_small", "feature_selectors"))
 """
 STEP 7: Visualizing results.
 """
-xdata = XAIOData()
-xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
-xdata.compute_normalization("log")
-feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
-gene_list = []
-for i in range(len(feature_selector)):
-    feature_selector[i] = RFEExtraTrees(
-        xdata,
-        xdata.all_annotations[i],
-        init_selection_size=4000,
-        n_estimators=450,
-        random_state=0,
-    )
-    feature_selector[i].load(
-        os.path.join(
-            savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
+if False:
+    xdata = XAIOData()
+    xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
+    xdata.compute_normalization("log")
+    feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
+    gene_list = []
+    for i in range(len(feature_selector)):
+        feature_selector[i] = RFEExtraTrees(
+            xdata,
+            xdata.all_annotations[i],
+            init_selection_size=4000,
+            n_estimators=450,
+            random_state=0,
         )
-    )
-    # feature_selector[i].plot()
-    gene_list = gene_list + [
-        xdata.feature_names[feature_selector[i].current_feature_indices[j]]
-        for j in range(len(feature_selector[i].current_feature_indices))
-    ]
+        feature_selector[i].load(
+            os.path.join(
+                savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
+            )
+        )
+        # feature_selector[i].plot()
+        gene_list = gene_list + [
+            xdata.feature_names[feature_selector[i].current_feature_indices[j]]
+            for j in range(len(feature_selector[i].current_feature_indices))
+        ]
 
-# xdata.feature_plot(gene_list, "log")
-# The Gene ENSG00000185633.9 (NDUFA4L2) seems associated to KIRC
-# (Kidney Renal Clear Cell Carcinoma).
-# This is confirmed by the publication:
-# Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear cell
-# renal cell carcinoma
-# xdata.feature_plot("ENSG00000185633.9", "raw")
+    # xdata.feature_plot(gene_list, "log")
+    # The Gene ENSG00000185633.9 (NDUFA4L2) seems associated to KIRC
+    # (Kidney Renal Clear Cell Carcinoma).
+    # This is confirmed by the publication:
+    # Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear cell
+    # renal cell carcinoma
+    # xdata.feature_plot("ENSG00000185633.9", "raw")
 
-
-classifier = ScoreBasedMulticlass(xdata.all_annotations, feature_selector)
+    classifier = ScoreBasedMulticlass(xdata.all_annotations, feature_selector)
 
 # all_predictions = classifier.predict(xdata.data_array["raw"][:])
 # annot_map = {project_list[i]: i for i in range(len(project_list))}
@@ -254,8 +253,6 @@ classifier = ScoreBasedMulticlass(xdata.all_annotations, feature_selector)
 #
 #
 # xdata.function_plot(multi_output, "samples", violinplot_=False)
-e()
-quit()
 
 
 """
