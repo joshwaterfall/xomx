@@ -156,8 +156,14 @@ For the first gene at the top, ENSG00000185633.9, the differential expression
 ```python
 xdata.feature_plot("ENSG00000185633.9", "raw")
 ```
-![alt text](imgs/tuto1_geneNDUFA4L2.png 
+![alt text](imgs/tuto1_NDUFA4L2_KIRC.png 
 "Read counts for ENSG00000185633.9")
+
+![alt text](imgs/tuto1_ELF3_KIRP.png 
+"Read counts for ENSG00000163435.14")
+
+![alt text](imgs/tuto1_FOXI1_KICH.png 
+"Read counts for ENSG00000168269.8")
 
 It turns out that ENSG00000185633.9 is the gene "NDUFA4L2", which is known to be a 
 biomarker of KIRC. See the following publication:
