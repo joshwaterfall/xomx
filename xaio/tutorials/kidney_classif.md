@@ -113,7 +113,10 @@ for i in range(nr_annotations):
 xdata.function_scatter(
     lambda idx: xdata.feature_mean_values[idx],
     lambda idx: xdata.feature_standard_deviations[idx],
-    "features")
+    "features",
+    xlog_scale=True,
+    ylog_scale=True,
+)
 ```
 ![alt text](imgs/tuto1_mean_vs_std_deviation.png 
 "Standard deviation vs. mean value for all features")
@@ -131,14 +134,16 @@ feature_selector[0].plot()
 (10 for each type of cancer):
 
 ```python
+xdata.reduce_features(gene_list)
+xdata.compute_normalization("log")
 xdata.umap_plot("log")
 ```
 ![alt text](imgs/tuto1_UMAP.png 
 "2D UMAP plot")
 
-This plot suggests a division into 4 categories of samples rather than 3. A possible 
-interpretation is that the samples in the bottom left cluster may have been 
-miscategorized, and are in fact not cases of KIRC, KIRP or KICH.
+We observe 3 distinct clusters corresponding to the three categories
+KIRC, KIRP and KICH. Remark: it may be possible that some of the 
+samples have been miscategorized.
 
 + Log-normalized values accross all samples, for the 30 genes that have been 
 selected:
@@ -149,27 +154,51 @@ xdata.feature_plot(gene_list, "log")
 ![alt text](imgs/tuto1_30features.png 
 "Log-normalized values accross all samples for the 30 selected features")
 
-For the first gene at the top, ENSG00000185633.9, the differential expression 
-(KIRC vs. other samples) seems particularly pronounced.
+The recursive feature elimination procedure results in features whose combined values 
+allow to distinguish the 3 categories of cancers. A strong contrast can also be 
+observed for some individual features. For example, in the figure above, 
+the features ENSG00000185633.9 (for KIRC), ENSG00000168269.8 (for KICH) and
+ENSG00000163435.14 (for KIRP) stand out.
 
-+ Read counts for ENSG00000185633.9 accross all samples:
+Let us plot the read counts accross all samples for each of these 3 features.
+
++ ENSG00000185633.9 (NDUFA4L2 gene):
 ```python
 xdata.feature_plot("ENSG00000185633.9", "raw")
 ```
 ![alt text](imgs/tuto1_NDUFA4L2_KIRC.png 
 "Read counts for ENSG00000185633.9")
 
++ ENSG00000163435.14 (ELF3 gene):
+```python
+xdata.feature_plot("ENSG00000163435.14", "raw")
+```
 ![alt text](imgs/tuto1_ELF3_KIRP.png 
 "Read counts for ENSG00000163435.14")
 
++ ENSG00000168269.8 (FOXI1 gene):
+```python
+xdata.feature_plot("ENSG00000168269.8", "raw")
+```
 ![alt text](imgs/tuto1_FOXI1_KICH.png 
 "Read counts for ENSG00000168269.8")
 
-It turns out that ENSG00000185633.9 is the gene "NDUFA4L2", which is known to be a 
-biomarker of KIRC. See the following publication:
-
-D. R. Minton et al., *Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear 
-cell renal cell carcinoma*, 
+Studies on the role of these genes in kidney cancers can be found in the literature:
++ In the following publication, the gene NDUFA4L2 (ENSG00000185633.9) is analyzed as a 
+biomarker for KIRC:
+[D. R. Minton et al., *Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 
+2 in clear cell renal cell carcinoma*, 
 Clin Cancer Res. 2016 Jun 1;22(11):2791-801. doi: [10.1158/1078-0432.CCR-15-1511](
 https://doi.org/10.1158/1078-0432.CCR-15-1511
-)
+)].
++ In [A. O. Osunkoya et al., *Diagnostic biomarkers for renal cell carcinoma: selection 
+using novel bioinformatics systems for microarray data analysis*, 
+Hum Pathol. 2009 Dec; 40(12): 1671–1678. doi: [10.1016/j.humpath.2009.05.006](
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2783948/
+)], the gene ELF3 (ENSG00000163435.14) is verified as a biomarker for KIRP.
++ Finally, [D. Lindgren et al., *Cell-Type-Specific Gene Programs of the Normal Human 
+Nephron Define Kidney Cancer Subtypes*, Cell Reports 2017 Aug; 20(6): 1476-1489. 
+doi: [10.1016/j.celrep.2017.07.043](
+https://doi.org/10.1016/j.celrep.2017.07.043
+)] identifies the transcription factor FOXI1 (ENSG00000168269.8) to be drastically 
+overexpressed in KICH.
