@@ -154,8 +154,8 @@ xdata.feature_plot(gene_list, "log")
 ![alt text](imgs/tuto1_30features.png 
 "Log-normalized values accross all samples for the 30 selected features")
 
-The recursive feature elimination procedure results in features whose combined values 
-allow to distinguish the 3 categories of cancers. A strong contrast can also be 
+The recursive feature elimination procedure returned 30 features whose combined values 
+allow us to distinguish the 3 categories of cancers. A strong contrast can also be 
 observed for some individual features. For example, in the figure above, 
 the features ENSG00000185633.9 (for KIRC), ENSG00000168269.8 (for KICH) and
 ENSG00000163435.14 (for KIRP) stand out.
