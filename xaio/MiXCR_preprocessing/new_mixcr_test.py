@@ -24,7 +24,7 @@ def get_reads(filename):
         engine="c",
     ).to_numpy()
     trb_indices = np.where(
-        [seq_read[i_, 4].startswith("TRB") for i_ in range(seq_read.shape[0])]
+        [seq_read[i_, 4].startswith("TRA") for i_ in range(seq_read.shape[0])]
         # [seq_read[i_, 4].startswith(
         #     ("IGL", "TRB", "TRA", "IGK", "IGH")) for i_ in range(seq_read.shape[0])]
     )[0]
@@ -68,13 +68,17 @@ def indiv_rep_seq(seq_rd, annotation_):
     nr_seqs = 5
     for elt in seq_rd:
         seq_dict.setdefault(elt[0], []).append(elt[1])
-        # annot_dict[elt[0]] = annotation_ + str(len(seq_dict[elt[0]]))
-        annot_dict[elt[0]] = annotation_
+        annot_dict[elt[0]] = annotation_ + str(len(seq_dict[elt[0]]))
+        # annot_dict[elt[0]] = annotation_ + str(seq_dict[elt[0]])
+        e()
+        quit()
+        # annot_dict[elt[0]] = annotation_
     for key in seq_dict.keys():
         s = np.zeros(100)
         cter = Counter(seq_dict[key]).most_common()[:nr_seqs]
         for i_ in range(len(cter)):
             s += protvec(cter[i_][0])
+        s /= nr_seqs
         seq_dict[key] = s
     return seq_dict, annot_dict
 
@@ -99,7 +103,7 @@ if True:
 
 
 data = XAIOData()
-data.save_dir = "/home/perrin/Desktop/data/xaio/dataset/MiXCR/subset_new/"
+data.save_dir = "/home/perrin/Desktop/data/xaio/dataset/MiXCR/subset_new13/"
 
 if not os.path.exists(data.save_dir):
     prefix = (
@@ -144,8 +148,8 @@ if not os.path.exists(data.save_dir):
     #     "UVM",
     # ]:
     annot_list = ["BRCA", "STAD", "ACC", "LUAD", "PAAD"]
-    annot_list = ["STAD", "ACC"]
-    annot_list = ["LUAD", "LUSC"]
+    # annot_list = ["STAD", "ACC"]
+    # annot_list = ["LUAD", "LUSC"]
     for annotation in annot_list:
         # for annotation in ["ACC", "BLCA"]:
         print(annotation)
@@ -161,9 +165,10 @@ if not os.path.exists(data.save_dir):
     data.compute_sample_indices()
     data.compute_all_annotations()
     data.compute_sample_indices_per_annotation()
-    data.nr_samples = len(data.sample_ids)
-    data.nr_features = 100
-    darray = np.zeros((data.nr_samples, data.nr_features))
+    # data.nr_samples = len(data.sample_ids)
+    # data.nr_features = 100
+    data.feature_names = np.zeros(100)
+    darray = np.zeros((data.nr_samples, 100))
     for i in range(data.nr_samples):
         darray[i, :] = sdic[data.sample_ids[i]]
     data.data_array["raw"] = darray

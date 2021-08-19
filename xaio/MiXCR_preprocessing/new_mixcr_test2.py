@@ -139,7 +139,7 @@ if not os.path.exists(data.save_dir):
         # "UCS",
         # "UVM",
     ]
-    # annot_list = ["STAD", "BRCA", "LUAD", "ACC"]
+    annot_list = ["STAD", "BRCA", "LUAD", "ACC"]
     for annotation in annot_list:
         # for annotation in ["ACC", "BLCA"]:
         print(annotation)
@@ -174,9 +174,9 @@ if not os.path.exists(data.save_dir):
     data.compute_sample_indices()
     data.compute_all_annotations()
     data.compute_sample_indices_per_annotation()
-    data.nr_samples = len(data.sample_ids)
-    data.nr_features = 100
-    darray = np.zeros((data.nr_samples, data.nr_features))
+    # data.nr_samples = len(data.sample_ids)
+    # data.nr_features = np.zeros(100)
+    darray = np.zeros((data.nr_samples, 100))
     for i in range(data.nr_samples):
         darray[i, :] = protvec(data.sample_ids[i])
     data.data_array["raw"] = darray
