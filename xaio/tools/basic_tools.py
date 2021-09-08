@@ -150,10 +150,12 @@ class XAIOData:
         """
         the total number of samples, or None if self.sample_ids is None
         """
-        if self.sample_ids is None:
+        if self.sample_ids is None and self.data_array is None:
             return None
-        else:
+        elif self.sample_ids is not None:
             return len(self.sample_ids)
+        else:
+            return self.data_array[list(self.data_array.keys())[0]].shape[0]
 
     @property
     def nr_features(self):
@@ -161,10 +163,12 @@ class XAIOData:
         the total number of features for each sample, or None if
         self.feature_names is None
         """
-        if self.feature_names is None:
+        if self.feature_names is None and self.data_array is None:
             return None
-        else:
+        elif self.feature_names is not None:
             return len(self.feature_names)
+        else:
+            return self.data_array[list(self.data_array.keys())[0]].shape[1]
 
     def save(self, normalization_types_list=None, save_dir=None):
         if normalization_types_list is None:
@@ -174,6 +178,12 @@ class XAIOData:
         assert self.save_dir is not None
         if not (os.path.exists(self.save_dir)):
             os.makedirs(self.save_dir, exist_ok=True)
+        if self.nr_samples is not None:
+            np.save(os.path.join(self.save_dir, "nr_samples.npy"), self.nr_samples)
+            print("Saved: " + os.path.join(self.save_dir, "nr_samples.npy"))
+        if self.nr_features is not None:
+            np.save(os.path.join(self.save_dir, "nr_features.npy"), self.nr_features)
+            print("Saved: " + os.path.join(self.save_dir, "nr_features.npy"))
         if self.sample_ids is not None:
             np.save(os.path.join(self.save_dir, "sample_ids.npy"), self.sample_ids)
             print("Saved: " + os.path.join(self.save_dir, "sample_ids.npy"))
@@ -340,6 +350,15 @@ class XAIOData:
         else:
             ldir = load_dir
             self.save_dir = load_dir
+        nr_samples_ = nr_features_ = 0
+        if os.path.exists(os.path.join(ldir, "nr_samples.npy")):
+            nr_samples_ = np.load(
+                os.path.join(ldir, "nr_samples.npy"), allow_pickle=True
+            ).item()
+        if os.path.exists(os.path.join(ldir, "nr_features.npy")):
+            nr_features_ = np.load(
+                os.path.join(ldir, "nr_features.npy"), allow_pickle=True
+            ).item()
         if os.path.exists(os.path.join(ldir, "sample_ids.npy")):
             self.sample_ids = np.load(
                 os.path.join(ldir, "sample_ids.npy"), allow_pickle=True
@@ -435,12 +454,14 @@ class XAIOData:
             ).item()
         for normtype in normalization_types_list:
             assert os.path.exists(os.path.join(ldir, normtype + "_data.bin"))
+            assert nr_samples_ > 0
+            assert nr_features_ > 0
             self.data_array[normtype] = np.array(
                 np.memmap(
                     os.path.join(ldir, normtype + "_data.bin"),
                     dtype="float32",
                     mode="r",
-                    shape=(self.nr_features, self.nr_samples),
+                    shape=(nr_features_, nr_samples_),
                 )
             ).transpose()
         if len(normalization_types_list) > 0:

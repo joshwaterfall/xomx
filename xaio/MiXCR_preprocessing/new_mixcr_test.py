@@ -70,8 +70,8 @@ def indiv_rep_seq(seq_rd, annotation_):
         seq_dict.setdefault(elt[0], []).append(elt[1])
         annot_dict[elt[0]] = annotation_ + str(len(seq_dict[elt[0]]))
         # annot_dict[elt[0]] = annotation_ + str(seq_dict[elt[0]])
-        e()
-        quit()
+        # e()
+        # quit()
         # annot_dict[elt[0]] = annotation_
     for key in seq_dict.keys():
         s = np.zeros(100)
@@ -147,7 +147,7 @@ if not os.path.exists(data.save_dir):
     #     "UCS",
     #     "UVM",
     # ]:
-    annot_list = ["BRCA", "STAD", "ACC", "LUAD", "PAAD"]
+    annot_list = ["STAD", "ACC", "LUAD", "PAAD"]
     # annot_list = ["STAD", "ACC"]
     # annot_list = ["LUAD", "LUSC"]
     for annotation in annot_list:
