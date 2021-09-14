@@ -10,12 +10,15 @@ Papillary Cell Carcinoma (KIRP), and Kidney Renal Clear Cell Carcinoma (KICH).
 **Repeated executions of the `kidney_classif.py` file perform each of the 7 steps of 
 the tutorial, one by one.**
 
-After the imports, the following line defines the folder (`~/xaiodata/kidney_classif`) 
+After the imports, the following lines defines the folder 
 in which data and outputs will be stored:
-
 ```python
-savedir = os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif")
+args = get_args()
+savedir = args.savedir
 ```
+By default, `savedir` is `~/xaiodata/kidney_classif`, but it can be modified using a 
+`--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
+
 
 ## Step 1: Preparing the manifest
 

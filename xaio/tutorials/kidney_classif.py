@@ -6,6 +6,7 @@ from xaio import RFEExtraTrees
 # from xaio.tools.basic_tools import XAIOData, confusion_matrix, matthews_coef
 # from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
 # from xaio.tools.classifiers.multiclass import ScoreBasedMulticlass
+import argparse
 import pandas as pd
 import numpy as np
 import os
@@ -23,8 +24,20 @@ See kidney_classif.md for detailed explanations.
 """
 
 
-# The data and outputs will be saved in the directory: ~/xaiodata/kidney_classif
-savedir = os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif")
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--savedir",
+        default=os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif"),
+    )
+    args = parser.parse_args()
+    return args
+
+
+# Unless specified otherwise, the data and outputs will be saved in the
+# directory: ~/xaiodata/kidney_classif
+args = get_args()
+savedir = args.savedir
 os.makedirs(savedir, exist_ok=True)
 
 # We use the file next_step.txt to know which step to execute next. 7 consecutive
