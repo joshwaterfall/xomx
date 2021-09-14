@@ -3,7 +3,7 @@ XAIO is a python library for eXplainable AI in Oncogenomics.
 
 Recommended installation steps (with conda): 
 ```
-git clone https://github.com/perrin-isir/xaio.git
+git clone git@github.com:perrin-isir/xaio.git
 cd xaio
 conda env create -f environment.yaml
 conda activate xaiov
