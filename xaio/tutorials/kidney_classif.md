@@ -81,8 +81,17 @@ https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
 In linux, the command `export PATH=$PATH:/path/to/gdc-client` can be useful to make
 sure that the `gdc-client` is found during the execution of `kidney_classif.py`.
 
+Remark: the execution of this step, i.e. the import of all the samples,
+may take some time.
+
 ## Step 3: Creating and saving the XAIOData object
 
+```
+df = gdc_create_data_matrix(
+    tmpdir,
+    os.path.join(savedir, "manifest.txt"),
+)
+```
 First, we use the `gdc_create_data_matrix()` function...
 
 ## Step 4: Annotating the samples
