@@ -1,5 +1,8 @@
-# XAIO 
+# XAIO
+
 XAIO is a python library for eXplainable AI in Oncogenomics.
+
+-----
 
 Recommended installation steps (with conda): 
 ```
@@ -13,5 +16,11 @@ environment:
 ```
 pip install -e .
 ```
-Tutorials (in [xaio/tutorials/](xaio/tutorials/))
-[kidney_classif.md](xaio/tutorials/kidney_classif.md)
+-----
+Tutorials (in [xaio/tutorials/](xaio/tutorials/)) are the best way to learn to use
+the XAIO library.
+
+Here is the list of tutorials:
+* [kidney_classif.md](xaio/tutorials/kidney_classif.md) (goal:  use a recursive feature 
+elimination method on RNA-Seq data to identify gene biomarkers for the differential 
+diagnosis of three types of kidney cancer)
