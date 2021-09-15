@@ -11,9 +11,6 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
-from IPython import embed as e
-
-assert e
 
 """
 TUTORIAL: KIDNEY CANCER CLASSIFICATION
@@ -28,14 +25,16 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--savedir",
-        default=os.path.join(os.path.expanduser("~"), "xaiodata", "kidney_classif"),
+        default=os.path.join(
+            os.path.expanduser("~"), "results", "xaio", "kidney_classif"
+        ),
     )
-    args = parser.parse_args()
-    return args
+    args_ = parser.parse_args()
+    return args_
 
 
 # Unless specified otherwise, the data and outputs will be saved in the
-# directory: ~/xaiodata/kidney_classif
+# directory: ~/results/xaio/kidney_classif
 args = get_args()
 savedir = args.savedir
 os.makedirs(savedir, exist_ok=True)
@@ -253,8 +252,6 @@ if step == 7:
     xdata.feature_plot("ENSG00000168269.8")  # FOXI1
     xdata.feature_plot("ENSG00000163435.14")  # ELF3
     xdata.feature_plot("ENSG00000185633.9")  # NDUFA4L2
-    e()
-    quit()
 
     # Some of the most remarkable genes on this plot:
     # ENSG00000185633.9
