@@ -16,7 +16,7 @@ in which data and outputs will be stored:
 args = get_args()
 savedir = args.savedir
 ```
-By default, `savedir` is `~/xaiodata/kidney_classif`, but it can be modified using a 
+By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified using a 
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
 
@@ -31,7 +31,7 @@ This involves creating a `manifest.txt` file that describes the files to be impo
 
 The `gdc_create_manifest()` function (`from xaio import gdc_create_manifest`) 
 facilitates the creation of this manifest. It is designed to import files of gene 
-expression counts performed with [HTSeq](https://github.com/simon-anders/htseq). 
+expression counts obtained with [HTSeq](https://github.com/simon-anders/htseq). 
 
 `gdc_create_manifest()` takes in input the disease type (in our case "Adenomas and 
 Adenocarcinomas"), the list of project names ("TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"), 

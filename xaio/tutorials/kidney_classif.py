@@ -2,10 +2,6 @@ from xaio import gdc_create_manifest, gdc_create_data_matrix
 from xaio import XAIOData, confusion_matrix, matthews_coef
 from xaio import RFEExtraTrees
 
-# from xaio.data_importation.gdc import gdc_create_manifest, gdc_create_data_matrix
-# from xaio.tools.basic_tools import XAIOData, confusion_matrix, matthews_coef
-# from xaio.tools.feature_selection.RFEExtraTrees import RFEExtraTrees
-# from xaio.tools.classifiers.multiclass import ScoreBasedMulticlass
 import argparse
 import pandas as pd
 import numpy as np
@@ -90,7 +86,7 @@ tmpdir = "tmpdir_GDCsamples"
 if step == 2:
     os.makedirs(tmpdir, exist_ok=True)
     commandstring = (
-        "./gdc-client download -d "
+        "gdc-client download -d "
         + tmpdir
         + " -m "
         + os.path.join(savedir, "manifest.txt")
