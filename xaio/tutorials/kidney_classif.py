@@ -20,10 +20,14 @@ See kidney_classif.md for detailed explanations.
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "step", metavar="S", type=int, nargs="?", default=None, help="execute step S"
+    )
+    parser.add_argument(
         "--savedir",
         default=os.path.join(
             os.path.expanduser("~"), "results", "xaio", "kidney_classif"
         ),
+        help="directory in which data and outputs will be stored",
     )
     args_ = parser.parse_args()
     return args_
@@ -37,8 +41,13 @@ os.makedirs(savedir, exist_ok=True)
 
 # We use the file next_step.txt to know which step to execute next. 7 consecutive
 # executions of the code complete the 7 steps of the tutorial.
+# A specific step can also be chosen using an integer in argument
+# (e.g. `python kidney_classif.py 1` to execute step 1).
 os.makedirs(savedir, exist_ok=True)
-if not os.path.exists(os.path.join(savedir, "next_step.txt")):
+if args.step is not None:
+    assert 1 <= args.step <= 7
+    step = args.step
+elif not os.path.exists(os.path.join(savedir, "next_step.txt")):
     step = 1
 else:
     step = np.loadtxt(os.path.join(savedir, "next_step.txt"), dtype="int")

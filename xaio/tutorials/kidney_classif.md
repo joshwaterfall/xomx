@@ -8,9 +8,12 @@ types of kidney cancer: Kidney Renal Clear Cell Carcinoma (KIRC), Kidney Renal
 Papillary Cell Carcinoma (KIRP), and Kidney Renal Clear Cell Carcinoma (KICH).
 
 **Repeated executions of the `kidney_classif.py` file perform each of the 7 steps of 
-the tutorial, one by one.**
+the tutorial, one by one.** A specific step can also be chosen using an integer
+argument. For instance, `python kidney_classif.py 1` executes the step 1.
 
-After the imports, the following lines defines the folder 
+-----
+
+After the imports, the following lines define the folder 
 in which data and outputs will be stored:
 ```python
 args = get_args()
@@ -74,6 +77,9 @@ Once the manifest is written, individual samples are downloaded to a temporary f
 
 This requires the `gdc-client`, which can be downloaded at: 
 https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
+
+In linux, the command `export PATH=$PATH:/path/to/gdc-client` can be useful to make
+sure that the `gdc-client` is found during the execution of `kidney_classif.py`.
 
 ## Step 3: Creating and saving the XAIOData object
 
