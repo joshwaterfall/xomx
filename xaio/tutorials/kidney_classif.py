@@ -106,7 +106,7 @@ if step == 2:
 
 """
 STEP 3: Gather all individual cases to create the data matrix, and save it in
-a folder named "xdata".
+a folder named "xd".
 After that, all the individual files imported with gdc-client are erased.
 """
 if step == 3:
@@ -121,11 +121,6 @@ if step == 3:
     # Importing raw data:
     xd.import_pandas(df)
 
-    from IPython import embed as e
-
-    e()
-    quit()
-
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
     # WARNING: basic pre-processing is used here for simplicity, but for more advanced
@@ -137,7 +132,7 @@ if step == 3:
     xd.compute_feature_standard_deviations()
 
     # Saving the XAIOData object and its "raw" data array to the disk:
-    xd.save(["raw"], os.path.join(savedir, "xdata"))
+    xd.save(["raw"], os.path.join(savedir, "xd"))
 
     # We erase the individual sample directories downloaded with gdc-client:
     shutil.rmtree(tmpdir, ignore_errors=True)
@@ -152,7 +147,7 @@ if step == 4:
     xd = XAIOData()
     # Loading the XAIOData object (with normalization_types_list=None, the data array
     # is not loaded):
-    xd.load(normalization_types_list=None, load_dir=os.path.join(savedir, "xdata"))
+    xd.load(normalization_types_list=None, load_dir=os.path.join(savedir, "xd"))
     manifest = pd.read_table(os.path.join(savedir, "manifest.txt"), header=0)
     xd.sample_annotations = np.empty(xd.nr_samples, dtype=object)
     for i in range(xd.nr_samples):
@@ -173,10 +168,10 @@ and randomly separate samples in training and test datasets.
 """
 if step == 5:
     xd = XAIOData()
-    xd.load(["raw"], os.path.join(savedir, "xdata"))
+    xd.load(["raw"], os.path.join(savedir, "xd"))
     xd.reduce_features(np.argsort(xd.feature_standard_deviations)[-4000:])
     xd.compute_train_and_test_indices(test_train_ratio=0.25)
-    xd.save(["raw"], os.path.join(savedir, "xdata_small"))
+    xd.save(["raw"], os.path.join(savedir, "xd_small"))
     print("STEP 5: done")
 
 
@@ -186,7 +181,7 @@ elimination to keep 10 features per classifier.
 """
 if step == 6:
     xd = XAIOData()
-    xd.load(["raw"], os.path.join(savedir, "xdata_small"))
+    xd.load(["raw"], os.path.join(savedir, "xd_small"))
     nr_annotations = len(xd.all_annotations)
     feature_selector = np.empty(nr_annotations, dtype=object)
     for i in range(nr_annotations):
@@ -209,7 +204,7 @@ if step == 6:
             print("MCC score:", matthews_coef(cm))
         feature_selector[i].save(
             os.path.join(
-                savedir, "xdata_small", "feature_selectors", xd.all_annotations[i]
+                savedir, "xd_small", "feature_selectors", xd.all_annotations[i]
             )
         )
         print("Done.")
@@ -222,7 +217,7 @@ STEP 7: Visualizing results.
 """
 if step == 7:
     xd = XAIOData()
-    xd.load(["raw"], os.path.join(savedir, "xdata_small"))
+    xd.load(["raw"], os.path.join(savedir, "xd_small"))
 
     xd.compute_normalization("std")
     xd.function_scatter(
@@ -244,7 +239,7 @@ if step == 7:
         )
         feature_selector[i].load(
             os.path.join(
-                savedir, "xdata_small", "feature_selectors", xd.all_annotations[i]
+                savedir, "xd_small", "feature_selectors", xd.all_annotations[i]
             )
         )
         gene_list += [
@@ -284,7 +279,7 @@ if step == 7:
     # This is confirmed by the publication:
     # Role of NADH Dehydrogenase (Ubiquinone) 1 alpha subcomplex 4-like 2 in clear cell
     # renal cell carcinoma
-    # xdata.feature_plot("ENSG00000185633.9", "raw")
+    # xd.feature_plot("ENSG00000185633.9", "raw")
 
 # noinspection PyTypeChecker
 np.savetxt(os.path.join(savedir, "next_step.txt"), [min(step + 1, 7)], fmt="%u")

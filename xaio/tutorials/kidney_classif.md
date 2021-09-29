@@ -128,6 +128,58 @@ Then we create a XAIOData object, and import the dataframe in it:
 xd = XAIOData()
 xd.import_pandas(df)
 ```
+The XAIOData class is the most important data structure of the XAIO library.
+Its implementation can be found in 
+[xaio/tools/basic_tools.py](xaio/tools/basic_tools.py).
+The objects of this class contain 2D data arrays and give access to various 
+functionalities to process them.
+
+`xd.data_array["raw"]` is the NumPy array of raw data, equal to the transpose of the
+dataframe df. So `xd.data_array["raw"][0, :]`, the first row, contains the expression 
+levels of all genes for the first sample. And `xd.data_array["raw"][:, 0]`, the
+first column, contains the expression levels of the first gene for all samples.
+
+The feature names (gene IDs) are stored in `xd.feature_names`, and the sample
+identifiers are stored in `xd.sample_ids`.
+
+In order to improve cross-sample comparisons, we normalize the sequencing
+depth to 1 million, with the following command:
+```
+xd.normalize_feature_sums(1e6)
+```
+`normalize_feature_sums(X)` performs a linear normalization for each sample 
+so that the sum of the feature values is equal to `X`.  It is a very basic 
+normalization that we use here for simplicity, but for more advanced
+applications, a more sophisticated pre-processing may be required.
+Unlike most other normalizations, `normalize_feature_sums()` is an 
+in-place modification of the raw data, so after its application, 
+the modified data is still called "raw".
+
+For each feature, we compute both its mean value accross all samples, and its
+standard deviation accross all samples:
+```
+xd.compute_feature_mean_values()
+xd.compute_feature_standard_deviations()
+```
+The mean values are stored in the list `xd.feature_mean_values`, 
+and the standard deviations are stored in the list `xd.feature_standard_deviations`.
+
+Then, we save `xd` to the disk (in the `savedir` directory, in an `xd` subfolder):
+```
+xd.save(["raw"], os.path.join(savedir, "xd"))
+```
+The list `["raw"]` in input specifies that `xd.data_array["raw"]` is saved to the disk.
+
+`xd.save([], os.path.join(savedir, "xd"))`, would save other elements of the `xd` 
+object, such as `xd.feature_mean_values` or `xd.feature_standard_deviations`, but 
+not the data array `xd.data_array["raw"]`. This is particularly useful when the data 
+array has not changed and does not need to be overwritten.
+
+At the end of Step 3, we delete the individual sample files that were downloaded in
+Step 2:
+```
+shutil.rmtree(tmpdir, ignore_errors=True)
+```
 
 ## Step 4: Annotating the samples
 
