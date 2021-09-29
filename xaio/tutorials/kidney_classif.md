@@ -4,11 +4,13 @@
 
 The objective of this tutorial is to use a recursive feature elimination method on 
 RNA-Seq data to identify gene biomarkers for the differential diagnosis of three 
-types of kidney cancer: Kidney Renal Clear Cell Carcinoma (KIRC), Kidney Renal 
-Papillary Cell Carcinoma (KIRP), and Kidney Renal Clear Cell Carcinoma (KICH).
+types of kidney cancer: Kidney Renal Clear Cell Carcinoma (**KIRC**), Kidney Renal 
+Papillary Cell Carcinoma (**KIRP**), and Kidney Renal Clear Cell Carcinoma (**KICH**).
 
 **Repeated executions of the `kidney_classif.py` file perform each of the 7 steps of 
-the tutorial, one by one.** A specific step can also be chosen using an integer
+the tutorial, one by one.** 
+
+A specific step can also be chosen using an integer
 argument. For instance, `python kidney_classif.py 1` executes the step 1.
 
 -----
@@ -35,6 +37,9 @@ This involves creating a `manifest.txt` file that describes the files to be impo
 The `gdc_create_manifest()` function (`from xaio import gdc_create_manifest`) 
 facilitates the creation of this manifest. It is designed to import files of gene 
 expression counts obtained with [HTSeq](https://github.com/simon-anders/htseq). 
+You can have a look at its implementation in 
+[xaio/data_importation/gdc.py](xaio/data_importation/gdc.py) to adapt it to your own
+needs if you want to import other types of data.
 
 `gdc_create_manifest()` takes in input the disease type (in our case "Adenomas and 
 Adenocarcinomas"), the list of project names ("TCGA-KIRC", "TCGA-KIRP", "TCGA-KICH"), 
@@ -70,15 +75,15 @@ df.to_csv(
 
 ## Step 2: Importing the data
 
-Once the manifest is written, individual samples are downloaded to a temporary folder
-(`tmpdir_GDCsamples/`) with the following command:
+Once the manifest is written, individual samples are downloaded to a local
+temporary folder (`tmpdir_GDCsamples/`) with the following command:
 
 `gdc-client download -d tmpdir_GDCsamples -m /path/to/manifest.txt`
 
 This requires the `gdc-client`, which can be downloaded at: 
 https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
 
-In linux, the command `export PATH=$PATH:/path/to/gdc-client` can be useful to make
+On linux, the command `export PATH=$PATH:/path/to/gdc-client` can be useful to make
 sure that the `gdc-client` is found during the execution of `kidney_classif.py`.
 
 Remark: the execution of this step, i.e. the import of all the samples,
@@ -92,7 +97,37 @@ df = gdc_create_data_matrix(
     os.path.join(savedir, "manifest.txt"),
 )
 ```
-First, we use the `gdc_create_data_matrix()` function...
+First, the `gdc_create_data_matrix()` function (implemented in
+[xaio/data_importation/gdc.py](xaio/data_importation/gdc.py)
+) is used to create a Pandas dataframe with all the individual samples.
+
+The content of the dataframe `df` looks like this:
+```
+In [1]: df
+Out[1]: 
+                    3fd3d1ba-67f4-4380-800b-af1d8f39b40c  8439d23c-d1ec-4871-8bcf-1f6064dbd3bc  ...  ec467273-4e66-403e-b166-c7f6c22be922  e9c9df49-2d63-4c80-861c-1feedd598fe5
+ENSG00000000003.13                                  3242                                  4853  ...                                   995                                  1739
+ENSG00000000005.5                                     13                                    46  ...                                     8                                    12
+ENSG00000000419.11                                  1610                                  2130  ...                                  1178
+...
+```
+Every column represents a sample (with a unique identifier), 
+and the rows correspond to different genes, identified by their 
+Ensembl gene ID with a version number after the dot (see
+[http://www.ensembl.org/info/genome/stable_ids/index.html](http://www.ensembl.org/info/genome/stable_ids/index.html)).
+The integer values are the raw gene expression level measurements for all genes 
+and samples.
+
+Since the last 5 rows contain special information that we will not use, we drop them
+with the following command:
+```
+df = df.drop(index=df.index[-5:])
+```
+Then we create a XAIOData object, and import the dataframe in it:
+```
+xd = XAIOData()
+xd.import_pandas(df)
+```
 
 ## Step 4: Annotating the samples
 

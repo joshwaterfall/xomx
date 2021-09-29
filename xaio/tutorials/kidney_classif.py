@@ -117,22 +117,27 @@ if step == 3:
     # We drop the last 5 rows containing special information which we will not use:
     df = df.drop(index=df.index[-5:])
 
-    xdata = XAIOData()
+    xd = XAIOData()
     # Importing raw data:
-    xdata.import_pandas(df)
+    xd.import_pandas(df)
+
+    from IPython import embed as e
+
+    e()
+    quit()
 
     # In order to improve cross-sample comparisons, we normalize the sequencing
     # depth to 1 million.
     # WARNING: basic pre-processing is used here for simplicity, but for more advanced
     # applications, a more sophisticated pre-processing may be required.
-    xdata.normalize_feature_sums(1e6)
+    xd.normalize_feature_sums(1e6)
 
     # We compute the mean and standard deviation (across samples) for all the features:
-    xdata.compute_feature_mean_values()
-    xdata.compute_feature_standard_deviations()
+    xd.compute_feature_mean_values()
+    xd.compute_feature_standard_deviations()
 
     # Saving the XAIOData object and its "raw" data array to the disk:
-    xdata.save(["raw"], os.path.join(savedir, "xdata"))
+    xd.save(["raw"], os.path.join(savedir, "xdata"))
 
     # We erase the individual sample directories downloaded with gdc-client:
     shutil.rmtree(tmpdir, ignore_errors=True)
@@ -144,21 +149,21 @@ STEP 4: Annotate the samples.
 Annotations are fetched from the previously created file manifest.txt.
 """
 if step == 4:
-    xdata = XAIOData()
+    xd = XAIOData()
     # Loading the XAIOData object (with normalization_types_list=None, the data array
     # is not loaded):
-    xdata.load(normalization_types_list=None, load_dir=os.path.join(savedir, "xdata"))
+    xd.load(normalization_types_list=None, load_dir=os.path.join(savedir, "xdata"))
     manifest = pd.read_table(os.path.join(savedir, "manifest.txt"), header=0)
-    xdata.sample_annotations = np.empty(xdata.nr_samples, dtype=object)
-    for i in range(xdata.nr_samples):
-        xdata.sample_annotations[xdata.sample_indices[manifest["id"][i]]] = manifest[
+    xd.sample_annotations = np.empty(xd.nr_samples, dtype=object)
+    for i in range(xd.nr_samples):
+        xd.sample_annotations[xd.sample_indices[manifest["id"][i]]] = manifest[
             "annotation"
         ][i]
     # Computing the list of different annotations:
-    xdata.compute_all_annotations()
+    xd.compute_all_annotations()
     # Computing the list of sample indices for every annotation:
-    xdata.compute_sample_indices_per_annotation()
-    xdata.save()
+    xd.compute_sample_indices_per_annotation()
+    xd.save()
     print("STEP 4: done")
 
 
@@ -167,11 +172,11 @@ STEP 5: Keep only the 4000 features with largest standard deviation, normalize d
 and randomly separate samples in training and test datasets.
 """
 if step == 5:
-    xdata = XAIOData()
-    xdata.load(["raw"], os.path.join(savedir, "xdata"))
-    xdata.reduce_features(np.argsort(xdata.feature_standard_deviations)[-4000:])
-    xdata.compute_train_and_test_indices(test_train_ratio=0.25)
-    xdata.save(["raw"], os.path.join(savedir, "xdata_small"))
+    xd = XAIOData()
+    xd.load(["raw"], os.path.join(savedir, "xdata"))
+    xd.reduce_features(np.argsort(xd.feature_standard_deviations)[-4000:])
+    xd.compute_train_and_test_indices(test_train_ratio=0.25)
+    xd.save(["raw"], os.path.join(savedir, "xdata_small"))
     print("STEP 5: done")
 
 
@@ -180,15 +185,15 @@ STEP 6: Train binary classifiers for every annotation, with recursive feature
 elimination to keep 10 features per classifier.
 """
 if step == 6:
-    xdata = XAIOData()
-    xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
-    nr_annotations = len(xdata.all_annotations)
+    xd = XAIOData()
+    xd.load(["raw"], os.path.join(savedir, "xdata_small"))
+    nr_annotations = len(xd.all_annotations)
     feature_selector = np.empty(nr_annotations, dtype=object)
     for i in range(nr_annotations):
-        print("Annotation: " + xdata.all_annotations[i])
+        print("Annotation: " + xd.all_annotations[i])
         feature_selector[i] = RFEExtraTrees(
-            xdata,
-            xdata.all_annotations[i],
+            xd,
+            xd.all_annotations[i],
             n_estimators=450,
             random_state=0,
         )
@@ -204,7 +209,7 @@ if step == 6:
             print("MCC score:", matthews_coef(cm))
         feature_selector[i].save(
             os.path.join(
-                savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
+                savedir, "xdata_small", "feature_selectors", xd.all_annotations[i]
             )
         )
         print("Done.")
@@ -216,47 +221,47 @@ if step == 6:
 STEP 7: Visualizing results.
 """
 if step == 7:
-    xdata = XAIOData()
-    xdata.load(["raw"], os.path.join(savedir, "xdata_small"))
+    xd = XAIOData()
+    xd.load(["raw"], os.path.join(savedir, "xdata_small"))
 
-    xdata.compute_normalization("std")
-    xdata.function_scatter(
-        lambda idx: xdata.feature_mean_values[idx],
-        lambda idx: xdata.feature_standard_deviations[idx],
+    xd.compute_normalization("std")
+    xd.function_scatter(
+        lambda idx: xd.feature_mean_values[idx],
+        lambda idx: xd.feature_standard_deviations[idx],
         "features",
         xlog_scale=True,
         ylog_scale=True,
     )
 
-    feature_selector = np.empty(len(xdata.all_annotations), dtype=object)
+    feature_selector = np.empty(len(xd.all_annotations), dtype=object)
     gene_list = []
     for i in range(len(feature_selector)):
         feature_selector[i] = RFEExtraTrees(
-            xdata,
-            xdata.all_annotations[i],
+            xd,
+            xd.all_annotations[i],
             n_estimators=450,
             random_state=0,
         )
         feature_selector[i].load(
             os.path.join(
-                savedir, "xdata_small", "feature_selectors", xdata.all_annotations[i]
+                savedir, "xdata_small", "feature_selectors", xd.all_annotations[i]
             )
         )
         gene_list += [
-            xdata.feature_names[idx_]
+            xd.feature_names[idx_]
             for idx_ in feature_selector[i].current_feature_indices
         ]
 
     feature_selector[0].plot()
 
-    xdata.reduce_features(gene_list)
-    xdata.compute_normalization("log")
-    xdata.umap_plot("log")
+    xd.reduce_features(gene_list)
+    xd.compute_normalization("log")
+    xd.umap_plot("log")
 
-    xdata.feature_plot(gene_list, "log")
-    xdata.feature_plot("ENSG00000168269.8")  # FOXI1
-    xdata.feature_plot("ENSG00000163435.14")  # ELF3
-    xdata.feature_plot("ENSG00000185633.9")  # NDUFA4L2
+    xd.feature_plot(gene_list, "log")
+    xd.feature_plot("ENSG00000168269.8")  # FOXI1
+    xd.feature_plot("ENSG00000163435.14")  # ELF3
+    xd.feature_plot("ENSG00000185633.9")  # NDUFA4L2
 
     # Some of the most remarkable genes on this plot:
     # ENSG00000185633.9
