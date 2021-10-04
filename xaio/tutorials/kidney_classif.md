@@ -25,7 +25,7 @@ By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
 ##### Table of Contents
-+ [Step 1: Preparing the manifest](#step-2)
++ [Step 1: Preparing the manifest](#s2)
 + [Step 2: Importing the data](#step-2:-importing-the-data)
 + [Step 3: Creating and saving the XAIOData object](#step-3:-creating-and-saving-the-xaiodata-object)
 + [Step 4: Annotating the samples](#step-4:-annotating-the-samples)
@@ -81,8 +81,7 @@ df.to_csv(
     mode="w",
 )
 ```
-
-## Step 2: Importing the data
+## Step 2: Importing the data {#s2}
 
 Once the manifest is written, individual samples are downloaded to a local
 temporary folder (`tmpdir_GDCsamples/`) with the following command:
