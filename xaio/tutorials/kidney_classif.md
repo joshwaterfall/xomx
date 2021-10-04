@@ -24,12 +24,17 @@ savedir = args.savedir
 By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified using a 
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
-##### Table of Contents  
-[Step 1](#s2-test)
+##### Table of Contents
++ [Step 1: Preparing the manifest](#step-1:-preparing-the-manifest)
++ [Step 2: Importing the data](#step-2:-importing-the-data)
++ [Step 3: Creating and saving the XAIOData object](#step-3:-creating-and-saving-the-xaiodata-object)
++ [Step 4: Annotating the samples](#step-4:-annotating-the-samples)
++ [Step 5: Basic pre-processing](#step-5:-basic-pre-processing)
 
-## Step 1: Preparing the manifest
-
-
+Step 6: Training binary classifiers and performing recursive feature elimination
+Step 6: Training binary classifiers and performing recursive feature elimination
+Step 7: Visualizing results
+Step 7: Visualizing results
 
 We use the 
 [GDC Data Transfer Tool](
