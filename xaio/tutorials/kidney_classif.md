@@ -25,7 +25,7 @@ By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
 ##### Table of Contents  
-[Step 1](#s2 test)
+[Step 1](#s2-test)
 
 ## Step 1: Preparing the manifest
 
