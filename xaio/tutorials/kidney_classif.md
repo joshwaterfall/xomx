@@ -25,16 +25,16 @@ By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
 ##### Table of Contents
-+ [Step 1: Preparing the manifest](#s2)
-+ [Step 2: Importing the data](#step-2:-importing-the-data)
-+ [Step 3: Creating and saving the XAIOData object](#step-3:-creating-and-saving-the-xaiodata-object)
-+ [Step 4: Annotating the samples](#step-4:-annotating-the-samples)
-+ [Step 5: Basic pre-processing](#step-5:-basic-pre-processing)
++ [Step 1: Preparing the manifest](#s1)
++ [Step 2: Importing the data](#s2)
++ [Step 3: Creating and saving the XAIOData object](#s3)
++ [Step 4: Annotating the samples](#s4)
++ [Step 5: Basic pre-processing](#5)
++ [Step 6: Training binary classifiers and performing recursive feature elimination](#s6)
++ [Step 7: Visualizing results](#s7)
 
-Step 6: Training binary classifiers and performing recursive feature elimination
-Step 6: Training binary classifiers and performing recursive feature elimination
-Step 7: Visualizing results
-Step 7: Visualizing results
+<a name="s1"></a>
+## Step 1: Preparing the manifest
 
 We use the 
 [GDC Data Transfer Tool](
@@ -98,6 +98,7 @@ sure that the `gdc-client` is found during the execution of `kidney_classif.py`.
 Remark: the execution of this step, i.e. the import of all the samples,
 may take some time.
 
+<a name="s3"></a>
 ## Step 3: Creating and saving the XAIOData object
 
 ```
@@ -191,10 +192,13 @@ Step 2:
 shutil.rmtree(tmpdir, ignore_errors=True)
 ```
 
+<a name="s4"></a>
 ## Step 4: Annotating the samples
 
+<a name="s5"></a>
 ## Step 5: Basic pre-processing
 
+<a name="s6"></a>
 ## Step 6: Training binary classifiers and performing recursive feature elimination
 
 ```python
@@ -220,6 +224,7 @@ for i in range(nr_annotations):
     )
 ```
 
+<a name="s7"></a>
 ## Step 7: Visualizing results
 
 + Standard deviation vs. mean value for all features:
@@ -318,5 +323,3 @@ https://doi.org/10.1016/j.celrep.2017.07.043
 )] identifies the transcription factor FOXI1 (ENSG00000168269.8) to be drastically 
 overexpressed in KICH.
 
-
-## S2 test
