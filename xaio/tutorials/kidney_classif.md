@@ -24,8 +24,12 @@ savedir = args.savedir
 By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified using a 
 `--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
+##### Table of Contents  
+[Step 1](#s2)
 
 ## Step 1: Preparing the manifest
+
+
 
 We use the 
 [GDC Data Transfer Tool](
@@ -308,3 +312,6 @@ doi: [10.1016/j.celrep.2017.07.043](
 https://doi.org/10.1016/j.celrep.2017.07.043
 )] identifies the transcription factor FOXI1 (ENSG00000168269.8) to be drastically 
 overexpressed in KICH.
+
+<a name="s2"></a>
+## s2
