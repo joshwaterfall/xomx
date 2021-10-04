@@ -81,7 +81,8 @@ df.to_csv(
     mode="w",
 )
 ```
-## Step 2: Importing the data {#s2}
+<a name="s2"></a>
+## Step 2: Importing the data
 
 Once the manifest is written, individual samples are downloaded to a local
 temporary folder (`tmpdir_GDCsamples/`) with the following command:
