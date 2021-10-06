@@ -7,24 +7,15 @@ RNA-Seq data to identify gene biomarkers for the differential diagnosis of three
 types of kidney cancer: Kidney Renal Clear Cell Carcinoma (**KIRC**), Kidney Renal 
 Papillary Cell Carcinoma (**KIRP**), and Kidney Renal Clear Cell Carcinoma (**KICH**).
 
-**Repeated executions of the `kidney_classif.py` file perform each of the 7 steps of 
-the tutorial, one by one.** 
+### Running the tutorial:
++ **Repeated executions of the [kidney_classif.py](xaio/tutorials/kidney_classif.py) 
+file perform each of the 7 steps of 
+the tutorial, one by one.**
 
-A specific step can also be chosen using an integer
++ A specific step can also be chosen using an integer
 argument. For instance, `python kidney_classif.py 1` executes the step 1.
 
------
-
-After the imports, the following lines define the folder 
-in which data and outputs will be stored:
-```python
-args = get_args()
-savedir = args.savedir
-```
-By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified using a 
-`--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
-
-##### Table of Contents
+### Table of Contents:
 + [Step 1: Preparing the manifest](#s1)
 + [Step 2: Importing the data](#s2)
 + [Step 3: Creating and saving the XAIOData object](#s3)
@@ -32,6 +23,18 @@ By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified
 + [Step 5: Basic pre-processing](#5)
 + [Step 6: Training binary classifiers and performing recursive feature elimination](#s6)
 + [Step 7: Visualizing results](#s7)
+
+### Saving results:
+
+After the imports, the following lines in [kidney_classif.py](xaio/tutorials/kidney_classif.py) 
+define the string variable `savedir`,  which is the folder 
+in which data and outputs will be stored:
+```python
+args = get_args()
+savedir = args.savedir
+```
+By default, `savedir` is `~/results/xaio/kidney_classif`, but it can be modified using a 
+`--savedir` argument in input (e.g. `python kidney_classif.py --savedir /tmp`).
 
 <a name="s1"></a>
 ## Step 1: Preparing the manifest
@@ -144,8 +147,8 @@ Its implementation can be found in
 The objects of this class contain 2D data arrays and give access to various 
 functionalities to process them.
 
-`xd.data_array["raw"]` is a NumPy array of raw data, now equal to the transpose of the
-dataframe df. So `xd.data_array["raw"][0, :]`, the first row, contains the expression 
+After `xd.import_pandas(df)`, `xd.data_array["raw"]` is a NumPy array of raw data equal to the transpose of the
+dataframe df. So, `xd.data_array["raw"][0, :]`, the first row, contains the expression 
 levels of all genes for the first sample. And `xd.data_array["raw"][:, 0]`, the
 first column, contains the expression levels of the first gene for all samples.
 
@@ -160,11 +163,11 @@ xd.normalize_feature_sums(1e6)
 ```
 `normalize_feature_sums(X)` performs a linear normalization for each sample 
 so that the sum of the feature values is equal to `X`.  It is a very basic 
-normalization that we use here for simplicity, but for more advanced
+normalization that we use for simplicity in this tutorial, but for more advanced
 applications, a more sophisticated pre-processing may be required.
 Unlike most other normalizations, `normalize_feature_sums()` is an 
 in-place modification of the raw data, so after its application, 
-the modified data is still called "raw".
+the modified data is still `xd.data_array["raw"]`.
 
 For each feature, we compute both its mean value accross all samples, and its
 standard deviation accross all samples:

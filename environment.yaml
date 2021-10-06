@@ -15,3 +15,5 @@ dependencies:
     - umap-learn>=0.5.1
     - scikit-learn>=0.24.2
     - joblib>=1.0.1
+    - requests>=2.25.1
+    - csv>=1.0

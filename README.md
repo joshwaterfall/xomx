@@ -1,8 +1,12 @@
 # XAIO
 
-XAIO is a python library for eXplainable AI in Oncogenomics.
+XAIO is a python library aiming a providing tools for 
+
+for eXplainable AI in Oncogenomics.
 
 -----
+
+## Install
 
 Recommended installation steps (with conda): 
 ```
@@ -17,6 +21,8 @@ environment:
 pip install -e .
 ```
 -----
+## Tutorials
+
 Tutorials (in [xaio/tutorials/](xaio/tutorials/)) are the best way to learn to use
 the XAIO library.
 

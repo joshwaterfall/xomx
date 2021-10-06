@@ -43,7 +43,6 @@ os.makedirs(savedir, exist_ok=True)
 # executions of the code complete the 7 steps of the tutorial.
 # A specific step can also be chosen using an integer in argument
 # (e.g. `python kidney_classif.py 1` to execute step 1).
-os.makedirs(savedir, exist_ok=True)
 if args.step is not None:
     assert 1 <= args.step <= 7
     step = args.step
@@ -281,5 +280,9 @@ if step == 7:
     # renal cell carcinoma
     # xd.feature_plot("ENSG00000185633.9", "raw")
 
+
+"""
+INCREMENTING next_step.txt
+"""
 # noinspection PyTypeChecker
 np.savetxt(os.path.join(savedir, "next_step.txt"), [min(step + 1, 7)], fmt="%u")
