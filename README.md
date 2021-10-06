@@ -43,7 +43,7 @@ To cite this repository in publications:
 
 ```bibtex
 @misc{xaio,
-  author = {Perrin-Gilbert, Nicolas and Vibert, Julien and Mathias Vandenbogaert, Mathias and Waterfall, Joshua J.},
+  author = {Perrin-Gilbert, Nicolas and Vibert, Julien and Vandenbogaert, Mathias and Waterfall, Joshua J.},
   title = {XAIO},
   year = {2021},
   publisher = {GitHub},
