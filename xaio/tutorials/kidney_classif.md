@@ -8,11 +8,11 @@ types of kidney cancer: Kidney Renal Clear Cell Carcinoma (**KIRC**), Kidney Ren
 Papillary Cell Carcinoma (**KIRP**), and Kidney Renal Clear Cell Carcinoma (**KICH**).
 
 ### Running the tutorial:
-+ **Repeated executions of the [kidney_classif.py](xaio/tutorials/kidney_classif.py) 
+- **Repeated executions of the [kidney_classif.py](xaio/tutorials/kidney_classif.py) 
 file perform each of the 7 steps of 
 the tutorial, one by one.**
 
-+ A specific step can also be chosen using an integer
+- A specific step can also be chosen using an integer
 argument. For instance, `python kidney_classif.py 1` executes the step 1.
 
 ### Table of Contents:
