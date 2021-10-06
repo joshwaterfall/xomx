@@ -26,8 +26,8 @@ argument. For instance, `python kidney_classif.py 1` executes the step 1.
 
 ### Saving results:
 
-After the imports, the following lines in [kidney_classif.py](xaio/tutorials/kidney_classif.py) 
-define the string variable `savedir`,  which is the folder 
+In [kidney_classif.py](xaio/tutorials/kidney_classif.py), after the imports, the 
+following lines define the string variable `savedir`,  which determines the folder 
 in which data and outputs will be stored:
 ```python
 args = get_args()
@@ -98,7 +98,7 @@ https://gdc.cancer.gov/access-data/gdc-data-transfer-tool
 On linux, the command `export PATH=$PATH:/path/to/gdc-client` can be useful to make
 sure that the `gdc-client` is found during the execution of `kidney_classif.py`.
 
-Remark: the execution of this step, i.e. the import of all the samples,
+Remark: the execution of this step, i.e. the import of all samples,
 may take some time.
 
 <a name="s3"></a>
