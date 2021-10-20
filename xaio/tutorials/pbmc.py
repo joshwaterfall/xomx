@@ -106,6 +106,11 @@ if step == 1:
             )
         )
     ]
+    # We use gene identifiers of this form:
+    #                       <Ensembl gene ID>|<HGNC official gene symbol>
+    # Example:
+    #                       'ENSG00000243485|MIR1302-10'
+
     # List of the sample IDs (barcodes):
     sampleids = list(
         csv.reader(
@@ -130,18 +135,154 @@ if step == 1:
     xd.save(["raw"])
 
 """
-STEP 2
+STEP 2: Pre-processing workflow
 """
 if step == 2:
     xd = XAIOData()
     xd.save_dir = savedir
     xd.load(["raw"])
-    e()
-    quit()
 
-data = XAIOData()
+    # We look for mitochondrial genes (HGNC official symbol starting with "MT-"):
+    mitochondrial_genes = xd.regex_search(r"\|MT\-")
+
+    # Let us define the following function, which, for the i-th cell, returns
+    # the percentage of mitochondrial counts:
+    def mt_ratio(i):
+        return xd.feature_values_ratio(mitochondrial_genes, i)
+
+    # To plot mitochondrial count percentages, we use function_plot:
+    xd.function_plot(
+        mt_ratio, samples_or_features="samples", violinplot=True, ylog_scale=False
+    )
+
+    # We compute the number of non-zero features for each cell, and the number of
+    # cells with non-zero counts for each feature. The values are saved in
+    # the xd object.
+    xd.compute_nr_non_zero_features()
+    xd.compute_nr_non_zero_samples()
+    # We also compute the total sum of counts for each cell:
+    xd.compute_total_feature_sums()
+
+    def nr_non_zero_features(i):
+        return xd.nr_non_zero_features[i]
+
+    # Plotting the number of non-zero features for each cell:
+    xd.function_plot(nr_non_zero_features, "samples", True, False)
+
+    def total_feature_sums(i):
+        return xd.total_feature_sums[i]
+
+    # Plotting the total number of counts for each sample:
+    xd.function_plot(total_feature_sums, "samples", True, False)
+
+    # We plot mitochondrial count percentages vs. total number number of counts:
+    xd.function_scatter(
+        total_feature_sums,
+        mt_ratio,
+        samples_or_features="samples",
+        violinplot=False,
+        xlog_scale=False,
+        ylog_scale=False,
+    )
+
+    # We plot the number of non-zero features vs. total number number of counts:
+    xd.function_scatter(total_feature_sums, nr_non_zero_features)
+
+    # We filter cells that have 2500 unique feature counts or more:
+    xd.reduce_samples(np.where(xd.nr_non_zero_features < 2500)[0])
+    # We verify that there remains no sample with 2500 features or more:
+    np.where(xd.nr_non_zero_features >= 2500)[0]
+
+    # We filter cells that have 200 feature counts or less:
+    xd.reduce_samples(np.where(xd.nr_non_zero_features > 200)[0])
+
+    # We filter cells that have >=5% mitochondrial counts:
+    xd.reduce_samples(np.where(np.vectorize(mt_ratio)(range(xd.nr_samples)) < 0.05)[0])
+
+    xd.save(["raw"])
+
+"""
+STEP 3: Normalizing the data
+"""
+if step == 3:
+    xd = XAIOData()
+    xd.save_dir = savedir
+    xd.load(["raw"])
+
+    # We compute a log-normalization of the data:
+    xd.compute_normalization("log")
+    # The log-normalized data is stored in xd.data_array["log"]
+    # Log-normalized values are all between 0 and 1.
+
+    # We save the log-normalized array:
+    xd.save(["log"])
+
+"""
+STEP 4:
+"""
+if step == 4:
+    xd = XAIOData()
+    xd.save_dir = savedir
+
+    # We load both the raw and log-normalized data:
+    xd.load(["raw", "log"])
+
+    # We compute the mean value and standard deviation of gene counts (in raw data):
+    xd.compute_feature_mean_values()
+    xd.compute_feature_standard_deviations()
+
+    def feature_standard_deviations(i):
+        return xd.feature_standard_deviations[i]
+
+    def feature_mean_values(i):
+        return xd.feature_mean_values[i]
+
+    # xd.function_scatter(
+    #     feature_mean_values,
+    #     feature_standard_deviations,
+    #     samples_or_features="features",
+    #     violinplot=False,
+    #     xlog_scale=False,
+    #     ylog_scale=False
+    # )
+
+    cvals = np.column_stack((xd.feature_standard_deviations, xd.feature_mean_values))
+
+    # from sklearn.preprocessing import power_transform
+    from sklearn.preprocessing import PowerTransformer
+
+    pt = PowerTransformer(method="yeo-johnson")
+    data = [[1], [3], [5]]
+    print(pt.fit(cvals))
+    res = pt.transform(cvals)
+    # res = cvals
+
+    def fsd(i):
+        return res[i][1]
+
+    def fmv(i):
+        return res[i][0]
+
+    xd.function_scatter(
+        fsd,
+        fmv,
+        samples_or_features="features",
+        violinplot=False,
+        xlog_scale=False,
+        ylog_scale=False,
+    )
+
+    # data = [[1, 2], [3, 2], [4, 5]]
+    # print(power_transform(data, method='box-cox'))
+
+    # n_clusters = 6
+    # kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(xd.data_array["log"])
+    e()
+
+quit()
+# data = XAIOData()
 # data.save_dir = output_dir + "/dataset/scRNASeq/"
-data.load(["raw", "std", "log"])
+# data.load(["raw", "std", "log"])
 
 # data = loadscRNASeq("log")
 # data = loadscRNASeq("raw")
