@@ -835,6 +835,8 @@ class XAIOData:
         violinplot=False,
         xlog_scale=False,
         ylog_scale=False,
+        xlabel="",
+        ylabel="",
         function_plot_=False,
     ):
         """Displays a scatter plot, with coordinates computed by applying two
@@ -953,6 +955,8 @@ class XAIOData:
             plt.xscale("log")
         if ylog_scale:
             plt.yscale("log")
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         plt.show()
 
     def function_plot(
@@ -961,6 +965,8 @@ class XAIOData:
         samples_or_features="samples",
         violinplot=True,
         ylog_scale=False,
+        xlabel="",
+        ylabel="",
     ):
         """Plots the value of a function on every sample or every feature, depending
         on the value of sof_ which must be either "samples" or "features"
@@ -972,6 +978,8 @@ class XAIOData:
             violinplot,
             xlog_scale=False,
             ylog_scale=ylog_scale,
+            xlabel=xlabel,
+            ylabel=ylabel,
             function_plot_=True,
         )
 

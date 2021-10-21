@@ -152,7 +152,12 @@ if step == 2:
 
     # To plot mitochondrial count percentages, we use function_plot:
     xd.function_plot(
-        mt_ratio, samples_or_features="samples", violinplot=True, ylog_scale=False
+        mt_ratio,
+        samples_or_features="samples",
+        violinplot=True,
+        ylog_scale=False,
+        xlabel="cells",
+        ylabel="mitochondrial count percentage",
     )
 
     # We compute the number of non-zero features for each cell, and the number of
@@ -167,13 +172,43 @@ if step == 2:
         return xd.nr_non_zero_features[i]
 
     # Plotting the number of non-zero features for each cell:
-    xd.function_plot(nr_non_zero_features, "samples", True, False)
+    xd.function_plot(
+        nr_non_zero_features,
+        "samples",
+        True,
+        False,
+        xlabel="cells",
+        ylabel="number of non-zero features",
+    )
 
     def total_feature_sums(i):
         return xd.total_feature_sums[i]
 
     # Plotting the total number of counts for each sample:
-    xd.function_plot(total_feature_sums, "samples", True, False)
+    xd.function_plot(
+        total_feature_sums,
+        "samples",
+        True,
+        False,
+        xlabel="cells",
+        ylabel="total number of counts",
+    )
+
+    # For the i-th gene, the following array is the array of fractions of counts in
+    # each single cell, across all cells:
+    # xd.data_array["raw"][:, i]/xd.total_feature_sums
+    # So this function returns the mean fraction of counts across all cells for the
+    def mean_count_fractions(i):
+        return np.mean(xd.data_array["raw"][:, i] / xd.total_feature_sums)
+
+    # We plot the mean fractions of counts across all cells, for each gene:
+    xd.function_plot(
+        mean_count_fractions,
+        samples_or_features="features",
+        violinplot=False,
+        xlabel="genes",
+        ylabel="mean fraction of counts across all cells",
+    )
 
     # We plot mitochondrial count percentages vs. total number number of counts:
     xd.function_scatter(
@@ -183,10 +218,17 @@ if step == 2:
         violinplot=False,
         xlog_scale=False,
         ylog_scale=False,
+        xlabel="total number number of counts",
+        ylabel="mitochondrial count percentages",
     )
 
     # We plot the number of non-zero features vs. total number number of counts:
-    xd.function_scatter(total_feature_sums, nr_non_zero_features)
+    xd.function_scatter(
+        total_feature_sums,
+        nr_non_zero_features,
+        xlabel="total number number of counts",
+        ylabel="number of non-zero features",
+    )
 
     # We filter cells that have 2500 unique feature counts or more:
     xd.reduce_samples(np.where(xd.nr_non_zero_features < 2500)[0])
