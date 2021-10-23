@@ -147,10 +147,11 @@ Its implementation can be found in
 The objects of this class contain 2D data arrays and give access to various 
 functionalities to process them.
 
-After `xd.import_pandas(df)`, `xd.data_array["raw"]` is a NumPy array of raw data equal to the transpose of the
-dataframe df. So, `xd.data_array["raw"][0, :]`, the first row, contains the expression 
-levels of all genes for the first sample. And `xd.data_array["raw"][:, 0]`, the
-first column, contains the expression levels of the first gene for all samples.
+After `xd.import_pandas(df)`, `xd.data_array["raw"]` is a NumPy array of raw data equal
+to the transpose of the dataframe df. So, `xd.data_array["raw"][0, :]`, the first row,
+contains the expression levels of all genes for the first sample. 
+And `xd.data_array["raw"][:, 0]`, the first column, contains the expression levels of
+the first gene for all samples.
 
 The feature names (gene IDs) are stored in `xd.feature_names`, and the sample
 identifiers are stored in `xd.sample_ids`. For most applications, XAIOData 

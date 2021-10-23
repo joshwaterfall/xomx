@@ -1039,7 +1039,7 @@ class XAIOData:
         metric="cosine",
         min_dist=0.0,
         n_neighbors=30,
-        random_state=42,
+        random_state=None,
     ):
         reducer = umap.UMAP(
             metric=metric,

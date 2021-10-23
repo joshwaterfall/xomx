@@ -1,5 +1,5 @@
 # from xaio import gdc_create_manifest, gdc_create_data_matrix
-from xaio import XAIOData, confusion_matrix, matthews_coef
+from xaio import XAIOData, confusion_matrix, matthews_coef, anndata_interface
 
 # from xaio import RFEExtraTrees
 # import numpy as np
@@ -17,6 +17,7 @@ import argparse
 
 # import pandas as pd
 import numpy as np
+import scanpy as sc
 import os
 import requests
 import tarfile
@@ -142,11 +143,12 @@ if step == 2:
     xd.save_dir = savedir
     xd.load(["raw"])
 
-    # We look for mitochondrial genes (HGNC official symbol starting with "MT-"):
+    # Look for mitochondrial genes (HGNC official symbol starting with "MT-") with
+    # regex_search:
     mitochondrial_genes = xd.regex_search(r"\|MT\-")
 
-    # Let us define the following function, which, for the i-th cell, returns
-    # the percentage of mitochondrial counts:
+    # The following function, for the i-th cell, returns the percentage of
+    # mitochondrial counts:
     def mt_ratio(i):
         return xd.feature_values_ratio(mitochondrial_genes, i)
 
@@ -160,18 +162,18 @@ if step == 2:
         ylabel="mitochondrial count percentage",
     )
 
-    # We compute the number of non-zero features for each cell, and the number of
+    # Compute the number of non-zero features for each cell, and the number of
     # cells with non-zero counts for each feature. The values are saved in
     # the xd object.
     xd.compute_nr_non_zero_features()
     xd.compute_nr_non_zero_samples()
-    # We also compute the total sum of counts for each cell:
+    # Compute the total sum of counts for each cell:
     xd.compute_total_feature_sums()
 
     def nr_non_zero_features(i):
         return xd.nr_non_zero_features[i]
 
-    # Plotting the number of non-zero features for each cell:
+    # Plot the number of non-zero features for each cell:
     xd.function_plot(
         nr_non_zero_features,
         "samples",
@@ -184,7 +186,7 @@ if step == 2:
     def total_feature_sums(i):
         return xd.total_feature_sums[i]
 
-    # Plotting the total number of counts for each sample:
+    # Plot the total number of counts for each sample:
     xd.function_plot(
         total_feature_sums,
         "samples",
@@ -201,7 +203,7 @@ if step == 2:
     def mean_count_fractions(i):
         return np.mean(xd.data_array["raw"][:, i] / xd.total_feature_sums)
 
-    # We plot the mean fractions of counts across all cells, for each gene:
+    # Plot the mean fractions of counts across all cells, for each gene:
     xd.function_plot(
         mean_count_fractions,
         samples_or_features="features",
@@ -210,7 +212,7 @@ if step == 2:
         ylabel="mean fraction of counts across all cells",
     )
 
-    # We plot mitochondrial count percentages vs. total number number of counts:
+    # Plot mitochondrial count percentages vs. total number number of counts:
     xd.function_scatter(
         total_feature_sums,
         mt_ratio,
@@ -222,7 +224,7 @@ if step == 2:
         ylabel="mitochondrial count percentages",
     )
 
-    # We plot the number of non-zero features vs. total number number of counts:
+    # Plot the number of non-zero features vs. total number number of counts:
     xd.function_scatter(
         total_feature_sums,
         nr_non_zero_features,
@@ -230,15 +232,13 @@ if step == 2:
         ylabel="number of non-zero features",
     )
 
-    # We filter cells that have 2500 unique feature counts or more:
+    # Filter cells that have 2500 unique feature counts or more:
     xd.reduce_samples(np.where(xd.nr_non_zero_features < 2500)[0])
-    # We verify that there remains no sample with 2500 features or more:
-    np.where(xd.nr_non_zero_features >= 2500)[0]
 
-    # We filter cells that have 200 feature counts or less:
+    # Filter cells that have 200 feature counts or less:
     xd.reduce_samples(np.where(xd.nr_non_zero_features > 200)[0])
 
-    # We filter cells that have >=5% mitochondrial counts:
+    # Filter cells that have >=5% mitochondrial counts:
     xd.reduce_samples(np.where(np.vectorize(mt_ratio)(range(xd.nr_samples)) < 0.05)[0])
 
     xd.save(["raw"])
@@ -251,13 +251,29 @@ if step == 3:
     xd.save_dir = savedir
     xd.load(["raw"])
 
-    # We compute a log-normalization of the data:
-    xd.compute_normalization("log")
+    # Normalize total counts to 10000 reads per cell.
+    xd.normalize_feature_sums(1e4)
+
+    # Logarithmize the data, and store it in xd.data_array["log1p"]:
+    xd.data_array["log1p"] = np.log(1 + xd.data_array["raw"])
     # The log-normalized data is stored in xd.data_array["log"]
     # Log-normalized values are all between 0 and 1.
 
-    # We save the log-normalized array:
-    xd.save(["log"])
+    # Create an AnnData object that shares the same data as xd.data_array["log1p"].
+    ad = anndata_interface(xd.data_array["log1p"])
+    # WARNING: changes in ad affect xd.data_array["log1p"], and vice versa.
+
+    # Use scanpy to compute the top 2000 highly variable genes:
+    sc.pp.highly_variable_genes(ad, n_top_genes=2000)
+
+    # Array of highly variable genes:
+    hv_genes = np.where(ad.var.highly_variable == 1)[0]
+
+    # Keep only highly variable genes.
+    xd.reduce_features(hv_genes)
+
+    # Save "raw" and "log1p" data.
+    xd.save(["raw", "log1p"])
 
 """
 STEP 4:
@@ -266,8 +282,34 @@ if step == 4:
     xd = XAIOData()
     xd.save_dir = savedir
 
-    # We load both the raw and log-normalized data:
-    xd.load(["raw", "log"])
+    # Load both the raw and log1p data:
+    xd.load(["raw"])
+
+    # Log-normalize the data:
+    xd.compute_normalization("log")
+
+    ad = anndata_interface(xd.data_array["log"])
+    sc.tl.pca(ad, svd_solver="arpack")
+    sc.pp.neighbors(ad, n_neighbors=10, n_pcs=40)
+    sc.tl.leiden(ad)
+
+    xd.sample_annotations = ad.obs.leiden.to_numpy()
+    xd.compute_all_annotations()
+
+    xd.umap_plot(n_neighbors=30)
+
+    # n_clusters = 8
+    # kmeans = KMeans(n_clusters=n_clusters, random_state=42).
+    # fit(xd.data_array["log1p"])
+    # xd.sample_annotations = kmeans.labels_
+    # xd.compute_all_annotations()
+    # xd.compute_sample_indices_per_annotation()
+    # data.compute_train_and_test_indices_per_annotation()
+    # data.compute_std_values_on_training_sets()
+    # data.compute_std_values_on_training_sets_argsort()
+
+    e()
+    quit()
 
     # We compute the mean value and standard deviation of gene counts (in raw data):
     xd.compute_feature_mean_values()
@@ -297,6 +339,7 @@ if step == 4:
     data = [[1], [3], [5]]
     print(pt.fit(cvals))
     res = pt.transform(cvals)
+
     # res = cvals
 
     def fsd(i):
@@ -333,6 +376,8 @@ quit()
 # data.reduce_features(np.where(data.nr_non_zero_samples > 2)[0])
 #
 mitochondrial_genes = data.regex_search(r"\|MT\-")
+
+
 # mt_percents = np.array(
 #     [
 #         data.percentage_feature_set(mitochondrial_genes, i)
