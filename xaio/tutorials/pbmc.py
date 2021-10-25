@@ -264,7 +264,7 @@ if step == 3:
     # WARNING: changes in ad affect xd.data_array["log1p"], and vice versa.
 
     # Use scanpy to compute the top 2000 highly variable genes:
-    sc.pp.highly_variable_genes(ad, n_top_genes=2000)
+    sc.pp.highly_variable_genes(ad, n_top_genes=8000)
 
     # Array of highly variable genes:
     hv_genes = np.where(ad.var.highly_variable == 1)[0]
@@ -273,36 +273,72 @@ if step == 3:
     xd.reduce_features(hv_genes)
 
     # Save "raw" and "log1p" data.
-    xd.save(["raw", "log1p"])
+    xd.save(["raw", "log1p"], os.path.join(savedir, "xd_small"))
 
 """
 STEP 4:
 """
 if step == 4:
     xd = XAIOData()
-    xd.save_dir = savedir
+    xd.save_dir = os.path.join(savedir, "xd_small")
 
     # Load both the raw and log1p data:
-    xd.load(["raw"])
+    xd.load(["raw", "log1p"])
 
     # Log-normalize the data:
-    xd.compute_normalization("log")
+    # xd.compute_normalization("log")
+    # xd.compute_normalization("std")
 
-    ad = anndata_interface(xd.data_array["log"])
+    ad = anndata_interface(xd.data_array["log1p"])
     sc.tl.pca(ad, svd_solver="arpack")
     sc.pp.neighbors(ad, n_neighbors=10, n_pcs=40)
     sc.tl.leiden(ad)
-
     xd.sample_annotations = ad.obs.leiden.to_numpy()
-    xd.compute_all_annotations()
-
-    xd.umap_plot(n_neighbors=30)
 
     # n_clusters = 8
-    # kmeans = KMeans(n_clusters=n_clusters, random_state=42).
-    # fit(xd.data_array["log1p"])
+    # kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(xd.data_array["log"])
     # xd.sample_annotations = kmeans.labels_
-    # xd.compute_all_annotations()
+
+    xd.compute_all_annotations()
+    xd.compute_feature_indices()
+    xd.compute_sample_indices()
+    xd.compute_sample_indices_per_annotation()
+    xd.compute_train_and_test_indices(test_train_ratio=0.25)
+
+    feature_selector = np.empty(len(xd.all_annotations), dtype=object)
+    gene_list = []
+    for i in range(len(xd.all_annotations)):
+        annotation = xd.all_annotations[i]
+        feature_selector[i] = RFEExtraTrees(xd, annotation)
+
+        print("Initialization...")
+        feature_selector[i].init()
+        for siz in [100, 30, 20, 12]:
+            print("Selecting", siz, "features...")
+            feature_selector[i].select_features(siz)
+            cm = confusion_matrix(
+                feature_selector[i],
+                feature_selector[i].data_test,
+                feature_selector[i].target_test,
+            )
+            print("MCC score:", matthews_coef(cm))
+        # feature_selector.save(save_dir)
+        print("Done.")
+        feature_selector[i].plot()
+        # print("MCC score:", matthews_coef(cm))
+
+        print(feature_selector[i].current_feature_indices)
+        gene_list = gene_list + [
+            xd.feature_names[idx_]
+            for idx_ in feature_selector[i].current_feature_indices
+        ]
+        print(gene_list)
+
+    e()
+
+    xd.feature_plot(gene_list, "log")
+
+    # xd.umap_plot(n_neighbors=30)
     # xd.compute_sample_indices_per_annotation()
     # data.compute_train_and_test_indices_per_annotation()
     # data.compute_std_values_on_training_sets()
@@ -474,6 +510,10 @@ for annotation in range(n_clusters):
     # print("MCC score:", matthews_coef(cm))
 
     print(feature_selector[annotation].current_feature_indices)
+    gene_list += [
+        xd.feature_names[idx_] for idx_ in feature_selector[i].current_feature_indices
+    ]
+
     gene_list = gene_list + [
         data.feature_names[
             feature_selector[annotation].current_feature_indices[i]

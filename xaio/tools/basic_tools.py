@@ -985,13 +985,15 @@ class XAIOData:
 
     def feature_plot(self, features=None, normalization_type="", ylog_scale=False):
         """ """
-        if normalization_type in self.data_array:
-            data_ = self.data_array[normalization_type]
-        else:
+        if normalization_type == "":
             data_ = self.data
+        else:
+            assert normalization_type in self.data_array
+            data_ = self.data_array[normalization_type]
         if type(features) == str or type(features) == np.str_ or type(features) == int:
             idx = features
             if type(idx) == str or type(idx) == np.str_:
+                assert self.feature_indices is not None
                 idx = self.feature_indices[idx]
             self.function_plot(
                 lambda i: data_[i, idx], "samples", ylog_scale=ylog_scale
@@ -1005,6 +1007,7 @@ class XAIOData:
             feature_indices_list_ = []
             for idx in features:
                 if type(idx) == str or type(idx) == np.str_:
+                    assert self.feature_indices is not None
                     idx = self.feature_indices[idx]
                 feature_indices_list_.append(idx)
             if self.all_annotations is None:
@@ -1156,14 +1159,13 @@ def feature_selection_from_list(
     annotation,
     feature_indices,
 ):
+
     f_indices = np.zeros_like(feature_indices, dtype=np.int64)
     for i in range(len(f_indices)):
         if type(feature_indices[i]) == str or type(feature_indices[i]) == np.str_:
             f_indices[i] = data.feature_indices[feature_indices[i]]
         else:
             f_indices[i] = feature_indices[i]
-    # train_indices = np.concatenate(list(data.train_indices_per_annotation.values()))
-    # test_indices = np.concatenate(list(data.test_indices_per_annotation.values()))
     data_train = np.take(
         np.take(data.data.transpose(), f_indices, axis=0),
         data.train_indices,
@@ -1197,6 +1199,7 @@ def naive_feature_selection(
     if selection_size >= data.nr_features:
         feature_indices = list(range(data.nr_features))
     else:
+        assert data.std_values_on_training_sets_argsort is not None
         feature_indices = np.array(
             data.std_values_on_training_sets_argsort[annotation][
                 : (selection_size // 2)

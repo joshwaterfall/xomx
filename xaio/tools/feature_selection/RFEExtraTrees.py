@@ -22,6 +22,12 @@ class RFEExtraTrees:
         random_state=0,
     ):
         self.data = data
+        assert (
+            data.train_indices is not None
+            and data.test_indices is not None
+            and data.train_indices_per_annotation is not None
+            and data.test_indices_per_annotation is not None
+        )
         self.annotation = annotation
         if init_selection_size is None:
             self.init_selection_size = self.data.nr_features
