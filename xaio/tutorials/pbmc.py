@@ -263,7 +263,7 @@ if step == 3:
     ad = anndata_interface(xd.data_array["log1p"])
     # WARNING: changes in ad affect xd.data_array["log1p"], and vice versa.
 
-    # Use scanpy to compute the top 2000 highly variable genes:
+    # Use scanpy to compute the top 8000 highly variable genes:
     sc.pp.highly_variable_genes(ad, n_top_genes=8000)
 
     # Array of highly variable genes:
@@ -282,12 +282,8 @@ if step == 4:
     xd = XAIOData()
     xd.save_dir = os.path.join(savedir, "xd_small")
 
-    # Load both the raw and log1p data:
-    xd.load(["raw", "log1p"])
-
-    # Log-normalize the data:
-    # xd.compute_normalization("log")
-    # xd.compute_normalization("std")
+    # Load the "log1p" data:
+    xd.load(["log1p"])
 
     ad = anndata_interface(xd.data_array["log1p"])
     sc.tl.pca(ad, svd_solver="arpack")
@@ -304,14 +300,14 @@ if step == 4:
     xd.compute_sample_indices()
     xd.compute_sample_indices_per_annotation()
     xd.compute_train_and_test_indices(test_train_ratio=0.25)
+    xd.save()
 
     feature_selector = np.empty(len(xd.all_annotations), dtype=object)
-    gene_list = []
+    gene_set = set()
     for i in range(len(xd.all_annotations)):
         annotation = xd.all_annotations[i]
         feature_selector[i] = RFEExtraTrees(xd, annotation)
-
-        print("Initialization...")
+        print("Annotation: " + str(annotation))
         feature_selector[i].init()
         for siz in [100, 30, 20, 12]:
             print("Selecting", siz, "features...")
@@ -322,27 +318,65 @@ if step == 4:
                 feature_selector[i].target_test,
             )
             print("MCC score:", matthews_coef(cm))
-        # feature_selector.save(save_dir)
+        feature_selector[i].save(
+            os.path.join(savedir, "xd_small", "feature_selectors", annotation)
+        )
         print("Done.")
-        feature_selector[i].plot()
-        # print("MCC score:", matthews_coef(cm))
-
-        print(feature_selector[i].current_feature_indices)
-        gene_list = gene_list + [
+        selected_gene_list = [
             xd.feature_names[idx_]
             for idx_ in feature_selector[i].current_feature_indices
         ]
-        print(gene_list)
+        print("Selected genes: ", selected_gene_list)
+        gene_set = gene_set.union(selected_gene_list)
 
-    e()
+"""
+STEP 5:
+"""
+if step == 5:
+    xd = XAIOData()
+    xd.save_dir = os.path.join(savedir, "xd_small")
 
-    xd.feature_plot(gene_list, "log")
+    # Load the "log1p" and raw data:
+    xd.load(["log1p", "raw"])
+
+    feature_selector = np.empty(len(xd.all_annotations), dtype=object)
+    gene_set = set()
+    for i in range(len(feature_selector)):
+        annotation = xd.all_annotations[i]
+        feature_selector[i] = RFEExtraTrees(xd, annotation)
+        feature_selector[i].load(
+            os.path.join(
+                savedir, "xd_small", "feature_selectors", xd.all_annotations[i]
+            )
+        )
+        selected_gene_list = [
+            xd.feature_names[idx_]
+            for idx_ in feature_selector[i].current_feature_indices
+        ]
+        gene_set = gene_set.union(selected_gene_list)
+
+    xd.feature_plot(list(gene_set), "log1p")
 
     # xd.umap_plot(n_neighbors=30)
     # xd.compute_sample_indices_per_annotation()
     # data.compute_train_and_test_indices_per_annotation()
     # data.compute_std_values_on_training_sets()
     # data.compute_std_values_on_training_sets_argsort()
+
+    biomarkers = [
+        "ENSG00000168685|IL7R",
+        "ENSG00000170458|CD14",
+        "ENSG00000090382|LYZ",
+        "ENSG00000156738|MS4A1",
+        "ENSG00000153563|CD8A",
+        "ENSG00000115523|GNLY",
+        "ENSG00000105374|NKG7",
+        "ENSG00000203747|FCGR3A",
+        "ENSG00000166927|MS4A7",
+        "ENSG00000179639|FCER1A",
+        "ENSG00000101439|CST3",
+        "ENSG00000163736|PPBP",
+    ]
 
     e()
     quit()
